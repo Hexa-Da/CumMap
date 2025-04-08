@@ -1,0 +1,378 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Reset des styles par défaut */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.edit-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: clamp(0.8rem, 3vw, 1rem);
+}
+
+.edit-button:hover {
+  background-color: #2980b9;
+}
+
+.edit-button.active {
+  background-color: #e74c3c;
+}
+
+.edit-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.edit-form input {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  min-width: 150px;
+  flex: 1;
+}
+
+.edit-form button {
+  padding: 0.5rem 1rem;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.edit-form button:hover {
+  background-color: #27ae60;
+}
+
+.edit-instructions {
+  color: #ecf0f1;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.app-main {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+/* Style pour l'icône de localisation de l'utilisateur */
+.user-location-icon {
+  filter: hue-rotate(120deg) saturate(1.5);
+}
+
+.venue-popup {
+  min-width: min(250px, 90vw);
+  padding: 0.5rem;
+}
+
+.venue-popup h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+}
+
+.venue-popup p {
+  margin: 0 0 0.5rem 0;
+  color: #34495e;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.venue-address {
+  font-style: italic;
+  color: #7f8c8d !important;
+  margin-bottom: 1rem !important;
+}
+
+.maps-button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.maps-button:hover {
+  background-color: #2980b9;
+}
+
+.matches-list {
+  margin-top: 1rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+.matches-list h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+}
+
+.match-item {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.match-date {
+  font-weight: bold;
+  color: #e74c3c;
+  margin: 0 0 0.25rem 0;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.match-teams {
+  font-weight: bold;
+  margin: 0 0 0.25rem 0;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.match-description {
+  font-size: clamp(0.7rem, 2.8vw, 0.8rem);
+  color: #666;
+  margin: 0;
+}
+
+.match-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.match-edit-form input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  width: 100%;
+}
+
+.match-edit-form button {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  margin-top: 0.25rem;
+}
+
+.match-edit-form button:first-of-type {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.match-edit-form button:last-of-type {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.edit-match-button {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: clamp(0.7rem, 2.8vw, 0.8rem);
+  width: 100%;
+}
+
+.edit-match-button:hover {
+  background-color: #d35400;
+}
+
+.add-match-button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 1rem 0;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.add-match-button:hover {
+  background-color: #27ae60;
+}
+
+.delete-button {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+/* Styles pour les popups Leaflet */
+.leaflet-popup-content {
+  margin: 0.5rem;
+  width: auto !important;
+}
+
+.leaflet-popup-content-wrapper {
+  max-width: 90vw;
+}
+
+/* Media queries pour les petits écrans */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 0.5rem;
+  }
+
+  .edit-form {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .edit-form input {
+    width: 100%;
+  }
+
+  .edit-form button {
+    width: 100%;
+  }
+
+  .venue-popup {
+    max-width: 85vw;
+  }
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.save-button,
+.cancel-button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+}
+
+.save-button {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #27ae60;
+}
+
+.cancel-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #c0392b;
+}
