@@ -549,21 +549,43 @@ html, body, #root {
 }
 
 .add-match-button {
-  background-color: #4CAF50;
+  background-color: var(--success-color);
   color: white;
-  width: 100%;
+  border: none;
   padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  width: 100%;
+  transition: all 0.3s ease;
   margin-bottom: 0.5rem;
 }
 
 .add-match-button:hover {
-  background-color: #388E3C;
+  background-color: var(--success-hover);
   transform: translateY(-1px);
+}
+
+.add-match-button:active {
+  transform: translateY(0);
+  background-color: var(--success-color);
 }
 
 @media (prefers-color-scheme: dark) {
   .match-item {
     background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .add-match-button {
+    background-color: #4CAF50;
+  }
+
+  .add-match-button:hover {
+    background-color: #388E3C;
+  }
+  
+  .add-match-button:active {
+    background-color: #2E7D32;
   }
 }
 

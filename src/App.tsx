@@ -1369,7 +1369,7 @@ function App() {
               />
             </div>
             <div className="form-actions">
-                            <button 
+              <button 
                 className="add-button"
                 onClick={() => {
                   if (editingMatch.match) {
@@ -1383,6 +1383,8 @@ function App() {
                         description: editingMatch.match.description
                       }
                     );
+                    // Fermer le formulaire après la mise à jour
+                    finishEditingMatch();
                   } else {
                     // Ajouter un nouveau match
                     handleAddMatch(editingMatch.venueId!);
@@ -1395,16 +1397,16 @@ function App() {
                 }
               >
                 {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-                            </button>
-                            <button 
-                              className="cancel-button"
+              </button>
+              <button 
+                className="cancel-button"
                 onClick={finishEditingMatch}
-                            >
-                              Annuler
-                            </button>
-                          </div>
-                          </div>
-                        </div>
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
