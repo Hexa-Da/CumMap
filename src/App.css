@@ -1387,8 +1387,8 @@ html, body, #root {
 }
 
 /* Le formulaire d'édition des matchs doit avoir le même style */
-.edit-form, [role="dialog"] {
-  z-index: 3000;
+.edit-form, [role="dialog"], .form-overlay {
+  z-index: 9999 !important; /* Valeur très élevée pour être au-dessus de tout */
 }
 
 /* Ajout d'un overlay pour empêcher les interactions avec les éléments en dessous */
@@ -1413,7 +1413,7 @@ html, body, #root {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
+  z-index: 9999 !important; /* Même valeur élevée */
 }
 
 .match-edit-form {
@@ -1422,4 +1422,30 @@ html, body, #root {
   top: auto;
   left: auto;
   max-width: 90vw;
+  background-color: var(--bg-color);
+  z-index: 10000 !important; /* Encore plus élevé pour être sûr */
+}
+
+@media (max-width: 768px) {
+  .form-overlay, .edit-form, [role="dialog"] {
+    z-index: 10000 !important; /* Valeur encore plus élevée sur mobile */
+  }
+  
+  .edit-form {
+    width: 90vw;
+    max-height: 80vh;
+    padding: 15px;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  .leaflet-control-container {
+    z-index: 1000 !important; /* S'assurer que les contrôles restent sous les formulaires */
+  }
+  
+  .events-toggle-button {
+    z-index: 1000 !important; /* S'assurer que le bouton reste sous les formulaires */
+  }
 }
