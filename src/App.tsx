@@ -215,7 +215,7 @@ function App() {
     setIsEditing(true);
   }, []);
   
-  const [hotels] = useState<Venue[]>([
+  const [hotels, setHotels] = useState<Venue[]>([
     {
       name: "F1 Les Ulis",
       position: [48.6819, 2.1694],
@@ -1601,10 +1601,6 @@ function App() {
                       <option value="Ping-pong">Ping-pong 🏓</option>
                       <option value="Other">Autre 🎯</option>
                     </select>
-                  </div>
-                  <div className="form-group emoji-preview">
-                    <label>Emoji sélectionné</label>
-                    <div className="selected-emoji">{selectedEmoji}</div>
                   </div>
                   <div className="form-actions">
                     <button 
