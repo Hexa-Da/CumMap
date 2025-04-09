@@ -664,3 +664,37 @@ html, body, #root {
     background-color: var(--danger-hover);
   }
 }
+
+.map-style-selector {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: clamp(0.8rem, 3vw, 1rem);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 1rem;
+}
+
+.map-style-selector:hover {
+  border-color: var(--primary-color);
+}
+
+.map-style-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--shadow-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-style-selector {
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    border-color: var(--border-color);
+  }
+
+  .map-style-selector:hover {
+    border-color: var(--primary-color);
+  }
+}

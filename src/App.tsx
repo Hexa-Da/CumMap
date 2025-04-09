@@ -241,6 +241,26 @@ function App() {
   const [locationError, setLocationError] = useState<string | false>(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [mapStyle, setMapStyle] = useState('osm'); // 'osm' par défaut
+
+  const mapStyles = {
+    osm: {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    },
+    cyclosm: {
+      url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+      attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - OpenBikeMap">CyclOSM</a> | Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    },
+    humanitarian: {
+      url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
+    },
+    osmfr: {
+      url: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+      attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }
+  };
 
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
@@ -277,9 +297,9 @@ function App() {
         
         try {
           await set(newVenueRef, newVenue);
-          setNewVenueName('');
-          setNewVenueDescription('');
-          setNewVenueAddress('');
+        setNewVenueName('');
+        setNewVenueDescription('');
+        setNewVenueAddress('');
         } catch (error) {
           console.error('Erreur lors de l\'ajout du lieu:', error);
           alert('Une erreur est survenue lors de l\'ajout du lieu.');
@@ -305,14 +325,14 @@ function App() {
       
       if (venue) {
         const matches = [...(venue.matches || [])];
-        const newMatchWithId = {
+          const newMatchWithId = {
           id: matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1,
-          ...newMatch
-        };
+            ...newMatch
+          };
         matches.push(newMatchWithId);
         
         await set(venueRef, {
-          ...venue,
+            ...venue,
           matches
         });
         
@@ -343,7 +363,7 @@ function App() {
       );
       
       await set(venueRef, {
-        ...venue,
+          ...venue,
         matches: updatedMatches
       });
     }
@@ -435,6 +455,16 @@ function App() {
       <header className="app-header">
         <h1>CumMap</h1>
         <div className="controls">
+          <select 
+            className="map-style-selector"
+            value={mapStyle}
+            onChange={(e) => setMapStyle(e.target.value)}
+          >
+            <option value="osm">OpenStreetMap</option>
+            <option value="cyclosm">CyclOSM</option>
+            <option value="humanitarian">Humanitarian</option>
+            <option value="osmfr">OSM France</option>
+          </select>
           <button 
             className={`edit-button ${isEditing ? 'active' : ''}`}
             onClick={() => setIsEditing(!isEditing)}
@@ -478,65 +508,65 @@ function App() {
         ) : locationLoading ? (
           <div className="loading">Chargement de la carte...</div>
         ) : (
-          <MapContainer
-            center={[48.8566, 2.3522]}
-            zoom={12}
-            style={{ height: 'calc(100vh - 80px)', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <LocationMarker />
-            {venues.map((venue) => (
-              <Marker 
-                key={venue.id} 
-                position={venue.position}
-                icon={DefaultIcon}
-                eventHandlers={{
+        <MapContainer
+          center={[48.8566, 2.3522]}
+          zoom={12}
+          style={{ height: 'calc(100vh - 80px)', width: '100%' }}
+        >
+          <TileLayer
+            url={mapStyles[mapStyle as keyof typeof mapStyles].url}
+            attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
+          />
+          <LocationMarker />
+          {venues.map((venue) => (
+            <Marker 
+              key={venue.id} 
+              position={venue.position}
+              icon={DefaultIcon}
+              eventHandlers={{
                   click: () => handlePopupOpen(venue.id || ''),
-                }}
-              >
+              }}
+            >
                 <Popup>
-                  <div className="venue-popup">
-                    <h3>{venue.name}</h3>
-                    <p>{venue.description}</p>
-                    <p className="venue-address">{venue.address}</p>
-                    <button className="maps-button" onClick={() => openInGoogleMaps(venue)}>
-                      Ouvrir dans Google Maps
-                    </button>
-                    {venue.matches.length > 0 && (
-                      <div className="matches-list">
-                        <h4>Matchs à venir :</h4>
-                        {venue.matches.map(match => (
-                          <div key={match.id} className="match-item">
-                            {editingMatch.venueId === venue.id && editingMatch.match?.id === match.id ? (
-                              <div className="match-edit-form">
-                                <input
-                                  type="datetime-local"
-                                  defaultValue={match.date.slice(0, 16)}
+                <div className="venue-popup">
+                  <h3>{venue.name}</h3>
+                  <p>{venue.description}</p>
+                  <p className="venue-address">{venue.address}</p>
+                  <button className="maps-button" onClick={() => openInGoogleMaps(venue)}>
+                    Ouvrir dans Google Maps
+                  </button>
+                  {venue.matches.length > 0 && (
+                    <div className="matches-list">
+                      <h4>Matchs à venir :</h4>
+                      {venue.matches.map(match => (
+                        <div key={match.id} className="match-item">
+                          {editingMatch.venueId === venue.id && editingMatch.match?.id === match.id ? (
+                            <div className="match-edit-form">
+                              <input
+                                type="datetime-local"
+                                defaultValue={match.date.slice(0, 16)}
                                   onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { date: e.target.value })}
-                                />
-                                <input
-                                  type="text"
-                                  defaultValue={match.teams}
+                              />
+                              <input
+                                type="text"
+                                defaultValue={match.teams}
                                   onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { teams: e.target.value })}
-                                />
-                                <input
-                                  type="text"
-                                  defaultValue={match.description}
+                              />
+                              <input
+                                type="text"
+                                defaultValue={match.description}
                                   onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { description: e.target.value })}
-                                />
-                                <div className="edit-buttons">
-                                  <button 
-                                    className="save-button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      finishEditingMatch();
-                                    }}
-                                  >
-                                    Enregistrer
-                                  </button>
+                              />
+                              <div className="edit-buttons">
+                                <button 
+                                  className="save-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    finishEditingMatch();
+                                  }}
+                                >
+                                  Enregistrer
+                                </button>
                                   <button 
                                     className="cancel-button"
                                     onClick={(e) => {
@@ -547,23 +577,23 @@ function App() {
                                     Annuler
                                   </button>
                                 </div>
-                              </div>
-                            ) : (
-                              <>
-                                <p className="match-date">{new Date(match.date).toLocaleString()}</p>
-                                <p className="match-teams">{match.teams}</p>
-                                <p className="match-description">{match.description}</p>
-                                {isEditing && (
+                            </div>
+                          ) : (
+                            <>
+                              <p className="match-date">{new Date(match.date).toLocaleString()}</p>
+                              <p className="match-teams">{match.teams}</p>
+                              <p className="match-description">{match.description}</p>
+                              {isEditing && (
                                   <div className="match-actions">
-                                    <button 
-                                      className="edit-match-button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
+                                <button 
+                                  className="edit-match-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                         startEditingMatch(venue.id || '', match);
-                                      }}
-                                    >
-                                      Modifier
-                                    </button>
+                                  }}
+                                >
+                                  Modifier
+                                </button>
                                     <button 
                                       className="delete-match-button"
                                       onClick={(e) => {
@@ -574,78 +604,78 @@ function App() {
                                       Supprimer
                                     </button>
                                   </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {isEditing && (
-                      <>
-                        <button 
-                          className="add-match-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {isEditing && (
+                    <>
+                      <button 
+                        className="add-match-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
                             startEditingMatch(venue.id || '', null);
-                          }}
-                        >
-                          Ajouter un match
-                        </button>
-                        {editingMatch.venueId === venue.id && !editingMatch.match && (
-                          <div className="match-edit-form">
-                            <input
-                              type="datetime-local"
-                              placeholder="Date et heure"
-                              value={newMatch.date}
-                              onChange={(e) => setNewMatch({ ...newMatch, date: e.target.value })}
-                            />
-                            <input
-                              type="text"
-                              placeholder="Équipes"
-                              value={newMatch.teams}
-                              onChange={(e) => setNewMatch({ ...newMatch, teams: e.target.value })}
-                            />
-                            <input
-                              type="text"
-                              placeholder="Description"
-                              value={newMatch.description}
-                              onChange={(e) => setNewMatch({ ...newMatch, description: e.target.value })}
-                            />
-                            <div className="edit-buttons">
-                              <button 
-                                className="save-button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                        }}
+                      >
+                        Ajouter un match
+                      </button>
+                      {editingMatch.venueId === venue.id && !editingMatch.match && (
+                        <div className="match-edit-form">
+                          <input
+                            type="datetime-local"
+                            placeholder="Date et heure"
+                            value={newMatch.date}
+                            onChange={(e) => setNewMatch({ ...newMatch, date: e.target.value })}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Équipes"
+                            value={newMatch.teams}
+                            onChange={(e) => setNewMatch({ ...newMatch, teams: e.target.value })}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Description"
+                            value={newMatch.description}
+                            onChange={(e) => setNewMatch({ ...newMatch, description: e.target.value })}
+                          />
+                          <div className="edit-buttons">
+                            <button 
+                              className="save-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                   handleAddMatch(venue.id || '');
-                                }}
-                              >
-                                Ajouter
-                              </button>
-                              <button 
-                                className="cancel-button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  finishEditingMatch();
-                                }}
-                              >
-                                Annuler
-                              </button>
-                            </div>
+                              }}
+                            >
+                              Ajouter
+                            </button>
+                            <button 
+                              className="cancel-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                finishEditingMatch();
+                              }}
+                            >
+                              Annuler
+                            </button>
                           </div>
-                        )}
-                        <button 
-                          className="delete-button"
+                        </div>
+                      )}
+                      <button 
+                        className="delete-button"
                           onClick={() => deleteVenue(venue.id || '')}
-                        >
-                          Supprimer ce lieu
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+                      >
+                        Supprimer ce lieu
+                      </button>
+                    </>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
             {hotels.map((hotel) => (
               <Marker 
                 key={hotel.name} 
@@ -664,7 +694,7 @@ function App() {
                 </Popup>
               </Marker>
             ))}
-          </MapContainer>
+        </MapContainer>
         )}
       </main>
     </div>
