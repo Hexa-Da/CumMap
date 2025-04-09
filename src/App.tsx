@@ -44,26 +44,66 @@ interface Venue {
 // Composant pour la géolocalisation
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const map = useMap();
 
   useEffect(() => {
     if (map) {
-      map.locate({
-        setView: true,
-        maxZoom: 16,
-        timeout: 10000
-      });
+      // Vérifier si la géolocalisation est supportée
+      if (!navigator.geolocation) {
+        setError("La géolocalisation n'est pas supportée par votre navigateur");
+        return;
+      }
 
-      map.on('locationfound', (e) => {
-        setPosition(e.latlng);
-        map.flyTo(e.latlng, map.getZoom());
-      });
+      // Configurer les options de géolocalisation
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      };
 
-      map.on('locationerror', (e) => {
-        console.error('Erreur de géolocalisation:', e.message);
-      });
+      // Demander la position
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          const newPosition = new LatLng(latitude, longitude);
+          setPosition(newPosition);
+          map.flyTo(newPosition, 16);
+        },
+        (err) => {
+          console.error('Erreur de géolocalisation:', err);
+          setError(`Erreur de géolocalisation: ${err.message}`);
+        },
+        options
+      );
+
+      // Surveiller la position
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          const newPosition = new LatLng(latitude, longitude);
+          setPosition(newPosition);
+        },
+        (err) => {
+          console.error('Erreur de suivi de position:', err);
+        },
+        options
+      );
+
+      // Nettoyer le watcher lors du démontage
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
     }
   }, [map]);
+
+  if (error) {
+    return (
+      <div className="error-message">
+        {error}
+      </div>
+    );
+  }
 
   return position === null ? null : (
     <Marker position={position} icon={UserIcon}>
