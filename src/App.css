@@ -1174,7 +1174,7 @@ html, body, #root {
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 1000;
+  z-index: 900;
   padding: 0.5rem 1rem;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -1353,6 +1353,7 @@ html, body, #root {
 .leaflet-control-zoom {
   margin-right: 10px !important;
   margin-top: 10px !important;
+  z-index: 900 !important;
 }
 
 .leaflet-control-zoom a {
@@ -1388,7 +1389,7 @@ html, body, #root {
 
 /* Le formulaire d'édition des matchs doit avoir le même style */
 .edit-form, [role="dialog"], .form-overlay {
-  z-index: 9999 !important; /* Valeur très élevée pour être au-dessus de tout */
+  z-index: 99999 !important;
 }
 
 /* Ajout d'un overlay pour empêcher les interactions avec les éléments en dessous */
@@ -1413,7 +1414,7 @@ html, body, #root {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999 !important; /* Même valeur élevée */
+  z-index: 99999 !important;
 }
 
 .match-edit-form {
@@ -1423,12 +1424,12 @@ html, body, #root {
   left: auto;
   max-width: 90vw;
   background-color: var(--bg-color);
-  z-index: 10000 !important; /* Encore plus élevé pour être sûr */
+  z-index: 100000 !important;
 }
 
 @media (max-width: 768px) {
   .form-overlay, .edit-form, [role="dialog"] {
-    z-index: 10000 !important; /* Valeur encore plus élevée sur mobile */
+    z-index: 100000 !important;
   }
   
   .edit-form {
@@ -1442,10 +1443,20 @@ html, body, #root {
   }
   
   .leaflet-control-container {
-    z-index: 1000 !important; /* S'assurer que les contrôles restent sous les formulaires */
+    z-index: 900 !important;
   }
   
   .events-toggle-button {
-    z-index: 1000 !important; /* S'assurer que le bouton reste sous les formulaires */
+    z-index: 900 !important;
   }
+}
+
+/* S'assurer que tous les contrôles Leaflet sont derrière les formulaires */
+.leaflet-control-container, 
+.leaflet-control,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-right,
+.leaflet-left {
+  z-index: 900 !important;
 }
