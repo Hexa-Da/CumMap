@@ -11,7 +11,7 @@
     "build": "npm install --legacy-peer-deps && tsc && vite build && touch dist/.nojekyll",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist -t true"
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.8",
