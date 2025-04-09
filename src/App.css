@@ -115,6 +115,15 @@
   .leaflet-control-zoom a:hover {
     background-color: var(--bg-color) !important;
   }
+
+  .retry-button {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .retry-button:hover {
+    background-color: var(--primary-hover);
+  }
 }
 
 html, body, #root {
@@ -244,7 +253,7 @@ html, body, #root {
 
 /* Style pour l'icône d'hôtel */
 .hotel-icon {
-  filter: hue-rotate(0deg) saturate(15) brightness(1.2) sepia(1) hue-rotate(-30deg);
+  filter: hue-rotate(120deg) saturate(15) brightness(1.2);
 }
 
 .venue-popup {
@@ -536,4 +545,23 @@ html, body, #root {
     transform: translate(-50%, 0);
     opacity: 1;
   }
+}
+
+/* Style pour le bouton de réessai de localisation */
+.retry-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.retry-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }

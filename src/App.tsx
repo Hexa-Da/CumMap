@@ -233,6 +233,9 @@ function App() {
     description: ''
   });
   const [openPopup, setOpenPopup] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
@@ -358,6 +361,29 @@ function App() {
     }
   };
 
+  const handleLocationSuccess = (position: GeolocationPosition) => {
+    const { latitude, longitude } = position.coords;
+    setUserLocation([latitude, longitude]);
+    setLocationError(false);
+    setLocationLoading(false);
+  };
+
+  const handleLocationError = (error: GeolocationPositionError) => {
+    console.error('Erreur de géolocalisation:', error);
+    setLocationError(true);
+    setLocationLoading(false);
+  };
+
+  const retryLocation = () => {
+    setLocationError(false);
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      handleLocationSuccess,
+      handleLocationError,
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -395,173 +421,184 @@ function App() {
         </div>
       </header>
       <main className="app-main">
-        <MapContainer
-          center={[48.8566, 2.3522]}
-          zoom={12}
-          style={{ height: 'calc(100vh - 80px)', width: '100%' }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          <LocationMarker />
-          {venues.map((venue) => (
-            <Marker 
-              key={venue.id} 
-              position={venue.position}
-              icon={DefaultIcon}
-              eventHandlers={{
-                click: () => handlePopupOpen(venue.id || ''),
-              }}
-            >
-              <Popup>
-                <div className="venue-popup">
-                  <h3>{venue.name}</h3>
-                  <p>{venue.description}</p>
-                  <p className="venue-address">{venue.address}</p>
-                  <button className="maps-button" onClick={() => openInGoogleMaps(venue)}>
-                    Ouvrir dans Google Maps
-                  </button>
-                  {venue.matches.length > 0 && (
-                    <div className="matches-list">
-                      <h4>Matchs à venir :</h4>
-                      {venue.matches.map(match => (
-                        <div key={match.id} className="match-item">
-                          {editingMatch.venueId === venue.id && editingMatch.match?.id === match.id ? (
-                            <div className="match-edit-form">
-                              <input
-                                type="datetime-local"
-                                defaultValue={match.date.slice(0, 16)}
-                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { date: e.target.value })}
-                              />
-                              <input
-                                type="text"
-                                defaultValue={match.teams}
-                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { teams: e.target.value })}
-                              />
-                              <input
-                                type="text"
-                                defaultValue={match.description}
-                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { description: e.target.value })}
-                              />
-                              <div className="edit-buttons">
-                                <button 
-                                  className="save-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    finishEditingMatch();
-                                  }}
-                                >
-                                  Enregistrer
-                                </button>
+        {locationError ? (
+          <div className="location-error">
+            <p>Impossible d'accéder à votre position. Vérifiez que la géolocalisation est activée.</p>
+            <button className="retry-button" onClick={retryLocation}>
+              Réessayer
+            </button>
+          </div>
+        ) : locationLoading ? (
+          <div className="loading">Chargement de la carte...</div>
+        ) : (
+          <MapContainer
+            center={[48.8566, 2.3522]}
+            zoom={12}
+            style={{ height: 'calc(100vh - 80px)', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <LocationMarker />
+            {venues.map((venue) => (
+              <Marker 
+                key={venue.id} 
+                position={venue.position}
+                icon={DefaultIcon}
+                eventHandlers={{
+                  click: () => handlePopupOpen(venue.id || ''),
+                }}
+              >
+                <Popup>
+                  <div className="venue-popup">
+                    <h3>{venue.name}</h3>
+                    <p>{venue.description}</p>
+                    <p className="venue-address">{venue.address}</p>
+                    <button className="maps-button" onClick={() => openInGoogleMaps(venue)}>
+                      Ouvrir dans Google Maps
+                    </button>
+                    {venue.matches.length > 0 && (
+                      <div className="matches-list">
+                        <h4>Matchs à venir :</h4>
+                        {venue.matches.map(match => (
+                          <div key={match.id} className="match-item">
+                            {editingMatch.venueId === venue.id && editingMatch.match?.id === match.id ? (
+                              <div className="match-edit-form">
+                                <input
+                                  type="datetime-local"
+                                  defaultValue={match.date.slice(0, 16)}
+                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { date: e.target.value })}
+                                />
+                                <input
+                                  type="text"
+                                  defaultValue={match.teams}
+                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { teams: e.target.value })}
+                                />
+                                <input
+                                  type="text"
+                                  defaultValue={match.description}
+                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { description: e.target.value })}
+                                />
+                                <div className="edit-buttons">
+                                  <button 
+                                    className="save-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      finishEditingMatch();
+                                    }}
+                                  >
+                                    Enregistrer
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <>
-                              <p className="match-date">{new Date(match.date).toLocaleString()}</p>
-                              <p className="match-teams">{match.teams}</p>
-                              <p className="match-description">{match.description}</p>
-                              {isEditing && (
-                                <button 
-                                  className="edit-match-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    startEditingMatch(venue.id || '', match);
-                                  }}
-                                >
-                                  Modifier
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isEditing && (
-                    <>
-                      <button 
-                        className="add-match-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditingMatch(venue.id || '', null);
-                        }}
-                      >
-                        Ajouter un match
-                      </button>
-                      {editingMatch.venueId === venue.id && !editingMatch.match && (
-                        <div className="match-edit-form">
-                          <input
-                            type="datetime-local"
-                            placeholder="Date et heure"
-                            value={newMatch.date}
-                            onChange={(e) => setNewMatch({ ...newMatch, date: e.target.value })}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Équipes"
-                            value={newMatch.teams}
-                            onChange={(e) => setNewMatch({ ...newMatch, teams: e.target.value })}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Description"
-                            value={newMatch.description}
-                            onChange={(e) => setNewMatch({ ...newMatch, description: e.target.value })}
-                          />
-                          <div className="edit-buttons">
-                            <button 
-                              className="save-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddMatch(venue.id || '');
-                              }}
-                            >
-                              Ajouter
-                            </button>
-                            <button 
-                              className="cancel-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                finishEditingMatch();
-                              }}
-                            >
-                              Annuler
-                            </button>
+                            ) : (
+                              <>
+                                <p className="match-date">{new Date(match.date).toLocaleString()}</p>
+                                <p className="match-teams">{match.teams}</p>
+                                <p className="match-description">{match.description}</p>
+                                {isEditing && (
+                                  <button 
+                                    className="edit-match-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      startEditingMatch(venue.id || '', match);
+                                    }}
+                                  >
+                                    Modifier
+                                  </button>
+                                )}
+                              </>
+                            )}
                           </div>
-                        </div>
-                      )}
-                      <button 
-                        className="delete-button"
-                        onClick={() => deleteVenue(venue.id || '')}
-                      >
-                        Supprimer ce lieu
-                      </button>
-                    </>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-          {hotels.map((hotel) => (
-            <Marker 
-              key={hotel.name} 
-              position={hotel.position}
-              icon={HotelIcon}
-            >
-              <Popup>
-                <div className="venue-popup">
-                  <h3>{hotel.name}</h3>
-                  <p>{hotel.description}</p>
-                  <p className="venue-address">{hotel.address}</p>
-                  <button className="maps-button" onClick={() => openInGoogleMaps(hotel)}>
-                    Ouvrir dans Google Maps
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+                        ))}
+                      </div>
+                    )}
+                    {isEditing && (
+                      <>
+                        <button 
+                          className="add-match-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingMatch(venue.id || '', null);
+                          }}
+                        >
+                          Ajouter un match
+                        </button>
+                        {editingMatch.venueId === venue.id && !editingMatch.match && (
+                          <div className="match-edit-form">
+                            <input
+                              type="datetime-local"
+                              placeholder="Date et heure"
+                              value={newMatch.date}
+                              onChange={(e) => setNewMatch({ ...newMatch, date: e.target.value })}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Équipes"
+                              value={newMatch.teams}
+                              onChange={(e) => setNewMatch({ ...newMatch, teams: e.target.value })}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Description"
+                              value={newMatch.description}
+                              onChange={(e) => setNewMatch({ ...newMatch, description: e.target.value })}
+                            />
+                            <div className="edit-buttons">
+                              <button 
+                                className="save-button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddMatch(venue.id || '');
+                                }}
+                              >
+                                Ajouter
+                              </button>
+                              <button 
+                                className="cancel-button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  finishEditingMatch();
+                                }}
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        <button 
+                          className="delete-button"
+                          onClick={() => deleteVenue(venue.id || '')}
+                        >
+                          Supprimer ce lieu
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+            {hotels.map((hotel) => (
+              <Marker 
+                key={hotel.name} 
+                position={hotel.position}
+                icon={HotelIcon}
+              >
+                <Popup>
+                  <div className="venue-popup">
+                    <h3>{hotel.name}</h3>
+                    <p>{hotel.description}</p>
+                    <p className="venue-address">{hotel.address}</p>
+                    <button className="maps-button" onClick={() => openInGoogleMaps(hotel)}>
+                      Ouvrir dans Google Maps
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        )}
       </main>
     </div>
   );
