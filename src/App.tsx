@@ -440,16 +440,33 @@ function App() {
         };
         matches.push(newMatchWithId);
         
-        await set(venueRef, {
-          ...venue,
-          matches
-        });
-        
-        setNewMatch({ date: '', teams: '', description: '' });
-        // Fermer uniquement le formulaire d'édition du match, mais garder le popup du lieu ouvert
-        setEditingMatch({ venueId: null, match: null });
-        // Maintenir le popup ouvert
-        setOpenPopup(venueId);
+        try {
+          await set(venueRef, {
+            ...venue,
+            matches
+          });
+          
+          setNewMatch({ date: '', teams: '', description: '' });
+          // Fermer uniquement le formulaire d'édition du match
+          setEditingMatch({ venueId: null, match: null });
+          // Conserver l'état du popup ouvert pour voir le match ajouté
+          setOpenPopup(venueId);
+          
+          // Forcer le rechargement du popup pour afficher le nouveau match
+          const marker = markersRef.current.find(m => 
+            m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+          );
+          
+          if (marker) {
+            // Fermer puis rouvrir le popup pour actualiser son contenu
+            setTimeout(() => {
+              marker.openPopup();
+            }, 300);
+          }
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout du match:', error);
+          alert('Une erreur est survenue lors de l\'ajout du match.');
+        }
       }
     }
   };
@@ -490,10 +507,30 @@ function App() {
             match.id === matchId ? { ...match, ...updatedData } : match
       );
       
-      await set(venueRef, {
+      try {
+        await set(venueRef, {
           ...venue,
-        matches: updatedMatches
-      });
+          matches: updatedMatches
+        });
+        
+        // Maintenir le popup ouvert après la mise à jour
+        setOpenPopup(venueId);
+        
+        // Forcer le rechargement du popup pour afficher les modifications
+        const marker = markersRef.current.find(m => 
+          m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+        );
+        
+        if (marker) {
+          // Fermer puis rouvrir le popup pour actualiser son contenu
+          setTimeout(() => {
+            marker.openPopup();
+          }, 300);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du match:', error);
+        alert('Une erreur est survenue lors de la mise à jour du match.');
+      }
     }
   };
 
