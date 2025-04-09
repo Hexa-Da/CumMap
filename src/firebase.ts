@@ -2,14 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  // Vous devrez créer un projet sur Firebase Console et copier la configuration ici
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyBFB_-a5O4KD1V0MSa4HYpsEMekpBTL044",
+  authDomain: "cummap-7afee.firebaseapp.com",
+  databaseURL: "https://cummap-7afee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cummap-7afee",
+  storageBucket: "cummap-7afee.firebasestorage.app",
+  messagingSenderId: "402641775282",
+  appId: "1:402641775282:web:585cabb0a67ae4475937ab"
 };
 
 const app = initializeApp(firebaseConfig);
