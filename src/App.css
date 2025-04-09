@@ -809,3 +809,71 @@ html, body, #root {
     border-color: var(--primary-color);
   }
 }
+
+.emoji-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-color);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.emoji-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-button:hover {
+  background: var(--bg-secondary);
+  transform: scale(1.1);
+}
+
+.emoji-button.selected {
+  background: var(--primary-color);
+  color: white;
+}
+
+.custom-marker {
+  transition: transform 0.3s ease;
+}
+
+.custom-marker span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate(0, 0) !important;
+  line-height: 1 !important;
+}
+
+.hotel-marker span {
+  transform: translate(0, 0) !important;
+}
+
+@media (max-width: 768px) {
+  .emoji-selector {
+    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+  }
+  
+  .emoji-button {
+    font-size: 1.2rem;
+    padding: 0.4rem;
+    width: 35px;
+    height: 35px;
+  }
+}

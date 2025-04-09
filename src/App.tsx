@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
 import { db } from './firebase';
+import React from 'react';
+import L from 'leaflet';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -49,6 +51,10 @@ interface Venue {
   matches: Match[];
   address?: string;
   type?: 'hotel' | 'venue';
+  sport: string;
+  date: string;
+  latitude: number;
+  longitude: number;
 }
 
 // Composant pour la géolocalisation
@@ -185,6 +191,8 @@ function MapEvents({ onMapClick }: { onMapClick: (e: { latlng: { lat: number; ln
 }
 
 function App() {
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [hotels] = useState<Venue[]>([
     {
@@ -193,7 +201,11 @@ function App() {
       description: "Hôtel F1 Les Ulis - Courtaboeuf",
       address: "Zi Courtaboeuf, Rue Rio Solado N°2, 91940 Les Ulis",
       type: 'hotel',
-      matches: []
+      matches: [],
+      sport: 'Football',
+      date: '',
+      latitude: 48.6819,
+      longitude: 2.1694
     },
     {
       name: "F1 Orly-Rungis",
@@ -201,7 +213,11 @@ function App() {
       description: "Hôtel F1 Orly-Rungis",
       address: "7 Rue du Pont des Halles, 94150 Rungis",
       type: 'hotel',
-      matches: []
+      matches: [],
+      sport: 'Football',
+      date: '',
+      latitude: 48.7486,
+      longitude: 2.3522
     }
   ]);
 
@@ -214,7 +230,11 @@ function App() {
         const venuesArray = Object.entries(data).map(([key, value]: [string, any]) => ({
           ...value,
           id: key,
-          matches: value.matches || []  // Assurer que matches est toujours un tableau
+          matches: value.matches || [],  // Assurer que matches est toujours un tableau
+          sport: value.sport || '',
+          date: value.date || '',
+          latitude: value.position ? value.position[0] : 0,
+          longitude: value.position ? value.position[1] : 0
         }));
         setVenues(venuesArray);
       } else {
@@ -231,6 +251,7 @@ function App() {
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
+  const [selectedSport, setSelectedSport] = useState('Football');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [editingMatch, setEditingMatch] = useState<{venueId: string | null, match: Match | null}>({ venueId: null, match: null });
   const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string}>({
@@ -263,6 +284,23 @@ function App() {
     }
   };
 
+  const sportEmojis: { [key: string]: string } = {
+    'Football': '⚽',
+    'Basket-ball': '🏀',
+    'Handball': '🤾',
+    'Rugby': '🏉',
+    'Volley-ball': '🏐',
+    'Badminton': '🏸',
+    'Cross': '🏃',
+    'Escalade': '🧗',
+    'Relais athlétisme': '🏃‍♂️',
+    'Relais natation': '🏊‍♂️',
+    'Tennis': '🎾',
+    'Tennis de table': '🏓',
+    'Pompom': '🎀',
+    'Hotel': '🏨'
+  };
+
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
     try {
@@ -281,6 +319,25 @@ function App() {
     }
   };
 
+  const getMarkerColor = (date: string) => {
+    const matchDate = new Date(date);
+    const now = new Date();
+    const diffTime = matchDate.getTime() - now.getTime();
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+    
+    if (diffHours < 0) return { color: '#808080', rotation: '0deg' }; // Gris pour les matchs passés
+    if (diffHours <= 1) return { color: '#FF0000', rotation: '0deg' }; // Rouge pour les matchs dans moins d'1h
+    if (diffHours <= 3) return { color: '#FF4500', rotation: '45deg' }; // Orange foncé pour les matchs dans 1-3h
+    if (diffHours <= 6) return { color: '#FFA500', rotation: '90deg' }; // Orange pour les matchs dans 3-6h
+    if (diffHours <= 12) return { color: '#FFD700', rotation: '135deg' }; // Jaune pour les matchs dans 6-12h
+    return { color: '#4CAF50', rotation: '180deg' }; // Vert pour les matchs plus éloignés
+  };
+
+  // Modifier la fonction getSportIcon pour utiliser des emojis
+  const getSportIcon = (sport: string) => {
+    return sportEmojis[sport] || '🏟️';
+  };
+
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
     if (newVenueName && newVenueDescription && newVenueAddress) {
@@ -293,14 +350,19 @@ function App() {
           position: coordinates,
           description: newVenueDescription,
           address: newVenueAddress,
-          matches: []
+          matches: [],
+          sport: selectedSport,
+          date: '',
+          latitude: coordinates[0],
+          longitude: coordinates[1]
         };
         
         try {
           await set(newVenueRef, newVenue);
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
+          setNewVenueName('');
+          setNewVenueDescription('');
+          setNewVenueAddress('');
+          setSelectedSport('Football');
         } catch (error) {
           console.error('Erreur lors de l\'ajout du lieu:', error);
           alert('Une erreur est survenue lors de l\'ajout du lieu.');
@@ -451,6 +513,174 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    if (mapRef.current) {
+      // Supprimer les marqueurs existants
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+
+      // Ajouter les marqueurs pour chaque lieu
+      venues.forEach(venue => {
+        const markerColor = getMarkerColor(venue.date);
+        const marker = L.marker([venue.latitude, venue.longitude], {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); transform: rotate(${markerColor.rotation});">
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getSportIcon(venue.sport)}</span>
+                   </div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+          })
+        });
+
+        // Créer le contenu du popup avec les fonctionnalités complètes
+        const popupContent = document.createElement('div');
+        popupContent.className = 'venue-popup';
+        
+        // Contenu de base du lieu
+        popupContent.innerHTML = `
+          <h3>${venue.name}</h3>
+          <p>${venue.description}</p>
+          <p><strong>Sport:</strong> ${venue.sport}</p>
+          <p><strong>Date:</strong> ${new Date(venue.date).toLocaleDateString()}</p>
+          <p class="venue-address">${venue.address}</p>
+        `;
+        
+        // Bouton Google Maps
+        const mapsButton = document.createElement('button');
+        mapsButton.className = 'maps-button';
+        mapsButton.textContent = 'Ouvrir dans Google Maps';
+        mapsButton.addEventListener('click', () => {
+          openInGoogleMaps(venue);
+        });
+        popupContent.appendChild(mapsButton);
+        
+        // Liste des matchs
+        if (venue.matches && venue.matches.length > 0) {
+          const matchesListDiv = document.createElement('div');
+          matchesListDiv.className = 'matches-list';
+          matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
+          
+          venue.matches.forEach(match => {
+            const matchItemDiv = document.createElement('div');
+            matchItemDiv.className = 'match-item';
+            
+            // Contenu du match
+            matchItemDiv.innerHTML = `
+              <p class="match-date">${new Date(match.date).toLocaleString()}</p>
+              <p class="match-teams">${match.teams}</p>
+              <p class="match-description">${match.description}</p>
+            `;
+            
+            // Boutons d'édition en mode édition
+            if (isEditing) {
+              const matchActionsDiv = document.createElement('div');
+              matchActionsDiv.className = 'match-actions';
+              
+              const editButton = document.createElement('button');
+              editButton.className = 'edit-match-button';
+              editButton.textContent = 'Modifier';
+              editButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startEditingMatch(venue.id || '', match);
+              });
+              
+              const deleteButton = document.createElement('button');
+              deleteButton.className = 'delete-match-button';
+              deleteButton.textContent = 'Supprimer';
+              deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteMatch(venue.id || '', match.id);
+              });
+              
+              matchActionsDiv.appendChild(editButton);
+              matchActionsDiv.appendChild(deleteButton);
+              matchItemDiv.appendChild(matchActionsDiv);
+            }
+            
+            matchesListDiv.appendChild(matchItemDiv);
+          });
+          
+          popupContent.appendChild(matchesListDiv);
+        }
+        
+        // Boutons d'édition pour le lieu
+        if (isEditing) {
+          const addMatchButton = document.createElement('button');
+          addMatchButton.className = 'add-match-button';
+          addMatchButton.textContent = 'Ajouter un match';
+          addMatchButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startEditingMatch(venue.id || '', null);
+          });
+          popupContent.appendChild(addMatchButton);
+          
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'delete-button';
+          deleteButton.textContent = 'Supprimer ce lieu';
+          deleteButton.addEventListener('click', () => {
+            deleteVenue(venue.id || '');
+          });
+          popupContent.appendChild(deleteButton);
+        }
+
+        marker.bindPopup(popupContent);
+        
+        marker.on('click', () => {
+          handlePopupOpen(venue.id || '');
+        });
+
+        if (mapRef.current) {
+          marker.addTo(mapRef.current);
+          markersRef.current.push(marker);
+        }
+      });
+
+      // Ajouter les marqueurs pour les hôtels
+      hotels.forEach(hotel => {
+        const marker = L.marker([hotel.latitude, hotel.longitude], {
+          icon: L.divIcon({
+            className: 'custom-marker hotel-marker',
+            html: `<div style="background-color: #1976D2; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏨</span>
+                   </div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+          })
+        });
+
+        // Créer le contenu du popup pour l'hôtel
+        const popupContent = document.createElement('div');
+        popupContent.className = 'venue-popup';
+        
+        // Contenu de base de l'hôtel
+        popupContent.innerHTML = `
+          <h3>${hotel.name}</h3>
+          <p>${hotel.description}</p>
+          <p class="venue-address">${hotel.address}</p>
+        `;
+        
+        // Bouton Google Maps
+        const mapsButton = document.createElement('button');
+        mapsButton.className = 'maps-button';
+        mapsButton.textContent = 'Ouvrir dans Google Maps';
+        mapsButton.addEventListener('click', () => {
+          openInGoogleMaps(hotel);
+        });
+        popupContent.appendChild(mapsButton);
+
+        marker.bindPopup(popupContent);
+        
+        if (mapRef.current) {
+          marker.addTo(mapRef.current);
+          markersRef.current.push(marker);
+        }
+      });
+    }
+  }, [venues, hotels, isEditing]);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -526,6 +756,21 @@ function App() {
                     className="form-input"
                   />
                 </div>
+                <div className="form-group">
+                  <label>Sport</label>
+                  <div className="emoji-selector">
+                    {Object.entries(sportEmojis).map(([sport, emoji]) => (
+                      <button
+                        key={sport}
+                        className={`emoji-button ${selectedSport === sport ? 'selected' : ''}`}
+                        onClick={() => setSelectedSport(sport)}
+                        title={sport}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="form-actions">
                   <button 
                     className="add-button"
@@ -562,188 +807,13 @@ function App() {
           center={[48.8566, 2.3522]}
           zoom={12}
           style={{ height: 'calc(100vh - 80px)', width: '100%' }}
+          ref={(map) => { mapRef.current = map || null; }}
         >
           <TileLayer
             url={mapStyles[mapStyle as keyof typeof mapStyles].url}
             attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
           />
           <LocationMarker />
-          {venues.map((venue) => (
-            <Marker 
-              key={venue.id} 
-              position={venue.position}
-              icon={DefaultIcon}
-              eventHandlers={{
-                  click: () => handlePopupOpen(venue.id || ''),
-              }}
-            >
-                <Popup>
-                <div className="venue-popup">
-                  <h3>{venue.name}</h3>
-                  <p>{venue.description}</p>
-                  <p className="venue-address">{venue.address}</p>
-                  <button className="maps-button" onClick={() => openInGoogleMaps(venue)}>
-                    Ouvrir dans Google Maps
-                  </button>
-                  {venue.matches.length > 0 && (
-                    <div className="matches-list">
-                      <h4>Matchs à venir :</h4>
-                      {venue.matches.map(match => (
-                        <div key={match.id} className="match-item">
-                          {editingMatch.venueId === venue.id && editingMatch.match?.id === match.id ? (
-                            <div className="match-edit-form">
-                              <input
-                                type="datetime-local"
-                                defaultValue={match.date.slice(0, 16)}
-                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { date: e.target.value })}
-                              />
-                              <input
-                                type="text"
-                                defaultValue={match.teams}
-                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { teams: e.target.value })}
-                              />
-                              <input
-                                type="text"
-                                defaultValue={match.description}
-                                  onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { description: e.target.value })}
-                              />
-                              <div className="edit-buttons">
-                                <button 
-                                  className="save-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    finishEditingMatch();
-                                  }}
-                                >
-                                  Enregistrer
-                                </button>
-                                  <button 
-                                    className="cancel-button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      finishEditingMatch();
-                                    }}
-                                  >
-                                    Annuler
-                                  </button>
-                                </div>
-                            </div>
-                          ) : (
-                            <>
-                              <p className="match-date">{new Date(match.date).toLocaleString()}</p>
-                              <p className="match-teams">{match.teams}</p>
-                              <p className="match-description">{match.description}</p>
-                              {isEditing && (
-                                  <div className="match-actions">
-                                <button 
-                                  className="edit-match-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                        startEditingMatch(venue.id || '', match);
-                                  }}
-                                >
-                                  Modifier
-                                </button>
-                                    <button 
-                                      className="delete-match-button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteMatch(venue.id || '', match.id);
-                                      }}
-                                    >
-                                      Supprimer
-                                    </button>
-                                  </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isEditing && (
-                    <>
-                      <button 
-                        className="add-match-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                            startEditingMatch(venue.id || '', null);
-                        }}
-                      >
-                        Ajouter un match
-                      </button>
-                      {editingMatch.venueId === venue.id && !editingMatch.match && (
-                        <div className="match-edit-form">
-                          <input
-                            type="datetime-local"
-                            placeholder="Date et heure"
-                            value={newMatch.date}
-                            onChange={(e) => setNewMatch({ ...newMatch, date: e.target.value })}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Équipes"
-                            value={newMatch.teams}
-                            onChange={(e) => setNewMatch({ ...newMatch, teams: e.target.value })}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Description"
-                            value={newMatch.description}
-                            onChange={(e) => setNewMatch({ ...newMatch, description: e.target.value })}
-                          />
-                          <div className="edit-buttons">
-                            <button 
-                              className="save-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                  handleAddMatch(venue.id || '');
-                              }}
-                            >
-                              Ajouter
-                            </button>
-                            <button 
-                              className="cancel-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                finishEditingMatch();
-                              }}
-                            >
-                              Annuler
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      <button 
-                        className="delete-button"
-                          onClick={() => deleteVenue(venue.id || '')}
-                      >
-                        Supprimer ce lieu
-                      </button>
-                    </>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-            {hotels.map((hotel) => (
-              <Marker 
-                key={hotel.name} 
-                position={hotel.position}
-                icon={HotelIcon}
-              >
-                <Popup>
-                  <div className="venue-popup">
-                    <h3>{hotel.name}</h3>
-                    <p>{hotel.description}</p>
-                    <p className="venue-address">{hotel.address}</p>
-                    <button className="maps-button" onClick={() => openInGoogleMaps(hotel)}>
-                      Ouvrir dans Google Maps
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
         </MapContainer>
         )}
       </main>
