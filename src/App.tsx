@@ -443,7 +443,7 @@ function App() {
           matches
         });
         
-        setNewMatch({ date: '', teams: '', description: '' });
+      setNewMatch({ date: '', teams: '', description: '' });
         setEditingMatch({ venueId: null, match: null });
       }
     }
@@ -466,7 +466,7 @@ function App() {
     
     if (venue) {
       const updatedMatches = venue.matches.map(match =>
-        match.id === matchId ? { ...match, ...updatedData } : match
+            match.id === matchId ? { ...match, ...updatedData } : match
       );
       
       await set(venueRef, {
@@ -788,7 +788,7 @@ function App() {
         const marker = L.marker([venue.latitude, venue.longitude], {
           icon: L.divIcon({
             className: 'custom-marker',
-            html: `<div class="marker-content" style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); transform: rotate(${markerColor.rotation});">
+            html: `<div class="marker-content" style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
                      <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getSportIcon(venue.sport)}</span>
                    </div>`,
             iconSize: [30, 30],
@@ -805,6 +805,7 @@ function App() {
         popupContent.innerHTML = `
           <h3>${venue.name}</h3>
           <p>${venue.description}</p>
+          <p><strong>Sport:</strong> ${venue.sport}</p>
           <p class="venue-address">${venue.address || `${venue.latitude}, ${venue.longitude}`}</p>
         `;
 
@@ -832,11 +833,70 @@ function App() {
         
         popupContent.appendChild(buttonsContainer);
 
+        // Liste des matchs
+        if (venue.matches && venue.matches.length > 0) {
+          const matchesListDiv = document.createElement('div');
+          matchesListDiv.className = 'matches-list';
+          matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
+          
+          venue.matches.forEach(match => {
+            const matchItemDiv = document.createElement('div');
+            matchItemDiv.className = 'match-item';
+            
+            // Contenu du match
+            matchItemDiv.innerHTML = `
+              <p class="match-date">${new Date(match.date).toLocaleString()}</p>
+              <p class="match-teams">${match.teams}</p>
+              <p class="match-description">${match.description}</p>
+            `;
+            
+            // Boutons d'édition en mode édition
+            if (isEditing) {
+              const matchActionsDiv = document.createElement('div');
+              matchActionsDiv.className = 'match-actions';
+              
+              const editButton = document.createElement('button');
+              editButton.className = 'edit-match-button';
+              editButton.textContent = 'Modifier';
+              editButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startEditingMatch(venue.id || '', match);
+              });
+              
+              const deleteButton = document.createElement('button');
+              deleteButton.className = 'delete-match-button';
+              deleteButton.textContent = 'Supprimer';
+              deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteMatch(venue.id || '', match.id);
+              });
+              
+              matchActionsDiv.appendChild(editButton);
+              matchActionsDiv.appendChild(deleteButton);
+              matchItemDiv.appendChild(matchActionsDiv);
+            }
+            
+            matchesListDiv.appendChild(matchItemDiv);
+          });
+          
+          popupContent.appendChild(matchesListDiv);
+        }
+
         // Ajouter les boutons d'édition si on est en mode édition
         if (isEditing) {
           // Boutons d'édition
           const editButtonsContainer = document.createElement('div');
           editButtonsContainer.className = 'popup-buttons';
+          
+          // Bouton pour ajouter un match
+          const addMatchButton = document.createElement('button');
+          addMatchButton.className = 'add-match-button';
+          addMatchButton.textContent = 'Ajouter un match';
+          addMatchButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startEditingMatch(venue.id || '', null);
+          });
+          editButtonsContainer.appendChild(addMatchButton);
           
           // Bouton Modifier
           const editButton = document.createElement('button');
@@ -1039,33 +1099,33 @@ function App() {
               <div className="edit-form-content">
                 <div className="form-group">
                   <label htmlFor="venue-name">Nom du lieu</label>
-                  <input
+              <input
                     id="venue-name"
-                    type="text"
-                    value={newVenueName}
-                    onChange={(e) => setNewVenueName(e.target.value)}
+                type="text"
+                value={newVenueName}
+                onChange={(e) => setNewVenueName(e.target.value)}
                     placeholder="Ex: Stade de France"
                     className="form-input"
-                  />
+              />
                 </div>
                 <div className="form-group">
                   <label htmlFor="venue-description">Description</label>
-                  <input
+              <input
                     id="venue-description"
-                    type="text"
-                    value={newVenueDescription}
-                    onChange={(e) => setNewVenueDescription(e.target.value)}
+                type="text"
+                value={newVenueDescription}
+                onChange={(e) => setNewVenueDescription(e.target.value)}
                     placeholder="Ex: Stade principal de football"
                     className="form-input"
-                  />
+              />
                 </div>
                 <div className="form-group">
                   <label htmlFor="venue-address">Adresse</label>
-                  <input
+              <input
                     id="venue-address"
-                    type="text"
-                    value={newVenueAddress}
-                    onChange={(e) => setNewVenueAddress(e.target.value)}
+                type="text"
+                value={newVenueAddress}
+                onChange={(e) => setNewVenueAddress(e.target.value)}
                     placeholder="Entrez l'adresse complète"
                     className="form-input"
                   />
@@ -1236,8 +1296,8 @@ function App() {
                         </div>
                       ))}
                 </div>
-              </div>
-            )}
+                    </div>
+                  )}
                     </div>
                   )}
       </main>
@@ -1343,8 +1403,8 @@ function App() {
                               Annuler
                             </button>
                           </div>
+                          </div>
                         </div>
-        </div>
       )}
     </div>
   );

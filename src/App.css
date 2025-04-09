@@ -471,146 +471,100 @@ html, body, #root {
   background-color: var(--primary-hover);
 }
 
+/* Styles pour la liste de matchs */
 .matches-list {
   margin-top: 1rem;
+  margin-bottom: 1rem;
   border-top: 1px solid var(--border-color);
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 }
 
 .matches-list h4 {
-  margin: 0 0 0.5rem 0;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
   color: var(--text-color);
-  font-size: clamp(0.9rem, 3.5vw, 1.1rem);
-  font-weight: 600;
+  font-size: 1rem;
 }
 
 .match-item {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
   margin-bottom: 0.5rem;
-  padding: 0.75rem;
-  background-color: var(--bg-secondary);
-  border-radius: 6px;
-  box-shadow: 0 2px 4px var(--shadow-color);
-  transition: transform 0.3s ease;
-}
-
-.match-item:hover {
-  transform: translateY(-2px);
+  border-radius: 4px;
 }
 
 .match-date {
   font-weight: bold;
   color: var(--danger-color);
-  margin: 0 0 0.25rem 0;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  font-size: 0.85rem;
+  margin: 0.25rem 0;
 }
 
 .match-teams {
-  font-weight: bold;
-  margin: 0 0 0.25rem 0;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  font-weight: 600;
+  margin: 0.25rem 0;
 }
 
 .match-description {
-  font-size: clamp(0.7rem, 2.8vw, 0.8rem);
-  color: var(--text-color-light);
-  margin: 0;
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: 0.25rem 0;
 }
 
-.match-edit-form {
+.match-actions {
   display: flex;
-  flex-direction: column;
   gap: 0.5rem;
-  margin: 0.5rem 0;
+  margin-top: 0.5rem;
 }
 
-.match-edit-form input {
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
-  width: 100%;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: border-color 0.3s;
-}
-
-.match-edit-form input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.match-edit-form button {
-  padding: 0.5rem;
+.edit-match-button,
+.delete-match-button,
+.add-match-button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
-  margin-top: 0.25rem;
   transition: all 0.3s ease;
-}
-
-.match-edit-form button:first-of-type {
-  background-color: var(--success-color);
-  color: white;
-}
-
-.match-edit-form button:last-of-type {
-  background-color: var(--danger-color);
-  color: white;
 }
 
 .edit-match-button {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--warning-color);
+  background-color: #2196F3;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: clamp(0.7rem, 2.8vw, 0.8rem);
-  width: 100%;
-  transition: all 0.3s ease;
 }
 
 .edit-match-button:hover {
-  background-color: var(--warning-hover);
+  background-color: #1976D2;
+  transform: translateY(-1px);
+}
+
+.delete-match-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-match-button:hover {
+  background-color: #d32f2f;
   transform: translateY(-1px);
 }
 
 .add-match-button {
+  background-color: #4CAF50;
+  color: white;
   width: 100%;
   padding: 0.5rem;
-  background-color: var(--success-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin: 1rem 0;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
-  transition: all 0.3s ease;
+  margin-bottom: 0.5rem;
 }
 
 .add-match-button:hover {
-  background-color: var(--success-hover);
+  background-color: #388E3C;
   transform: translateY(-1px);
 }
 
-.delete-button {
-  width: 100%;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background-color: var(--danger-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: clamp(0.8rem, 3vw, 0.9rem);
-  transition: all 0.3s ease;
-}
-
-.delete-button:hover {
-  background-color: var(--danger-hover);
-  transform: translateY(-1px);
+@media (prefers-color-scheme: dark) {
+  .match-item {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* Styles pour les popups Leaflet */
@@ -1061,7 +1015,6 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 5px var(--shadow-color);
-  transform: rotate(180deg);
 }
 
 /* Styles pour la liste des événements */
@@ -1257,7 +1210,6 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   min-width: 30px;
-  transform: rotate(180deg);
 }
 
 .event-name {
