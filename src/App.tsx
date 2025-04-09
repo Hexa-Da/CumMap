@@ -302,7 +302,9 @@ function App() {
   const [locationError, setLocationError] = useState<string | false>(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [mapStyle, setMapStyle] = useState('osm'); // 'osm' par défaut
+  const [mapStyle, setMapStyle] = useState('osm');
+  const [activeTab, setActiveTab] = useState<'map' | 'events'>('map');
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
 
   const mapStyles = {
     osm: {
@@ -491,6 +493,71 @@ function App() {
     return new Date(matchDate) < new Date();
   };
 
+  // Fonction pour récupérer tous les événements (matchs et soirées)
+  const getAllEvents = () => {
+    const events: Array<{
+      id: string;
+      name: string;
+      date: string;
+      description: string;
+      address: string;
+      location: [number, number];
+      type: 'match' | 'party';
+      teams?: string;
+      venue?: string;
+      isPassed: boolean;
+    }> = [];
+
+    // Ajouter les matchs
+    venues.forEach(venue => {
+      if (venue.matches && venue.matches.length > 0) {
+        venue.matches.forEach(match => {
+          events.push({
+            id: `match-${venue.id}-${match.id}`,
+            name: match.teams,
+            date: match.date,
+            description: match.description,
+            address: venue.address || `${venue.latitude}, ${venue.longitude}`,
+            location: [venue.latitude, venue.longitude],
+            type: 'match',
+            teams: match.teams,
+            venue: venue.name,
+            isPassed: isMatchPassed(match.date)
+          });
+        });
+      }
+    });
+
+    // Ajouter les soirées
+    parties.forEach(party => {
+      events.push({
+        id: `party-${party.id || party.name}`,
+        name: party.name,
+        date: party.date,
+        description: party.description,
+        address: party.address || `${party.latitude}, ${party.longitude}`,
+        location: [party.latitude, party.longitude],
+        type: 'party',
+        isPassed: isMatchPassed(party.date)
+      });
+    });
+
+    // Trier par date (du plus récent au plus ancien)
+    return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  // Fonction pour formater la date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Fonction pour ouvrir dans Google Maps
   const openInGoogleMaps = (venue: Venue) => {
     const query = encodeURIComponent(venue.address || `${venue.position[0]},${venue.position[1]}`);
@@ -562,6 +629,54 @@ function App() {
       .catch(err => {
         console.error('Erreur lors de la copie : ', err);
       });
+  };
+
+  // Fonction pour centrer la carte sur un événement
+  const centerOnEvent = (eventId: string) => {
+    setSelectedEvent(eventId);
+    
+    // Trouver l'événement correspondant
+    const allEvents = getAllEvents();
+    const event = allEvents.find(e => e.id === eventId);
+    
+    if (event) {
+      // Extraire les coordonnées
+      const [lat, lng] = event.location;
+      
+      // Centrer la carte
+      if (mapRef.current) {
+        mapRef.current.flyTo([lat, lng], 16);
+      }
+      
+      // Ouvrir le popup correspondant
+      if (event.type === 'match') {
+        const [_, venueId, matchId] = eventId.split('-');
+        const marker = markersRef.current.find(m => {
+          const venue = venues.find(v => v.id === venueId);
+          return venue && m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude;
+        });
+        
+        if (marker) {
+          marker.openPopup();
+        }
+      } else if (event.type === 'party') {
+        const [_, partyId] = eventId.split('-');
+        const party = parties.find(p => p.id === partyId || p.name === partyId);
+        
+        if (party) {
+          const marker = markersRef.current.find(m => 
+            m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
+          );
+          
+          if (marker) {
+            marker.openPopup();
+          }
+        }
+      }
+    }
+    
+    // Basculer vers l'onglet carte
+    setActiveTab('map');
   };
 
   useEffect(() => {
@@ -824,7 +939,7 @@ function App() {
       <header className="app-header">
         <h1>CumMap</h1>
         <div className="controls">
-          {!isEditing && (
+          {!isEditing && activeTab === 'map' && (
             <select 
               className="map-style-selector"
               value={mapStyle}
@@ -941,18 +1056,98 @@ function App() {
         ) : locationLoading ? (
           <div className="loading">Chargement de la carte...</div>
         ) : (
-        <MapContainer
-          center={[48.8566, 2.3522]}
-          zoom={12}
-          style={{ height: 'calc(100vh - 80px)', width: '100%' }}
-          ref={(map) => { mapRef.current = map || null; }}
-        >
-          <TileLayer
-            url={mapStyles[mapStyle as keyof typeof mapStyles].url}
-            attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
-          />
-          <LocationMarker />
-        </MapContainer>
+          <div className="map-container">
+            <MapContainer
+              center={[48.8566, 2.3522]}
+              zoom={12}
+              style={{ height: '100%', width: '100%' }}
+              ref={(map) => { mapRef.current = map || null; }}
+              zoomControl={false}
+            >
+              <TileLayer
+                url={mapStyles[mapStyle as keyof typeof mapStyles].url}
+                attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
+              />
+              <LocationMarker />
+              <div className="leaflet-control-container">
+                <div className="leaflet-top leaflet-right">
+                  <div className="leaflet-control-zoom leaflet-bar leaflet-control">
+                    <a className="leaflet-control-zoom-in" href="#" title="Zoom in" role="button" aria-label="Zoom in" onClick={(e) => {
+                      e.preventDefault();
+                      mapRef.current?.zoomIn();
+                    }}>+</a>
+                    <a className="leaflet-control-zoom-out" href="#" title="Zoom out" role="button" aria-label="Zoom out" onClick={(e) => {
+                      e.preventDefault();
+                      mapRef.current?.zoomOut();
+                    }}>−</a>
+                  </div>
+                </div>
+              </div>
+            </MapContainer>
+            
+            {/* Bouton flottant pour afficher les événements */}
+            <button 
+              className={`events-toggle-button ${activeTab === 'events' ? 'active' : ''}`}
+              onClick={() => setActiveTab(activeTab === 'map' ? 'events' : 'map')}
+            >
+              {activeTab === 'map' ? '📆 Événements' : '✖️ Fermer'}
+            </button>
+            
+            {activeTab === 'events' && (
+              <div className="events-panel">
+                <h2>Événements à venir</h2>
+                <div className="events-list">
+                  {getAllEvents().map(event => (
+                    <div 
+                      key={event.id} 
+                      className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent === event.id ? 'selected' : ''}`}
+                      onClick={() => centerOnEvent(event.id)}
+                    >
+                      <div className="event-header">
+                        <span className="event-type-badge">
+                          {event.type === 'match' ? '🏆 Match' : '🎉 Soirée'}
+                        </span>
+                        <span className="event-date">{formatDate(event.date)}</span>
+                      </div>
+                      <div className="event-title-container">
+                        {event.type === 'match' && venues.find(v => v.name === event.venue) && (
+                          <span className="event-sport-icon">
+                            {getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')}
+                          </span>
+                        )}
+                        <h3 className="event-name">{event.name}</h3>
+                      </div>
+                      {event.type === 'match' && event.venue && (
+                        <p className="event-venue">Lieu: {event.venue}</p>
+                      )}
+                      <p className="event-description">{event.description}</p>
+                      <p className="event-address">{event.address}</p>
+                      <div className="event-actions">
+                        <button 
+                          className="maps-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
+                          }}
+                        >
+                          Ouvrir dans Google Maps
+                        </button>
+                        <button 
+                          className="copy-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(event.address);
+                          }}
+                        >
+                          Copier l'adresse
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </main>
 
@@ -961,13 +1156,13 @@ function App() {
         <div className="edit-form">
           <div className="edit-form-header">
             <h3>{editingMatch.match ? 'Modifier le match' : 'Ajouter un match'}</h3>
-                        </div>
+          </div>
           <div className="edit-form-content">
             <div className="form-group">
               <label htmlFor="match-date">Date et heure</label>
-                          <input
+              <input
                 id="match-date"
-                            type="datetime-local"
+                type="datetime-local"
                 value={editingMatch.match ? editingMatch.match.date : newMatch.date}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -984,9 +1179,9 @@ function App() {
             </div>
             <div className="form-group">
               <label htmlFor="match-teams">Équipes</label>
-                          <input
+              <input
                 id="match-teams"
-                            type="text"
+                type="text"
                 value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -1004,9 +1199,9 @@ function App() {
             </div>
             <div className="form-group">
               <label htmlFor="match-description">Description</label>
-                          <input
+              <input
                 id="match-description"
-                            type="text"
+                type="text"
                 value={editingMatch.match ? editingMatch.match.description : newMatch.description}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -1023,7 +1218,7 @@ function App() {
               />
             </div>
             <div className="form-actions">
-                            <button 
+              <button 
                 className="add-button"
                 onClick={() => {
                   if (editingMatch.match) {
@@ -1049,15 +1244,15 @@ function App() {
                 }
               >
                 {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-                            </button>
-                            <button 
-                              className="cancel-button"
+              </button>
+              <button 
+                className="cancel-button"
                 onClick={finishEditingMatch}
-                            >
-                              Annuler
-                            </button>
-                          </div>
-                        </div>
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
