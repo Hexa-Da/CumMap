@@ -57,6 +57,13 @@ interface Venue {
   longitude: number;
 }
 
+// Interface pour les actions d'historique
+interface HistoryAction {
+  type: 'ADD_VENUE' | 'UPDATE_VENUE' | 'DELETE_VENUE' | 'ADD_MATCH' | 'UPDATE_MATCH' | 'DELETE_MATCH';
+  data: any;
+  undo: () => Promise<void>;
+}
+
 // Composant pour la géolocalisation
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null);
@@ -321,6 +328,10 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
+  
+  // État pour l'historique des actions et l'index actuel
+  const [history, setHistory] = useState<HistoryAction[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   const mapStyles = {
     osm: {
@@ -405,6 +416,39 @@ function App() {
     return true;
   };
 
+  // Fonction pour ajouter une action à l'historique
+  const addToHistory = (action: HistoryAction) => {
+    // Supprimer les actions futures (si on est revenu en arrière)
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(action);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  // Fonction pour annuler la dernière action
+  const undoLastAction = async () => {
+    if (historyIndex >= 0) {
+      const action = history[historyIndex];
+      await action.undo();
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  // Gestionnaire d'événements pour écouter Ctrl+Z
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        await undoLastAction();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [history, historyIndex]);
+
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
     // Vérifier les droits admin seulement au moment de l'ajout
@@ -429,6 +473,18 @@ function App() {
         
         try {
           await set(newVenueRef, newVenue);
+          
+          // Ajouter l'action à l'historique avec une fonction d'annulation
+          const venueId = newVenueRef.key || '';
+          addToHistory({
+            type: 'ADD_VENUE',
+            data: { ...newVenue, id: venueId },
+            undo: async () => {
+              const undoRef = ref(db, `venues/${venueId}`);
+              await set(undoRef, null);
+            }
+          });
+          
           setNewVenueName('');
           setNewVenueDescription('');
           setNewVenueAddress('');
@@ -450,9 +506,34 @@ function App() {
     // Vérifier les droits admin seulement au moment de la suppression
     if (!checkAdminRights()) return;
     
-    const venueRef = ref(db, `venues/${id}`);
-    await set(venueRef, null);
-    setSelectedVenue(null);
+    // Sauvegarder l'état du lieu avant suppression pour pouvoir annuler
+    const venue = venues.find(v => v.id === id);
+    if (venue) {
+      const venueRef = ref(db, `venues/${id}`);
+      await set(venueRef, null);
+      
+      // Ajouter l'action à l'historique avec une fonction d'annulation
+      addToHistory({
+        type: 'DELETE_VENUE',
+        data: venue,
+        undo: async () => {
+          const undoRef = ref(db, `venues/${id}`);
+          await set(undoRef, {
+            name: venue.name,
+            position: [venue.latitude, venue.longitude],
+            description: venue.description,
+            address: venue.address,
+            matches: venue.matches || [],
+            sport: venue.sport,
+            date: venue.date,
+            latitude: venue.latitude,
+            longitude: venue.longitude
+          });
+        }
+      });
+      
+      setSelectedVenue(null);
+    }
   };
 
   // Fonction pour ajouter un nouveau match
@@ -473,9 +554,20 @@ function App() {
         matches.push(newMatchWithId);
         
         try {
+          const venueBefore = { ...venue };
           await set(venueRef, {
             ...venue,
             matches
+          });
+          
+          // Ajouter l'action à l'historique avec une fonction d'annulation
+          addToHistory({
+            type: 'ADD_MATCH',
+            data: { venueId, match: newMatchWithId },
+            undo: async () => {
+              const undoRef = ref(db, `venues/${venueId}`);
+              await set(undoRef, venueBefore);
+            }
           });
           
           setNewMatch({ date: '', teams: '', description: '' });
@@ -503,7 +595,7 @@ function App() {
     }
   };
 
-  // Fonction pour gérer la modification d'un match
+  // Fonction pour mettre à jour un match
   const handleUpdateMatch = async (venueId: string, matchId: number, updatedData: Partial<Match>) => {
     // Vérifier les droits admin seulement au moment de la mise à jour
     if (!checkAdminRights()) return;
@@ -512,6 +604,10 @@ function App() {
     const venue = venues.find(v => v.id === venueId);
     
     if (venue) {
+      // Sauvegarder l'état avant modification pour pouvoir annuler
+      const venueBefore = { ...venue };
+      const matchBefore = venue.matches.find(m => m.id === matchId);
+      
       const updatedMatches = venue.matches.map(match =>
             match.id === matchId ? { ...match, ...updatedData } : match
       );
@@ -521,6 +617,18 @@ function App() {
           ...venue,
           matches: updatedMatches
         });
+        
+        // Ajouter l'action à l'historique avec une fonction d'annulation
+        if (matchBefore) {
+          addToHistory({
+            type: 'UPDATE_MATCH',
+            data: { venueId, matchId, before: matchBefore, after: { ...matchBefore, ...updatedData } },
+            undo: async () => {
+              const undoRef = ref(db, `venues/${venueId}`);
+              await set(undoRef, venueBefore);
+            }
+          });
+        }
         
         // Maintenir le popup ouvert après la mise à jour
         setOpenPopup(venueId);
@@ -552,11 +660,149 @@ function App() {
     const venue = venues.find(v => v.id === venueId);
     
     if (venue) {
+      // Sauvegarder l'état avant suppression pour pouvoir annuler
+      const venueBefore = { ...venue };
+      const matchToDelete = venue.matches.find(m => m.id === matchId);
+      
       const updatedMatches = venue.matches.filter(match => match.id !== matchId);
       await set(venueRef, {
         ...venue,
         matches: updatedMatches
       });
+      
+      // Ajouter l'action à l'historique avec une fonction d'annulation
+      if (matchToDelete) {
+        addToHistory({
+          type: 'DELETE_MATCH',
+          data: { venueId, match: matchToDelete },
+          undo: async () => {
+            const undoRef = ref(db, `venues/${venueId}`);
+            await set(undoRef, venueBefore);
+          }
+        });
+      }
+    }
+  };
+
+  // Fonction pour mettre à jour un lieu existant
+  const handleUpdateVenue = async () => {
+    // Vérifier les droits admin seulement au moment de la mise à jour
+    if (!checkAdminRights()) return;
+    
+    if (editingVenue.id && newVenueName && newVenueDescription) {
+      // Trouver le lieu dans la liste
+      const venue = venues.find(v => v.id === editingVenue.id);
+      
+      if (venue) {
+        // Sauvegarder l'état avant modification pour pouvoir annuler
+        const venueBefore = { ...venue };
+        const venueRef = ref(db, `venues/${editingVenue.id}`);
+        
+        // Si l'adresse a changé, essayer de la géocoder
+        if (newVenueAddress !== venue.address) {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(newVenueAddress)}`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+              // Mettre à jour avec les nouvelles coordonnées
+              const updatedVenue = {
+                ...venue,
+                name: newVenueName,
+                description: newVenueDescription,
+                address: newVenueAddress,
+                sport: selectedSport,
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                position: [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+              };
+              
+              await set(venueRef, updatedVenue);
+              
+              // Ajouter l'action à l'historique avec une fonction d'annulation
+              addToHistory({
+                type: 'UPDATE_VENUE',
+                data: { before: venueBefore, after: updatedVenue },
+                undo: async () => {
+                  const undoRef = ref(db, `venues/${editingVenue.id}`);
+                  await set(undoRef, venueBefore);
+                }
+              });
+            } else {
+              // Garder les anciennes coordonnées mais mettre à jour les autres informations
+              const updatedVenue = {
+                ...venue,
+                name: newVenueName,
+                description: newVenueDescription,
+                address: newVenueAddress,
+                sport: selectedSport
+              };
+              
+              await set(venueRef, updatedVenue);
+              
+              // Ajouter l'action à l'historique avec une fonction d'annulation
+              addToHistory({
+                type: 'UPDATE_VENUE',
+                data: { before: venueBefore, after: updatedVenue },
+                undo: async () => {
+                  const undoRef = ref(db, `venues/${editingVenue.id}`);
+                  await set(undoRef, venueBefore);
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Erreur lors de la géolocalisation de l\'adresse:', error);
+            // Mettre à jour sans changer les coordonnées
+            const updatedVenue = {
+              ...venue,
+              name: newVenueName,
+              description: newVenueDescription,
+              address: newVenueAddress,
+              sport: selectedSport
+            };
+            
+            await set(venueRef, updatedVenue);
+            
+            // Ajouter l'action à l'historique avec une fonction d'annulation
+            addToHistory({
+              type: 'UPDATE_VENUE',
+              data: { before: venueBefore, after: updatedVenue },
+              undo: async () => {
+                const undoRef = ref(db, `venues/${editingVenue.id}`);
+                await set(undoRef, venueBefore);
+              }
+            });
+          }
+        } else {
+          // Mettre à jour sans changer l'adresse ni les coordonnées
+          const updatedVenue = {
+            ...venue,
+            name: newVenueName,
+            description: newVenueDescription,
+            sport: selectedSport
+          };
+          
+          await set(venueRef, updatedVenue);
+          
+          // Ajouter l'action à l'historique avec une fonction d'annulation
+          addToHistory({
+            type: 'UPDATE_VENUE',
+            data: { before: venueBefore, after: updatedVenue },
+            undo: async () => {
+              const undoRef = ref(db, `venues/${editingVenue.id}`);
+              await set(undoRef, venueBefore);
+            }
+          });
+        }
+        
+        // Réinitialiser le formulaire et l'état d'édition
+        setNewVenueName('');
+        setNewVenueDescription('');
+        setNewVenueAddress('');
+        setSelectedSport('Football');
+        setEditingVenue({ id: null, venue: null });
+        setIsAddingPlace(false);
+      }
     }
   };
 
@@ -576,78 +822,6 @@ function App() {
     setNewVenueAddress(venue.address || '');
     setSelectedSport(venue.sport);
     setSelectedEmoji(sportEmojis[venue.sport as keyof typeof sportEmojis] || '⚽');
-  };
-
-  // Fonction pour mettre à jour un lieu existant
-  const handleUpdateVenue = async () => {
-    // Vérifier les droits admin seulement au moment de la mise à jour
-    if (!checkAdminRights()) return;
-    
-    if (editingVenue.id && newVenueName && newVenueDescription) {
-      // Trouver le lieu dans la liste
-      const venue = venues.find(v => v.id === editingVenue.id);
-      
-      if (venue) {
-        const venueRef = ref(db, `venues/${editingVenue.id}`);
-        
-        // Si l'adresse a changé, essayer de la géocoder
-        if (newVenueAddress !== venue.address) {
-          try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(newVenueAddress)}`);
-            const data = await response.json();
-            
-            if (data && data.length > 0) {
-              // Mettre à jour avec les nouvelles coordonnées
-              await set(venueRef, {
-                ...venue,
-                name: newVenueName,
-                description: newVenueDescription,
-                address: newVenueAddress,
-                sport: selectedSport,
-                latitude: parseFloat(data[0].lat),
-                longitude: parseFloat(data[0].lon),
-                position: [parseFloat(data[0].lat), parseFloat(data[0].lon)]
-              });
-            } else {
-              // Garder les anciennes coordonnées mais mettre à jour les autres informations
-              await set(venueRef, {
-                ...venue,
-                name: newVenueName,
-                description: newVenueDescription,
-                address: newVenueAddress,
-                sport: selectedSport
-              });
-            }
-          } catch (error) {
-            console.error('Erreur lors de la géolocalisation de l\'adresse:', error);
-            // Mettre à jour sans changer les coordonnées
-            await set(venueRef, {
-              ...venue,
-              name: newVenueName,
-              description: newVenueDescription,
-              address: newVenueAddress,
-              sport: selectedSport
-            });
-          }
-        } else {
-          // Mettre à jour sans changer l'adresse ni les coordonnées
-          await set(venueRef, {
-            ...venue,
-            name: newVenueName,
-            description: newVenueDescription,
-            sport: selectedSport
-          });
-        }
-        
-        // Réinitialiser le formulaire et l'état d'édition
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
-        setSelectedSport('Football');
-        setEditingVenue({ id: null, venue: null });
-        setIsAddingPlace(false);
-      }
-    }
   };
 
   // Fonction pour annuler l'édition
