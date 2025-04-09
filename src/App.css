@@ -932,7 +932,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-top: 0.5rem;
 }
 
 .copy-button {
@@ -961,7 +961,7 @@ html, body, #root {
   .copy-button {
     background-color: #9575CD;
   }
-  
+
   .copy-button:hover {
     background-color: #7E57C2;
   }
@@ -969,6 +969,58 @@ html, body, #root {
   .copy-button:active {
     background-color: #673AB7;
   }
+}
+
+.popup-buttons .edit-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.popup-buttons .edit-button:hover {
+  background-color: #1565C0;
+  transform: translateY(-1px);
+}
+
+.popup-buttons .delete-button {
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.popup-buttons .delete-button:hover {
+  background-color: #C62828;
+  transform: translateY(-1px);
+}
+
+.emoji-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.selected-emoji {
+  font-size: 2rem;
+  margin-top: 0.25rem;
+  background-color: var(--bg-secondary);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px var(--shadow-color);
 }
 
 /* Styles pour la liste des événements */

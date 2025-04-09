@@ -305,42 +305,44 @@ function App() {
   const [mapStyle, setMapStyle] = useState('osm');
   const [activeTab, setActiveTab] = useState<'map' | 'events'>('map');
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
+  const [selectedEmoji, setSelectedEmoji] = useState('⚽');
 
   const mapStyles = {
     osm: {
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     },
     cyclosm: {
-      url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
-      attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - OpenBikeMap">CyclOSM</a> | Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     },
     humanitarian: {
-      url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
+      url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     },
     osmfr: {
-      url: "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
-      attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }
   };
 
   const sportEmojis: { [key: string]: string } = {
-    'Football': '⚽',
-    'Basket-ball': '🏀',
-    'Handball': '🤾',
-    'Rugby': '🏉',
-    'Volley-ball': '🏐',
-    'Badminton': '🏸',
-    'Cross': '🏃',
-    'Escalade': '🧗',
-    'Relais athlétisme': '🏃‍♂️',
-    'Relais natation': '🏊‍♂️',
-    'Tennis': '🎾',
-    'Tennis de table': '🏓',
-    'Pompom': '🎀',
-    'Hotel': '🏨',
-    'Party': '🎉'
+    Football: '⚽',
+    Basketball: '🏀',
+    Handball: '🤾',
+    Rugby: '🏉',
+    Volleyball: '🏐',
+    Tennis: '🎾',
+    Badminton: '🏸',
+    Hockey: '🏑',
+    'Base-ball': '⚾',
+    Golf: '⛳',
+    'Ping-pong': '🏓',
+    Other: '🎯',
+    Pompom: '🎀',
+    Party: '🎉',
+    Hotel: '🏨'
   };
 
   // Fonction pour géocoder une adresse avec Nominatim
@@ -486,6 +488,98 @@ function App() {
         matches: updatedMatches
       });
     }
+  };
+
+  // Fonction pour commencer l'édition d'un lieu
+  const startEditingVenue = (venue: Venue) => {
+    setEditingVenue({ id: venue.id || '', venue });
+    setIsEditing(true);
+    setIsAddingPlace(true);
+    // Pré-remplir les champs du formulaire avec les données du lieu
+    setNewVenueName(venue.name);
+    setNewVenueDescription(venue.description);
+    setNewVenueAddress(venue.address || '');
+    setSelectedSport(venue.sport);
+    setSelectedEmoji(sportEmojis[venue.sport as keyof typeof sportEmojis] || '⚽');
+  };
+
+  // Fonction pour mettre à jour un lieu existant
+  const handleUpdateVenue = async () => {
+    if (editingVenue.id && newVenueName && newVenueDescription) {
+      // Trouver le lieu dans la liste
+      const venue = venues.find(v => v.id === editingVenue.id);
+      
+      if (venue) {
+        const venueRef = ref(db, `venues/${editingVenue.id}`);
+        
+        // Si l'adresse a changé, essayer de la géocoder
+        if (newVenueAddress !== venue.address) {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(newVenueAddress)}`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+              // Mettre à jour avec les nouvelles coordonnées
+              await set(venueRef, {
+                ...venue,
+                name: newVenueName,
+                description: newVenueDescription,
+                address: newVenueAddress,
+                sport: selectedSport,
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                position: [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+              });
+            } else {
+              // Garder les anciennes coordonnées mais mettre à jour les autres informations
+              await set(venueRef, {
+                ...venue,
+                name: newVenueName,
+                description: newVenueDescription,
+                address: newVenueAddress,
+                sport: selectedSport
+              });
+            }
+          } catch (error) {
+            console.error('Erreur lors de la géolocalisation de l\'adresse:', error);
+            // Mettre à jour sans changer les coordonnées
+            await set(venueRef, {
+              ...venue,
+              name: newVenueName,
+              description: newVenueDescription,
+              address: newVenueAddress,
+              sport: selectedSport
+            });
+          }
+        } else {
+          // Mettre à jour sans changer l'adresse ni les coordonnées
+          await set(venueRef, {
+            ...venue,
+            name: newVenueName,
+            description: newVenueDescription,
+            sport: selectedSport
+          });
+        }
+        
+        // Réinitialiser le formulaire et l'état d'édition
+        setNewVenueName('');
+        setNewVenueDescription('');
+        setNewVenueAddress('');
+        setSelectedSport('Football');
+        setEditingVenue({ id: null, venue: null });
+        setIsAddingPlace(false);
+      }
+    }
+  };
+
+  // Fonction pour annuler l'édition
+  const cancelEditingVenue = () => {
+    setEditingVenue({ id: null, venue: null });
+    setNewVenueName('');
+    setNewVenueDescription('');
+    setNewVenueAddress('');
+    setSelectedSport('Football');
+    setIsAddingPlace(false);
   };
 
   // Fonction pour vérifier si un match est passé
@@ -679,13 +773,16 @@ function App() {
     setActiveTab('map');
   };
 
+  // Générer les marqueurs pour la carte
   useEffect(() => {
-    if (mapRef.current) {
-      // Supprimer les marqueurs existants
-      markersRef.current.forEach(marker => marker.remove());
+    if (!locationError && mapRef.current) {
+      // Nettoyer les marqueurs existants
+      markersRef.current.forEach(marker => {
+        marker.remove();
+      });
       markersRef.current = [];
 
-      // Ajouter les marqueurs pour chaque lieu
+      // Ajouter les marqueurs pour les lieux
       venues.forEach(venue => {
         const markerColor = getMarkerColor(venue.date);
         const marker = L.marker([venue.latitude, venue.longitude], {
@@ -700,7 +797,7 @@ function App() {
           })
         });
 
-        // Créer le contenu du popup avec les fonctionnalités complètes
+        // Créer le contenu du popup
         const popupContent = document.createElement('div');
         popupContent.className = 'venue-popup';
         
@@ -708,11 +805,9 @@ function App() {
         popupContent.innerHTML = `
           <h3>${venue.name}</h3>
           <p>${venue.description}</p>
-          <p><strong>Sport:</strong> ${venue.sport}</p>
-          <p><strong>Date:</strong> ${new Date(venue.date).toLocaleDateString()}</p>
-          <p class="venue-address">${venue.address}</p>
+          <p class="venue-address">${venue.address || `${venue.latitude}, ${venue.longitude}`}</p>
         `;
-        
+
         // Boutons d'actions
         const buttonsContainer = document.createElement('div');
         buttonsContainer.className = 'popup-buttons';
@@ -736,74 +831,32 @@ function App() {
         buttonsContainer.appendChild(copyButton);
         
         popupContent.appendChild(buttonsContainer);
-        
-        // Liste des matchs
-        if (venue.matches && venue.matches.length > 0) {
-          const matchesListDiv = document.createElement('div');
-          matchesListDiv.className = 'matches-list';
-          matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
-          
-          venue.matches.forEach(match => {
-            const matchItemDiv = document.createElement('div');
-            matchItemDiv.className = 'match-item';
-            
-            // Contenu du match
-            matchItemDiv.innerHTML = `
-              <p class="match-date">${new Date(match.date).toLocaleString()}</p>
-              <p class="match-teams">${match.teams}</p>
-              <p class="match-description">${match.description}</p>
-            `;
-            
-            // Boutons d'édition en mode édition
-            if (isEditing) {
-              const matchActionsDiv = document.createElement('div');
-              matchActionsDiv.className = 'match-actions';
-              
-              const editButton = document.createElement('button');
-              editButton.className = 'edit-match-button';
-              editButton.textContent = 'Modifier';
-              editButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                startEditingMatch(venue.id || '', match);
-              });
-              
-              const deleteButton = document.createElement('button');
-              deleteButton.className = 'delete-match-button';
-              deleteButton.textContent = 'Supprimer';
-              deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteMatch(venue.id || '', match.id);
-              });
-              
-              matchActionsDiv.appendChild(editButton);
-              matchActionsDiv.appendChild(deleteButton);
-              matchItemDiv.appendChild(matchActionsDiv);
-            }
-            
-            matchesListDiv.appendChild(matchItemDiv);
-          });
-          
-          popupContent.appendChild(matchesListDiv);
-        }
-        
-        // Boutons d'édition pour le lieu
+
+        // Ajouter les boutons d'édition si on est en mode édition
         if (isEditing) {
-          const addMatchButton = document.createElement('button');
-          addMatchButton.className = 'add-match-button';
-          addMatchButton.textContent = 'Ajouter un match';
-          addMatchButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startEditingMatch(venue.id || '', null);
-          });
-          popupContent.appendChild(addMatchButton);
+          // Boutons d'édition
+          const editButtonsContainer = document.createElement('div');
+          editButtonsContainer.className = 'popup-buttons';
           
+          // Bouton Modifier
+          const editButton = document.createElement('button');
+          editButton.className = 'edit-button';
+          editButton.textContent = 'Modifier ce lieu';
+          editButton.addEventListener('click', () => {
+            startEditingVenue(venue);
+          });
+          editButtonsContainer.appendChild(editButton);
+          
+          // Bouton Supprimer
           const deleteButton = document.createElement('button');
           deleteButton.className = 'delete-button';
           deleteButton.textContent = 'Supprimer ce lieu';
           deleteButton.addEventListener('click', () => {
             deleteVenue(venue.id || '');
           });
-          popupContent.appendChild(deleteButton);
+          editButtonsContainer.appendChild(deleteButton);
+          
+          popupContent.appendChild(editButtonsContainer);
         }
 
         marker.bindPopup(popupContent);
@@ -957,6 +1010,7 @@ function App() {
               setIsEditing(!isEditing);
               if (isEditing) {
                 setIsAddingPlace(false);
+                setEditingVenue({ id: null, venue: null });
               }
             }}
           >
@@ -965,78 +1019,115 @@ function App() {
           {isEditing && (
             <button 
               className="add-place-button"
-              onClick={() => setIsAddingPlace(true)}
+              onClick={() => {
+                setIsAddingPlace(true);
+                setEditingVenue({ id: null, venue: null });
+                setNewVenueName('');
+                setNewVenueDescription('');
+                setNewVenueAddress('');
+                setSelectedSport('Football');
+              }}
             >
               Ajouter un lieu
             </button>
           )}
-          {isAddingPlace && (
+          {(isAddingPlace || editingVenue.id) && (
             <div className="edit-form">
               <div className="edit-form-header">
-                <h3>Ajouter un nouveau lieu</h3>
+                <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
               </div>
               <div className="edit-form-content">
                 <div className="form-group">
                   <label htmlFor="venue-name">Nom du lieu</label>
-              <input
+                  <input
                     id="venue-name"
-                type="text"
-                value={newVenueName}
-                onChange={(e) => setNewVenueName(e.target.value)}
+                    type="text"
+                    value={newVenueName}
+                    onChange={(e) => setNewVenueName(e.target.value)}
                     placeholder="Ex: Stade de France"
-                    className="form-input"
-              />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="venue-description">Description</label>
-              <input
-                    id="venue-description"
-                type="text"
-                value={newVenueDescription}
-                onChange={(e) => setNewVenueDescription(e.target.value)}
-                    placeholder="Ex: Stade principal de football"
-                    className="form-input"
-              />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="venue-address">Adresse</label>
-              <input
-                    id="venue-address"
-                type="text"
-                value={newVenueAddress}
-                onChange={(e) => setNewVenueAddress(e.target.value)}
-                    placeholder="Ex: Rue Jules Rimet, 93200 Saint-Denis"
                     className="form-input"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Sport</label>
-                  <div className="emoji-selector">
-                    {Object.entries(sportEmojis).map(([sport, emoji]) => (
-                      <button
-                        key={sport}
-                        className={`emoji-button ${selectedSport === sport ? 'selected' : ''}`}
-                        onClick={() => setSelectedSport(sport)}
-                        title={sport}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                  <label htmlFor="venue-description">Description</label>
+                  <input
+                    id="venue-description"
+                    type="text"
+                    value={newVenueDescription}
+                    onChange={(e) => setNewVenueDescription(e.target.value)}
+                    placeholder="Ex: Stade principal de football"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="venue-address">Adresse</label>
+                  <input
+                    id="venue-address"
+                    type="text"
+                    value={newVenueAddress}
+                    onChange={(e) => setNewVenueAddress(e.target.value)}
+                    placeholder="Entrez l'adresse complète"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="venue-sport">Sport</label>
+                  <select
+                    id="venue-sport"
+                    value={selectedSport}
+                    onChange={(e) => {
+                      setSelectedSport(e.target.value);
+                      setSelectedEmoji(sportEmojis[e.target.value] || '⚽');
+                    }}
+                    className="form-input"
+                  >
+                    <option value="Football">Football ⚽</option>
+                    <option value="Basketball">Basketball 🏀</option>
+                    <option value="Handball">Handball 🤾</option>
+                    <option value="Rugby">Rugby 🏉</option>
+                    <option value="Volleyball">Volleyball 🏐</option>
+                    <option value="Tennis">Tennis 🎾</option>
+                    <option value="Badminton">Badminton 🏸</option>
+                    <option value="Hockey">Hockey 🏑</option>
+                    <option value="Base-ball">Base-ball ⚾</option>
+                    <option value="Golf">Golf ⛳</option>
+                    <option value="Ping-pong">Ping-pong 🏓</option>
+                    <option value="Other">Autre 🎯</option>
+                  </select>
+                </div>
+                <div className="form-group emoji-preview">
+                  <label>Emoji sélectionné</label>
+                  <div className="selected-emoji">{selectedEmoji}</div>
                 </div>
                 <div className="form-actions">
                   <button 
                     className="add-button"
-                    onClick={handleAddVenue}
-                    disabled={!newVenueName || !newVenueDescription || !newVenueAddress}
+                    onClick={() => {
+                      if (editingVenue.id) {
+                        handleUpdateVenue();
+                      } else {
+                        handleAddVenue();
+                      }
+                    }}
+                    disabled={!newVenueName || !newVenueDescription}
                   >
-                    Ajouter le lieu
+                    {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
                   </button>
                   <button 
                     className="cancel-button"
-                    onClick={() => setIsAddingPlace(false)}
+                    onClick={() => {
+                      if (editingVenue.id) {
+                        cancelEditingVenue();
+                      } else {
+                        setIsAddingPlace(false);
+                        setNewVenueName('');
+                        setNewVenueDescription('');
+                        setNewVenueAddress('');
+                        setSelectedSport('Football');
+                      }
+                    }}
                   >
-                    Fermer
+                    Annuler
                   </button>
                 </div>
               </div>
@@ -1057,18 +1148,18 @@ function App() {
           <div className="loading">Chargement de la carte...</div>
         ) : (
           <div className="map-container">
-            <MapContainer
-              center={[48.8566, 2.3522]}
-              zoom={12}
+        <MapContainer
+          center={[48.8566, 2.3522]}
+          zoom={12}
               style={{ height: '100%', width: '100%' }}
               ref={(map) => { mapRef.current = map || null; }}
               zoomControl={false}
-            >
-              <TileLayer
+        >
+          <TileLayer
                 url={mapStyles[mapStyle as keyof typeof mapStyles].url}
                 attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
-              />
-              <LocationMarker />
+          />
+          <LocationMarker />
               <div className="leaflet-control-container">
                 <div className="leaflet-top leaflet-right">
                   <div className="leaflet-control-zoom leaflet-bar leaflet-control">
@@ -1091,7 +1182,7 @@ function App() {
               onClick={() => setActiveTab(activeTab === 'map' ? 'events' : 'map')}
             >
               {activeTab === 'map' ? '📆 Événements' : '✖️ Fermer'}
-            </button>
+                  </button>
             
             {activeTab === 'events' && (
               <div className="events-panel">
@@ -1123,32 +1214,32 @@ function App() {
                       <p className="event-description">{event.description}</p>
                       <p className="event-address">{event.address}</p>
                       <div className="event-actions">
-                        <button 
+                                <button 
                           className="maps-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
-                          }}
-                        >
+                                  }}
+                                >
                           Ouvrir dans Google Maps
-                        </button>
-                        <button 
+                                </button>
+                                <button 
                           className="copy-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                             copyToClipboard(event.address);
-                          }}
-                        >
+                                  }}
+                                >
                           Copier l'adresse
-                        </button>
+                                </button>
                       </div>
-                    </div>
-                  ))}
+                        </div>
+                      ))}
                 </div>
               </div>
             )}
-          </div>
-        )}
+                    </div>
+                  )}
       </main>
 
       {/* Formulaire d'ajout/modification de match */}
@@ -1160,9 +1251,9 @@ function App() {
           <div className="edit-form-content">
             <div className="form-group">
               <label htmlFor="match-date">Date et heure</label>
-              <input
+                          <input
                 id="match-date"
-                type="datetime-local"
+                            type="datetime-local"
                 value={editingMatch.match ? editingMatch.match.date : newMatch.date}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -1179,9 +1270,9 @@ function App() {
             </div>
             <div className="form-group">
               <label htmlFor="match-teams">Équipes</label>
-              <input
+                          <input
                 id="match-teams"
-                type="text"
+                            type="text"
                 value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -1199,9 +1290,9 @@ function App() {
             </div>
             <div className="form-group">
               <label htmlFor="match-description">Description</label>
-              <input
+                          <input
                 id="match-description"
-                type="text"
+                            type="text"
                 value={editingMatch.match ? editingMatch.match.description : newMatch.description}
                 onChange={(e) => {
                   if (editingMatch.match) {
@@ -1218,7 +1309,7 @@ function App() {
               />
             </div>
             <div className="form-actions">
-              <button 
+                            <button 
                 className="add-button"
                 onClick={() => {
                   if (editingMatch.match) {
@@ -1244,15 +1335,15 @@ function App() {
                 }
               >
                 {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-              </button>
-              <button 
-                className="cancel-button"
+                            </button>
+                            <button 
+                              className="cancel-button"
                 onClick={finishEditingMatch}
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
         </div>
       )}
     </div>
