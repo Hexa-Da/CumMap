@@ -7,6 +7,7 @@ import { ref, onValue, set, push } from 'firebase/database';
 import { db } from './firebase';
 import React from 'react';
 import L from 'leaflet';
+import ReactGA from 'react-ga4';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -63,6 +64,10 @@ interface HistoryAction {
   data: any;
   undo: () => Promise<void>;
 }
+
+// Initialiser Google Analytics
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXX';
+ReactGA.initialize(GA_MEASUREMENT_ID);
 
 // Composant pour la géolocalisation
 function LocationMarker() {
@@ -1011,6 +1016,13 @@ function App() {
 
   // Fonction pour ouvrir dans Google Maps
   const openInGoogleMaps = (venue: Venue) => {
+    // Tracker l'ouverture dans Google Maps
+    ReactGA.event({
+      category: 'navigation',
+      action: 'open_google_maps',
+      label: venue.name
+    });
+
     const query = encodeURIComponent(venue.address || `${venue.position[0]},${venue.position[1]}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
@@ -1056,6 +1068,12 @@ function App() {
   };
 
   const retryLocation = () => {
+    // Tracker la demande de géolocalisation
+    ReactGA.event({
+      category: 'location',
+      action: 'retry_location'
+    });
+    
     setLocationError(false);
     setLocationLoading(true);
     
@@ -1084,6 +1102,13 @@ function App() {
 
   // Fonction pour centrer la carte sur un événement
   const centerOnEvent = (eventId: string) => {
+    // Tracker l'événement de sélection d'un événement
+    ReactGA.event({
+      category: 'event',
+      action: 'select_event',
+      label: eventId
+    });
+
     setSelectedEvent(eventId);
     
     // Trouver l'événement correspondant
@@ -1404,6 +1429,27 @@ function App() {
     setEditingMatch({ venueId: null, match: null });
   };
 
+  // Enregistrer la visite de la page au chargement
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+    
+    // Fonction pour enregistrer les événements personnalisés
+    const trackEvent = (category: string, action: string) => {
+      ReactGA.event({
+        category,
+        action
+      });
+    };
+
+    // Tracker l'événement "app_loaded"
+    trackEvent('app', 'app_loaded');
+    
+    return () => {
+      // Tracker l'événement quand l'utilisateur quitte
+      trackEvent('app', 'app_closed');
+    };
+  }, []);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -1413,7 +1459,15 @@ function App() {
             <select 
               className="map-style-selector"
               value={mapStyle}
-              onChange={(e) => setMapStyle(e.target.value)}
+              onChange={(e) => {
+                // Tracker le changement de style de carte
+                ReactGA.event({
+                  category: 'map',
+                  action: 'change_map_style',
+                  label: e.target.value
+                });
+                setMapStyle(e.target.value);
+              }}
             >
               <option value="osm">OpenStreetMap</option>
               <option value="cyclosm">CyclOSM</option>
@@ -1425,6 +1479,13 @@ function App() {
           <button 
             className={`edit-button ${isEditing ? 'active' : ''}`}
             onClick={() => {
+              // Tracker le changement de mode édition
+              ReactGA.event({
+                category: 'app',
+                action: 'toggle_edit_mode',
+                label: isEditing ? 'off' : 'on'
+              });
+              
               setIsEditing(!isEditing);
               if (isEditing) {
                 setIsAddingPlace(false);
@@ -1601,7 +1662,15 @@ function App() {
             {/* Bouton flottant pour afficher les événements */}
             <button 
               className={`events-toggle-button ${activeTab === 'events' ? 'active' : ''}`}
-              onClick={() => setActiveTab(activeTab === 'map' ? 'events' : 'map')}
+              onClick={() => {
+                // Tracker le changement d'onglet
+                ReactGA.event({
+                  category: 'navigation',
+                  action: 'change_tab',
+                  label: activeTab === 'map' ? 'events' : 'map'
+                });
+                setActiveTab(activeTab === 'map' ? 'events' : 'map');
+              }}
             >
               {activeTab === 'map' ? '📆 Événements' : '✖️ Fermer'}
             </button>
