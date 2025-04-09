@@ -399,9 +399,9 @@ function App() {
         
         try {
           await set(newVenueRef, newVenue);
-          setNewVenueName('');
-          setNewVenueDescription('');
-          setNewVenueAddress('');
+        setNewVenueName('');
+        setNewVenueDescription('');
+        setNewVenueAddress('');
           setSelectedSport('Football');
         } catch (error) {
           console.error('Erreur lors de l\'ajout du lieu:', error);
@@ -553,6 +553,17 @@ function App() {
     );
   };
 
+  // Fonction pour copier au presse-papier
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert('Adresse copiée !');
+      })
+      .catch(err => {
+        console.error('Erreur lors de la copie : ', err);
+      });
+  };
+
   useEffect(() => {
     if (mapRef.current) {
       // Supprimer les marqueurs existants
@@ -565,7 +576,7 @@ function App() {
         const marker = L.marker([venue.latitude, venue.longitude], {
           icon: L.divIcon({
             className: 'custom-marker',
-            html: `<div style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); transform: rotate(${markerColor.rotation});">
+            html: `<div class="marker-content" style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); transform: rotate(${markerColor.rotation});">
                      <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getSportIcon(venue.sport)}</span>
                    </div>`,
             iconSize: [30, 30],
@@ -587,6 +598,10 @@ function App() {
           <p class="venue-address">${venue.address}</p>
         `;
         
+        // Boutons d'actions
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'popup-buttons';
+        
         // Bouton Google Maps
         const mapsButton = document.createElement('button');
         mapsButton.className = 'maps-button';
@@ -594,7 +609,18 @@ function App() {
         mapsButton.addEventListener('click', () => {
           openInGoogleMaps(venue);
         });
-        popupContent.appendChild(mapsButton);
+        buttonsContainer.appendChild(mapsButton);
+        
+        // Bouton Copier l'adresse
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.textContent = 'Copier l\'adresse';
+        copyButton.addEventListener('click', () => {
+          copyToClipboard(venue.address || `${venue.latitude},${venue.longitude}`);
+        });
+        buttonsContainer.appendChild(copyButton);
+        
+        popupContent.appendChild(buttonsContainer);
         
         // Liste des matchs
         if (venue.matches && venue.matches.length > 0) {
@@ -702,6 +728,10 @@ function App() {
           <p class="venue-address">${hotel.address}</p>
         `;
         
+        // Boutons d'actions
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'popup-buttons';
+        
         // Bouton Google Maps
         const mapsButton = document.createElement('button');
         mapsButton.className = 'maps-button';
@@ -709,7 +739,18 @@ function App() {
         mapsButton.addEventListener('click', () => {
           openInGoogleMaps(hotel);
         });
-        popupContent.appendChild(mapsButton);
+        buttonsContainer.appendChild(mapsButton);
+        
+        // Bouton Copier l'adresse
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.textContent = 'Copier l\'adresse';
+        copyButton.addEventListener('click', () => {
+          copyToClipboard(hotel.address || `${hotel.latitude},${hotel.longitude}`);
+        });
+        buttonsContainer.appendChild(copyButton);
+        
+        popupContent.appendChild(buttonsContainer);
 
         marker.bindPopup(popupContent);
         
@@ -744,6 +785,10 @@ function App() {
           <p class="venue-address">${party.address}</p>
         `;
         
+        // Boutons d'actions
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'popup-buttons';
+        
         // Bouton Google Maps
         const mapsButton = document.createElement('button');
         mapsButton.className = 'maps-button';
@@ -751,7 +796,18 @@ function App() {
         mapsButton.addEventListener('click', () => {
           openInGoogleMaps(party);
         });
-        popupContent.appendChild(mapsButton);
+        buttonsContainer.appendChild(mapsButton);
+        
+        // Bouton Copier l'adresse
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.textContent = 'Copier l\'adresse';
+        copyButton.addEventListener('click', () => {
+          copyToClipboard(party.address || `${party.latitude},${party.longitude}`);
+        });
+        buttonsContainer.appendChild(copyButton);
+        
+        popupContent.appendChild(buttonsContainer);
 
         marker.bindPopup(popupContent);
         
@@ -807,33 +863,33 @@ function App() {
               <div className="edit-form-content">
                 <div className="form-group">
                   <label htmlFor="venue-name">Nom du lieu</label>
-                  <input
+              <input
                     id="venue-name"
-                    type="text"
-                    value={newVenueName}
-                    onChange={(e) => setNewVenueName(e.target.value)}
+                type="text"
+                value={newVenueName}
+                onChange={(e) => setNewVenueName(e.target.value)}
                     placeholder="Ex: Stade de France"
                     className="form-input"
-                  />
+              />
                 </div>
                 <div className="form-group">
                   <label htmlFor="venue-description">Description</label>
-                  <input
+              <input
                     id="venue-description"
-                    type="text"
-                    value={newVenueDescription}
-                    onChange={(e) => setNewVenueDescription(e.target.value)}
+                type="text"
+                value={newVenueDescription}
+                onChange={(e) => setNewVenueDescription(e.target.value)}
                     placeholder="Ex: Stade principal de football"
                     className="form-input"
-                  />
+              />
                 </div>
                 <div className="form-group">
                   <label htmlFor="venue-address">Adresse</label>
-                  <input
+              <input
                     id="venue-address"
-                    type="text"
-                    value={newVenueAddress}
-                    onChange={(e) => setNewVenueAddress(e.target.value)}
+                type="text"
+                value={newVenueAddress}
+                onChange={(e) => setNewVenueAddress(e.target.value)}
                     placeholder="Ex: Rue Jules Rimet, 93200 Saint-Denis"
                     className="form-input"
                   />
@@ -899,6 +955,111 @@ function App() {
         </MapContainer>
         )}
       </main>
+
+      {/* Formulaire d'ajout/modification de match */}
+      {editingMatch.venueId && (
+        <div className="edit-form">
+          <div className="edit-form-header">
+            <h3>{editingMatch.match ? 'Modifier le match' : 'Ajouter un match'}</h3>
+                        </div>
+          <div className="edit-form-content">
+            <div className="form-group">
+              <label htmlFor="match-date">Date et heure</label>
+                          <input
+                id="match-date"
+                            type="datetime-local"
+                value={editingMatch.match ? editingMatch.match.date : newMatch.date}
+                onChange={(e) => {
+                  if (editingMatch.match) {
+                    // Modification d'un match existant
+                    const updatedMatch = { ...editingMatch.match, date: e.target.value };
+                    setEditingMatch({ ...editingMatch, match: updatedMatch });
+                  } else {
+                    // Création d'un nouveau match
+                    setNewMatch({ ...newMatch, date: e.target.value });
+                  }
+                }}
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="match-teams">Équipes</label>
+                          <input
+                id="match-teams"
+                            type="text"
+                value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
+                onChange={(e) => {
+                  if (editingMatch.match) {
+                    // Modification d'un match existant
+                    const updatedMatch = { ...editingMatch.match, teams: e.target.value };
+                    setEditingMatch({ ...editingMatch, match: updatedMatch });
+                  } else {
+                    // Création d'un nouveau match
+                    setNewMatch({ ...newMatch, teams: e.target.value });
+                  }
+                }}
+                placeholder="Ex: France vs Brésil"
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="match-description">Description</label>
+                          <input
+                id="match-description"
+                            type="text"
+                value={editingMatch.match ? editingMatch.match.description : newMatch.description}
+                onChange={(e) => {
+                  if (editingMatch.match) {
+                    // Modification d'un match existant
+                    const updatedMatch = { ...editingMatch.match, description: e.target.value };
+                    setEditingMatch({ ...editingMatch, match: updatedMatch });
+                  } else {
+                    // Création d'un nouveau match
+                    setNewMatch({ ...newMatch, description: e.target.value });
+                  }
+                }}
+                placeholder="Ex: Match de qualification"
+                className="form-input"
+              />
+            </div>
+            <div className="form-actions">
+                            <button 
+                className="add-button"
+                onClick={() => {
+                  if (editingMatch.match) {
+                    // Mettre à jour un match existant
+                    handleUpdateMatch(
+                      editingMatch.venueId!, 
+                      editingMatch.match.id, 
+                      {
+                        date: editingMatch.match.date,
+                        teams: editingMatch.match.teams,
+                        description: editingMatch.match.description
+                      }
+                    );
+                  } else {
+                    // Ajouter un nouveau match
+                    handleAddMatch(editingMatch.venueId!);
+                  }
+                }}
+                disabled={
+                  editingMatch.match 
+                    ? !editingMatch.match.date || !editingMatch.match.teams || !editingMatch.match.description
+                    : !newMatch.date || !newMatch.teams || !newMatch.description
+                }
+              >
+                {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
+                            </button>
+                            <button 
+                              className="cancel-button"
+                onClick={finishEditingMatch}
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+        </div>
+      )}
     </div>
   );
 }
