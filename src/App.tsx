@@ -1207,32 +1207,6 @@ function App() {
               <p class="match-description">${match.description}</p>
             `;
             
-            // Boutons d'édition en mode édition - toujours visibles
-            if (isEditing) {
-              const matchActionsDiv = document.createElement('div');
-              matchActionsDiv.className = 'match-actions';
-              
-              const editButton = document.createElement('button');
-              editButton.className = 'edit-match-button';
-              editButton.textContent = 'Modifier';
-              editButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                startEditingMatch(venue.id || '', match);
-              });
-              
-              const deleteButton = document.createElement('button');
-              deleteButton.className = 'delete-match-button';
-              deleteButton.textContent = 'Supprimer';
-              deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteMatch(venue.id || '', match.id);
-              });
-              
-              matchActionsDiv.appendChild(editButton);
-              matchActionsDiv.appendChild(deleteButton);
-              matchItemDiv.appendChild(matchActionsDiv);
-            }
-            
             matchesListDiv.appendChild(matchItemDiv);
           });
           
@@ -1337,33 +1311,6 @@ function App() {
         
         popupContent.appendChild(buttonsContainer);
 
-        // Ajouter les boutons d'édition si on est en mode édition
-        if (isEditing) {
-          // Boutons d'édition
-          const editButtonsContainer = document.createElement('div');
-          editButtonsContainer.className = 'popup-buttons';
-          
-          // Bouton Modifier
-          const editButton = document.createElement('button');
-          editButton.className = 'edit-button';
-          editButton.textContent = 'Modifier cet hôtel';
-          editButton.addEventListener('click', () => {
-            startEditingHotel(hotel);
-          });
-          editButtonsContainer.appendChild(editButton);
-          
-          // Bouton Supprimer
-          const deleteButton = document.createElement('button');
-          deleteButton.className = 'delete-button';
-          deleteButton.textContent = 'Supprimer cet hôtel';
-          deleteButton.addEventListener('click', () => {
-            deleteHotel(hotel.id || '');
-          });
-          editButtonsContainer.appendChild(deleteButton);
-          
-          popupContent.appendChild(editButtonsContainer);
-        }
-
         marker.bindPopup(popupContent);
         
         if (mapRef.current) {
@@ -1430,29 +1377,6 @@ function App() {
       });
     }
   }, [venues, hotels, parties, isEditing, isAdminMode]);
-
-  // Fonctions pour la gestion des hôtels
-  const startEditingHotel = (hotel: Venue) => {
-    setEditingVenue({ id: hotel.id || '', venue: hotel });
-    setIsEditing(true);
-    setIsAddingPlace(true);
-    // Pré-remplir les champs du formulaire avec les données de l'hôtel
-    setNewVenueName(hotel.name);
-    setNewVenueDescription(hotel.description);
-    setNewVenueAddress(hotel.address || '');
-    setSelectedSport('Hotel');
-  };
-
-  const deleteHotel = (hotelId: string) => {
-    if (!checkAdminRights()) return;
-    
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet hôtel ?")) {
-      // Mettre à jour la liste des hôtels en local
-      const updatedHotels = hotels.filter(h => h.id !== hotelId);
-      // Mettre à jour l'état
-      setHotels(updatedHotels);
-    }
-  };
 
   // Fonction pour commencer l'édition d'un match
   const startEditingMatch = (venueId: string, match: Match | null) => {
