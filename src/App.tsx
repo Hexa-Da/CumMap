@@ -451,7 +451,23 @@ function App() {
 
   // Fonction pour gérer la modification d'un match
   const startEditingMatch = (venueId: string, match: Match | null) => {
+    // Fermer le formulaire d'édition de lieu s'il est ouvert
+    if (editingVenue.id || isAddingPlace) {
+      setEditingVenue({ id: null, venue: null });
+      setIsAddingPlace(false);
+    }
+    
     setEditingMatch({ venueId, match });
+    
+    if (match) {
+      setNewMatch({
+        date: match.date,
+        teams: match.teams,
+        description: match.description
+      });
+    } else {
+      setNewMatch({ date: '', teams: '', description: '' });
+    }
   };
 
   // Fonction pour terminer l'édition
@@ -492,6 +508,11 @@ function App() {
 
   // Fonction pour commencer l'édition d'un lieu
   const startEditingVenue = (venue: Venue) => {
+    // Fermer le formulaire d'édition de match s'il est ouvert
+    if (editingMatch.venueId) {
+      finishEditingMatch();
+    }
+    
     setEditingVenue({ id: venue.id || '', venue });
     setIsEditing(true);
     setIsAddingPlace(true);
@@ -1080,6 +1101,11 @@ function App() {
             <button 
               className="add-place-button"
               onClick={() => {
+                // Fermer le formulaire d'édition de match s'il est ouvert
+                if (editingMatch.venueId) {
+                  finishEditingMatch();
+                }
+                
                 setIsAddingPlace(true);
                 setEditingVenue({ id: null, venue: null });
                 setNewVenueName('');
