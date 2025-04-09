@@ -3,6 +3,8 @@ import 'leaflet/dist/leaflet.css';
 import { Icon, LatLng } from 'leaflet';
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
+import { ref, onValue, set, push } from 'firebase/database';
+import { db } from './firebase';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -31,7 +33,7 @@ interface Match {
 }
 
 interface Venue {
-  id: number;
+  id?: string;  // ID Firebase est une string
   name: string;
   position: [number, number];
   description: string;
@@ -51,8 +53,14 @@ function LocationMarker() {
   });
 
   useEffect(() => {
-    map.locate();
-  }, [map]);
+    const venuesRef = ref(db, 'venues');
+    onValue(venuesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setVenues(Object.values(data));
+      }
+    });
+  }, []);
 
   return position === null ? null : (
     <Marker position={position} icon={UserIcon}>
@@ -70,52 +78,41 @@ function MapEvents({ onMapClick }: { onMapClick: (e: { latlng: { lat: number; ln
 }
 
 function App() {
-  const [venues, setVenues] = useState<Venue[]>([
-    {
-      id: 1,
-      name: 'AccorHotels Arena',
-      position: [48.8383, 2.3789],
-      description: 'Salle de concert et événements sportifs',
-      address: '8 Boulevard de Bercy, 75012 Paris',
-      matches: [
-        { id: 1, date: '2024-04-15 20:00', teams: 'PSG vs Real Madrid', description: 'Champions League' },
-        { id: 2, date: '2024-04-20 21:00', teams: 'France vs Espagne', description: 'Match amical' }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Le Zénith',
-      position: [48.8939, 2.3934],
-      description: 'Salle de spectacles',
-      address: '211 Avenue Jean Jaurès, 75019 Paris',
-      matches: [
-        { id: 3, date: '2024-04-18 19:00', teams: 'PSG vs Marseille', description: 'Ligue 1' }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Stade de France',
-      position: [48.9244, 2.3601],
-      description: 'Stade national',
-      address: '93216 Saint-Denis',
-      matches: [
-        { id: 4, date: '2024-04-25 21:00', teams: 'France vs Allemagne', description: 'Euro 2024' }
-      ]
-    }
-  ]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+
+  // Charger les lieux depuis Firebase au démarrage
+  useEffect(() => {
+    const venuesRef = ref(db, 'venues');
+    const unsubscribe = onValue(venuesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const venuesArray = Object.entries(data).map(([key, value]: [string, any]) => ({
+          ...value,
+          id: key,
+          matches: value.matches || []  // Assurer que matches est toujours un tableau
+        }));
+        setVenues(venuesArray);
+      } else {
+        setVenues([]); // Si pas de données, initialiser avec un tableau vide
+      }
+    });
+
+    // Cleanup function
+    return () => unsubscribe();
+  }, []);
 
   const [isEditing, setIsEditing] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
-  const [editingMatch, setEditingMatch] = useState<{venueId: number, match: Match | null}>({ venueId: 0, match: null });
+  const [editingMatch, setEditingMatch] = useState<{venueId: string | null, match: Match | null}>({ venueId: null, match: null });
   const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string}>({
     date: '',
     teams: '',
     description: ''
   });
-  const [openPopup, setOpenPopup] = useState<number | null>(null);
+  const [openPopup, setOpenPopup] = useState<string | null>(null);
 
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
@@ -140,18 +137,25 @@ function App() {
     if (newVenueName && newVenueDescription && newVenueAddress) {
       const coordinates = await geocodeAddress(newVenueAddress);
       if (coordinates) {
-        const newVenue: Venue = {
-          id: venues.length + 1,
+        const venuesRef = ref(db, 'venues');
+        const newVenueRef = push(venuesRef);
+        const newVenue: Omit<Venue, 'id'> = {
           name: newVenueName,
           position: coordinates,
           description: newVenueDescription,
           address: newVenueAddress,
           matches: []
         };
-        setVenues([...venues, newVenue]);
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
+        
+        try {
+          await set(newVenueRef, newVenue);
+          setNewVenueName('');
+          setNewVenueDescription('');
+          setNewVenueAddress('');
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout du lieu:', error);
+          alert('Une erreur est survenue lors de l\'ajout du lieu.');
+        }
       } else {
         alert('Adresse non trouvée. Veuillez vérifier l\'adresse saisie.');
       }
@@ -159,55 +163,62 @@ function App() {
   };
 
   // Fonction pour supprimer un lieu
-  const deleteVenue = (id: number) => {
-    setVenues(venues.filter(venue => venue.id !== id));
+  const deleteVenue = async (id: string) => {
+    const venueRef = ref(db, `venues/${id}`);
+    await set(venueRef, null);
     setSelectedVenue(null);
   };
 
   // Fonction pour ajouter un nouveau match
-  const handleAddMatch = (venueId: number) => {
+  const handleAddMatch = async (venueId: string) => {
     if (newMatch.date && newMatch.teams && newMatch.description) {
-      setVenues(venues.map(venue => {
-        if (venue.id === venueId) {
-          const newMatchWithId = {
-            id: Math.max(0, ...venue.matches.map(m => m.id)) + 1,
-            ...newMatch
-          };
-          return {
-            ...venue,
-            matches: [...venue.matches, newMatchWithId]
-          };
-        }
-        return venue;
-      }));
-      setNewMatch({ date: '', teams: '', description: '' });
-      setEditingMatch({ venueId: 0, match: null });
+      const venueRef = ref(db, `venues/${venueId}`);
+      const venue = venues.find(v => v.id === venueId);
+      
+      if (venue) {
+        const matches = [...(venue.matches || [])];
+        const newMatchWithId = {
+          id: matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1,
+          ...newMatch
+        };
+        matches.push(newMatchWithId);
+        
+        await set(venueRef, {
+          ...venue,
+          matches
+        });
+        
+        setNewMatch({ date: '', teams: '', description: '' });
+        setEditingMatch({ venueId: null, match: null });
+      }
     }
   };
 
   // Fonction pour gérer la modification d'un match
-  const startEditingMatch = (venueId: number, match: Match | null) => {
+  const startEditingMatch = (venueId: string, match: Match | null) => {
     setEditingMatch({ venueId, match });
   };
 
   // Fonction pour terminer l'édition
   const finishEditingMatch = () => {
-    setEditingMatch({ venueId: 0, match: null });
+    setEditingMatch({ venueId: null, match: null });
   };
 
-  // Fonction pour modifier un match existant
-  const handleUpdateMatch = (venueId: number, matchId: number, updatedData: Partial<Match>) => {
-    setVenues(venues.map(venue => {
-      if (venue.id === venueId) {
-        return {
-          ...venue,
-          matches: venue.matches.map(match => 
-            match.id === matchId ? { ...match, ...updatedData } : match
-          )
-        };
-      }
-      return venue;
-    }));
+  // Fonction pour mettre à jour un match
+  const handleUpdateMatch = async (venueId: string, matchId: number, updatedData: Partial<Match>) => {
+    const venueRef = ref(db, `venues/${venueId}`);
+    const venue = venues.find(v => v.id === venueId);
+    
+    if (venue) {
+      const updatedMatches = venue.matches.map(match =>
+        match.id === matchId ? { ...match, ...updatedData } : match
+      );
+      
+      await set(venueRef, {
+        ...venue,
+        matches: updatedMatches
+      });
+    }
   };
 
   // Fonction pour ouvrir dans Google Maps
@@ -217,7 +228,7 @@ function App() {
   };
 
   // Fonction pour gérer l'ouverture des popups
-  const handlePopupOpen = (venueId: number) => {
+  const handlePopupOpen = (venueId: string) => {
     setOpenPopup(venueId);
   };
 
@@ -280,7 +291,7 @@ function App() {
               position={venue.position}
               icon={DefaultIcon}
               eventHandlers={{
-                click: () => handlePopupOpen(venue.id),
+                click: () => handlePopupOpen(venue.id || ''),
               }}
             >
               <Popup onClose={handlePopupClose}>
@@ -301,17 +312,17 @@ function App() {
                               <input
                                 type="datetime-local"
                                 defaultValue={match.date.slice(0, 16)}
-                                onChange={(e) => handleUpdateMatch(venue.id, match.id, { date: e.target.value })}
+                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { date: e.target.value })}
                               />
                               <input
                                 type="text"
                                 defaultValue={match.teams}
-                                onChange={(e) => handleUpdateMatch(venue.id, match.id, { teams: e.target.value })}
+                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { teams: e.target.value })}
                               />
                               <input
                                 type="text"
                                 defaultValue={match.description}
-                                onChange={(e) => handleUpdateMatch(venue.id, match.id, { description: e.target.value })}
+                                onChange={(e) => handleUpdateMatch(venue.id || '', match.id, { description: e.target.value })}
                               />
                               <div className="edit-buttons">
                                 <button 
@@ -335,7 +346,7 @@ function App() {
                                   className="edit-match-button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    startEditingMatch(venue.id, match);
+                                    startEditingMatch(venue.id || '', match);
                                   }}
                                 >
                                   Modifier
@@ -353,7 +364,7 @@ function App() {
                         className="add-match-button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          startEditingMatch(venue.id, null);
+                          startEditingMatch(venue.id || '', null);
                         }}
                       >
                         Ajouter un match
@@ -383,7 +394,7 @@ function App() {
                               className="save-button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleAddMatch(venue.id);
+                                handleAddMatch(venue.id || '');
                               }}
                             >
                               Ajouter
@@ -402,7 +413,7 @@ function App() {
                       )}
                       <button 
                         className="delete-button"
-                        onClick={() => deleteVenue(venue.id)}
+                        onClick={() => deleteVenue(venue.id || '')}
                       >
                         Supprimer ce lieu
                       </button>
