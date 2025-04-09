@@ -407,6 +407,7 @@ function App() {
 
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
+    // Vérifier les droits admin seulement au moment de l'ajout
     if (!checkAdminRights()) return;
     
     if (newVenueName && newVenueDescription && newVenueAddress) {
@@ -446,6 +447,7 @@ function App() {
 
   // Fonction pour supprimer un lieu
   const deleteVenue = async (id: string) => {
+    // Vérifier les droits admin seulement au moment de la suppression
     if (!checkAdminRights()) return;
     
     const venueRef = ref(db, `venues/${id}`);
@@ -455,6 +457,7 @@ function App() {
 
   // Fonction pour ajouter un nouveau match
   const handleAddMatch = async (venueId: string) => {
+    // Vérifier les droits admin seulement au moment de l'ajout
     if (!checkAdminRights()) return;
     
     if (newMatch.date && newMatch.teams && newMatch.description) {
@@ -501,33 +504,8 @@ function App() {
   };
 
   // Fonction pour gérer la modification d'un match
-  const startEditingMatch = (venueId: string, match: Match | null) => {
-    // Fermer le formulaire d'édition de lieu s'il est ouvert
-    if (editingVenue.id || isAddingPlace) {
-      setEditingVenue({ id: null, venue: null });
-      setIsAddingPlace(false);
-    }
-    
-    setEditingMatch({ venueId, match });
-    
-    if (match) {
-      setNewMatch({
-        date: match.date,
-        teams: match.teams,
-        description: match.description
-      });
-    } else {
-      setNewMatch({ date: '', teams: '', description: '' });
-    }
-  };
-
-  // Fonction pour terminer l'édition
-  const finishEditingMatch = () => {
-    setEditingMatch({ venueId: null, match: null });
-  };
-
-  // Fonction pour mettre à jour un match
   const handleUpdateMatch = async (venueId: string, matchId: number, updatedData: Partial<Match>) => {
+    // Vérifier les droits admin seulement au moment de la mise à jour
     if (!checkAdminRights()) return;
     
     const venueRef = ref(db, `venues/${venueId}`);
@@ -567,6 +545,7 @@ function App() {
 
   // Fonction pour supprimer un match
   const deleteMatch = async (venueId: string, matchId: number) => {
+    // Vérifier les droits admin seulement au moment de la suppression
     if (!checkAdminRights()) return;
     
     const venueRef = ref(db, `venues/${venueId}`);
@@ -601,6 +580,7 @@ function App() {
 
   // Fonction pour mettre à jour un lieu existant
   const handleUpdateVenue = async () => {
+    // Vérifier les droits admin seulement au moment de la mise à jour
     if (!checkAdminRights()) return;
     
     if (editingVenue.id && newVenueName && newVenueDescription) {
@@ -948,7 +928,7 @@ function App() {
               <p class="match-description">${match.description}</p>
             `;
             
-            // Boutons d'édition en mode édition - toujours visibles, mais vérifient les droits
+            // Boutons d'édition en mode édition - toujours visibles
             if (isEditing) {
               const matchActionsDiv = document.createElement('div');
               matchActionsDiv.className = 'match-actions';
@@ -958,10 +938,6 @@ function App() {
               editButton.textContent = 'Modifier';
               editButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!isAdminMode) {
-                  alert('Administratorrechte erforderlich');
-                  return;
-                }
                 startEditingMatch(venue.id || '', match);
               });
               
@@ -970,10 +946,6 @@ function App() {
               deleteButton.textContent = 'Supprimer';
               deleteButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!isAdminMode) {
-                  alert('Administratorrechte erforderlich');
-                  return;
-                }
                 deleteMatch(venue.id || '', match.id);
               });
               
@@ -988,7 +960,7 @@ function App() {
           popupContent.appendChild(matchesListDiv);
         }
 
-        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles, mais vérifient les droits
+        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles
         if (isEditing) {
           // Boutons d'édition
           const editButtonsContainer = document.createElement('div');
@@ -1000,10 +972,6 @@ function App() {
           addMatchButton.textContent = 'Ajouter un match';
           addMatchButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (!isAdminMode) {
-              alert('Administratorrechte erforderlich');
-              return;
-            }
             startEditingMatch(venue.id || '', null);
           });
           editButtonsContainer.appendChild(addMatchButton);
@@ -1013,10 +981,6 @@ function App() {
           editButton.className = 'edit-button';
           editButton.textContent = 'Modifier ce lieu';
           editButton.addEventListener('click', () => {
-            if (!isAdminMode) {
-              alert('Administratorrechte erforderlich');
-              return;
-            }
             startEditingVenue(venue);
           });
           editButtonsContainer.appendChild(editButton);
@@ -1026,10 +990,6 @@ function App() {
           deleteButton.className = 'delete-button';
           deleteButton.textContent = 'Supprimer ce lieu';
           deleteButton.addEventListener('click', () => {
-            if (!isAdminMode) {
-              alert('Administratorrechte erforderlich');
-              return;
-            }
             deleteVenue(venue.id || '');
           });
           editButtonsContainer.appendChild(deleteButton);
@@ -1096,7 +1056,7 @@ function App() {
         
         popupContent.appendChild(buttonsContainer);
 
-        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles, mais vérifient les droits
+        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles
         if (isEditing) {
           // Boutons d'édition
           const editButtonsContainer = document.createElement('div');
@@ -1107,10 +1067,6 @@ function App() {
           editButton.className = 'edit-button';
           editButton.textContent = 'Modifier cet hôtel';
           editButton.addEventListener('click', () => {
-            if (!isAdminMode) {
-              alert('Administratorrechte erforderlich');
-              return;
-            }
             startEditingHotel(hotel);
           });
           editButtonsContainer.appendChild(editButton);
@@ -1120,10 +1076,6 @@ function App() {
           deleteButton.className = 'delete-button';
           deleteButton.textContent = 'Supprimer cet hôtel';
           deleteButton.addEventListener('click', () => {
-            if (!isAdminMode) {
-              alert('Administratorrechte erforderlich');
-              return;
-            }
             deleteHotel(hotel.id || '');
           });
           editButtonsContainer.appendChild(deleteButton);
@@ -1229,6 +1181,32 @@ function App() {
     }
   };
 
+  // Fonction pour commencer l'édition d'un match
+  const startEditingMatch = (venueId: string, match: Match | null) => {
+    // Fermer le formulaire d'édition de lieu s'il est ouvert
+    if (editingVenue.id || isAddingPlace) {
+      setEditingVenue({ id: null, venue: null });
+      setIsAddingPlace(false);
+    }
+    
+    setEditingMatch({ venueId, match });
+    
+    if (match) {
+      setNewMatch({
+        date: match.date,
+        teams: match.teams,
+        description: match.description
+      });
+    } else {
+      setNewMatch({ date: '', teams: '', description: '' });
+    }
+  };
+
+  // Fonction pour terminer l'édition d'un match
+  const finishEditingMatch = () => {
+    setEditingMatch({ venueId: null, match: null });
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -1246,14 +1224,10 @@ function App() {
               <option value="osmfr">OSM France</option>
             </select>
           )}
-          {/* Afficher toujours le bouton d'édition, mais il ne fait rien en mode visiteur */}
+          {/* Afficher toujours le bouton d'édition */}
           <button 
             className={`edit-button ${isEditing ? 'active' : ''}`}
             onClick={() => {
-              if (!isAdminMode && !isEditing) {
-                alert('Administratorrechte erforderlich');
-                return;
-              }
               setIsEditing(!isEditing);
               if (isEditing) {
                 setIsAddingPlace(false);
@@ -1263,15 +1237,11 @@ function App() {
           >
             {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
           </button>
-          {/* Afficher toujours le bouton d'ajout de lieu, mais il vérifie les droits admin */}
+          {/* Afficher toujours le bouton d'ajout de lieu */}
           {isEditing && (
             <button 
               className="add-place-button"
               onClick={() => {
-                if (!isAdminMode) {
-                  alert('Administratorrechte erforderlich');
-                  return;
-                }
                 // Fermer le formulaire d'édition de match s'il est ouvert
                 if (editingMatch.venueId) {
                   finishEditingMatch();
