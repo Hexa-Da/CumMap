@@ -14,7 +14,8 @@ let DefaultIcon = new Icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
-  iconAnchor: [12, 41]
+  iconAnchor: [12, 41],
+  className: 'default-marker-icon'
 });
 
 let UserIcon = new Icon({
