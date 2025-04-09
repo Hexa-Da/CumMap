@@ -227,6 +227,7 @@ function App() {
   }, []);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingPlace, setIsAddingPlace] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
@@ -455,43 +456,92 @@ function App() {
       <header className="app-header">
         <h1>CumMap</h1>
         <div className="controls">
-          <select 
-            className="map-style-selector"
-            value={mapStyle}
-            onChange={(e) => setMapStyle(e.target.value)}
-          >
-            <option value="osm">OpenStreetMap</option>
-            <option value="cyclosm">CyclOSM</option>
-            <option value="humanitarian">Humanitarian</option>
-            <option value="osmfr">OSM France</option>
-          </select>
+          {!isEditing && (
+            <select 
+              className="map-style-selector"
+              value={mapStyle}
+              onChange={(e) => setMapStyle(e.target.value)}
+            >
+              <option value="osm">OpenStreetMap</option>
+              <option value="cyclosm">CyclOSM</option>
+              <option value="humanitarian">Humanitarian</option>
+              <option value="osmfr">OSM France</option>
+            </select>
+          )}
           <button 
             className={`edit-button ${isEditing ? 'active' : ''}`}
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              setIsEditing(!isEditing);
+              if (isEditing) {
+                setIsAddingPlace(false);
+              }
+            }}
           >
             {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
           </button>
           {isEditing && (
+            <button 
+              className="add-place-button"
+              onClick={() => setIsAddingPlace(true)}
+            >
+              Ajouter un lieu
+            </button>
+          )}
+          {isAddingPlace && (
             <div className="edit-form">
-              <input
-                type="text"
-                placeholder="Nom du lieu"
-                value={newVenueName}
-                onChange={(e) => setNewVenueName(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Description"
-                value={newVenueDescription}
-                onChange={(e) => setNewVenueDescription(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Adresse"
-                value={newVenueAddress}
-                onChange={(e) => setNewVenueAddress(e.target.value)}
-              />
-              <button onClick={handleAddVenue}>Ajouter le lieu</button>
+              <div className="edit-form-header">
+                <h3>Ajouter un nouveau lieu</h3>
+              </div>
+              <div className="edit-form-content">
+                <div className="form-group">
+                  <label htmlFor="venue-name">Nom du lieu</label>
+                  <input
+                    id="venue-name"
+                    type="text"
+                    value={newVenueName}
+                    onChange={(e) => setNewVenueName(e.target.value)}
+                    placeholder="Ex: Stade de France"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="venue-description">Description</label>
+                  <input
+                    id="venue-description"
+                    type="text"
+                    value={newVenueDescription}
+                    onChange={(e) => setNewVenueDescription(e.target.value)}
+                    placeholder="Ex: Stade principal de football"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="venue-address">Adresse</label>
+                  <input
+                    id="venue-address"
+                    type="text"
+                    value={newVenueAddress}
+                    onChange={(e) => setNewVenueAddress(e.target.value)}
+                    placeholder="Ex: Rue Jules Rimet, 93200 Saint-Denis"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-actions">
+                  <button 
+                    className="add-button"
+                    onClick={handleAddVenue}
+                    disabled={!newVenueName || !newVenueDescription || !newVenueAddress}
+                  >
+                    Ajouter le lieu
+                  </button>
+                  <button 
+                    className="cancel-button"
+                    onClick={() => setIsAddingPlace(false)}
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
