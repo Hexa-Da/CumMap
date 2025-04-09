@@ -210,26 +210,6 @@ function App() {
     }
   }, []);
   
-  // Fonction pour générer les liens
-  const generateLinks = () => {
-    const currentUrl = window.location.href.split('?')[0]; // URL de base sans paramètres
-    const adminLink = `${currentUrl}?mode=admin`;
-    const visitorLink = currentUrl.replace(/\?mode=admin/, '');
-    
-    return { adminLink, visitorLink };
-  };
-  
-  // Fonction pour copier un lien au presse-papier
-  const copyLink = (link: string, type: string) => {
-    navigator.clipboard.writeText(link)
-      .then(() => {
-        alert(`Lien ${type} copié !`);
-      })
-      .catch(err => {
-        console.error('Erreur lors de la copie : ', err);
-      });
-  };
-
   const [hotels] = useState<Venue[]>([
     {
       name: "F1 Les Ulis",
@@ -1251,121 +1231,106 @@ function App() {
               Ajouter un lieu
             </button>
           )}
-          {/* Boutons pour générer et copier les liens */}
-          {isAdminMode && (
-            <div className="link-buttons">
-              <button 
-                className="link-button admin-link"
-                onClick={() => copyLink(generateLinks().adminLink, 'administrateur')}
-              >
-                Copier lien admin
-              </button>
-              <button 
-                className="link-button visitor-link"
-                onClick={() => copyLink(generateLinks().visitorLink, 'visiteur')}
-              >
-                Copier lien visiteur
-              </button>
-            </div>
-          )}
           {(isAddingPlace || editingVenue.id) && (
-            <div className="edit-form">
-              <div className="edit-form-header">
-                <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
-              </div>
-              <div className="edit-form-content">
-                <div className="form-group">
-                  <label htmlFor="venue-name">Nom du lieu</label>
-              <input
-                    id="venue-name"
-                type="text"
-                value={newVenueName}
-                onChange={(e) => setNewVenueName(e.target.value)}
-                    placeholder="Ex: Stade de France"
-                    className="form-input"
-              />
+            <div className="form-overlay">
+              <div className="edit-form">
+                <div className="edit-form-header">
+                  <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="venue-description">Description</label>
-              <input
-                    id="venue-description"
-                type="text"
-                value={newVenueDescription}
-                onChange={(e) => setNewVenueDescription(e.target.value)}
-                    placeholder="Ex: Stade principal de football"
-                    className="form-input"
-              />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="venue-address">Adresse</label>
-              <input
-                    id="venue-address"
-                type="text"
-                value={newVenueAddress}
-                onChange={(e) => setNewVenueAddress(e.target.value)}
-                    placeholder="Entrez l'adresse complète"
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="venue-sport">Sport</label>
-                  <select
-                    id="venue-sport"
-                    value={selectedSport}
-                    onChange={(e) => {
-                      setSelectedSport(e.target.value);
-                      setSelectedEmoji(sportEmojis[e.target.value] || '⚽');
-                    }}
-                    className="form-input"
-                  >
-                    <option value="Football">Football ⚽</option>
-                    <option value="Basketball">Basketball 🏀</option>
-                    <option value="Handball">Handball 🤾</option>
-                    <option value="Rugby">Rugby 🏉</option>
-                    <option value="Volleyball">Volleyball 🏐</option>
-                    <option value="Tennis">Tennis 🎾</option>
-                    <option value="Badminton">Badminton 🏸</option>
-                    <option value="Hockey">Hockey 🏑</option>
-                    <option value="Base-ball">Base-ball ⚾</option>
-                    <option value="Golf">Golf ⛳</option>
-                    <option value="Ping-pong">Ping-pong 🏓</option>
-                    <option value="Other">Autre 🎯</option>
-                  </select>
-                </div>
-                <div className="form-group emoji-preview">
-                  <label>Emoji sélectionné</label>
-                  <div className="selected-emoji">{selectedEmoji}</div>
-                </div>
-                <div className="form-actions">
-                  <button 
-                    className="add-button"
-                    onClick={() => {
-                      if (editingVenue.id) {
-                        handleUpdateVenue();
-                      } else {
-                        handleAddVenue();
-                      }
-                    }}
-                    disabled={!newVenueName || !newVenueDescription}
-                  >
-                    {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
-                  </button>
-                  <button 
-                    className="cancel-button"
-                    onClick={() => {
-                      if (editingVenue.id) {
-                        cancelEditingVenue();
-                      } else {
-                        setIsAddingPlace(false);
-                        setNewVenueName('');
-                        setNewVenueDescription('');
-                        setNewVenueAddress('');
-                        setSelectedSport('Football');
-                      }
-                    }}
-                  >
-                    Annuler
-                  </button>
+                <div className="edit-form-content">
+                  <div className="form-group">
+                    <label htmlFor="venue-name">Nom du lieu</label>
+                    <input
+                      id="venue-name"
+                      type="text"
+                      value={newVenueName}
+                      onChange={(e) => setNewVenueName(e.target.value)}
+                      placeholder="Ex: Stade de France"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="venue-description">Description</label>
+                    <input
+                      id="venue-description"
+                      type="text"
+                      value={newVenueDescription}
+                      onChange={(e) => setNewVenueDescription(e.target.value)}
+                      placeholder="Ex: Stade principal de football"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="venue-address">Adresse</label>
+                    <input
+                      id="venue-address"
+                      type="text"
+                      value={newVenueAddress}
+                      onChange={(e) => setNewVenueAddress(e.target.value)}
+                      placeholder="Entrez l'adresse complète"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="venue-sport">Sport</label>
+                    <select
+                      id="venue-sport"
+                      value={selectedSport}
+                      onChange={(e) => {
+                        setSelectedSport(e.target.value);
+                        setSelectedEmoji(sportEmojis[e.target.value] || '⚽');
+                      }}
+                      className="form-input"
+                    >
+                      <option value="Football">Football ⚽</option>
+                      <option value="Basketball">Basketball 🏀</option>
+                      <option value="Handball">Handball 🤾</option>
+                      <option value="Rugby">Rugby 🏉</option>
+                      <option value="Volleyball">Volleyball 🏐</option>
+                      <option value="Tennis">Tennis 🎾</option>
+                      <option value="Badminton">Badminton 🏸</option>
+                      <option value="Hockey">Hockey 🏑</option>
+                      <option value="Base-ball">Base-ball ⚾</option>
+                      <option value="Golf">Golf ⛳</option>
+                      <option value="Ping-pong">Ping-pong 🏓</option>
+                      <option value="Other">Autre 🎯</option>
+                    </select>
+                  </div>
+                  <div className="form-group emoji-preview">
+                    <label>Emoji sélectionné</label>
+                    <div className="selected-emoji">{selectedEmoji}</div>
+                  </div>
+                  <div className="form-actions">
+                    <button 
+                      className="add-button"
+                      onClick={() => {
+                        if (editingVenue.id) {
+                          handleUpdateVenue();
+                        } else {
+                          handleAddVenue();
+                        }
+                      }}
+                      disabled={!newVenueName || !newVenueDescription}
+                    >
+                      {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
+                    </button>
+                    <button 
+                      className="cancel-button"
+                      onClick={() => {
+                        if (editingVenue.id) {
+                          cancelEditingVenue();
+                        } else {
+                          setIsAddingPlace(false);
+                          setNewVenueName('');
+                          setNewVenueDescription('');
+                          setNewVenueAddress('');
+                          setSelectedSport('Football');
+                        }
+                      }}
+                    >
+                      Annuler
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1475,109 +1440,111 @@ function App() {
                     </div>
                   )}
       </main>
-
+      
       {/* Formulaire d'ajout/modification de match */}
       {editingMatch.venueId && (
-        <div className="edit-form">
-          <div className="edit-form-header">
-            <h3>{editingMatch.match ? 'Modifier le match' : 'Ajouter un match'}</h3>
-          </div>
-          <div className="edit-form-content">
-            <div className="form-group">
-              <label htmlFor="match-date">Date et heure</label>
-                          <input
-                id="match-date"
-                            type="datetime-local"
-                value={editingMatch.match ? editingMatch.match.date : newMatch.date}
-                onChange={(e) => {
-                  if (editingMatch.match) {
-                    // Modification d'un match existant
-                    const updatedMatch = { ...editingMatch.match, date: e.target.value };
-                    setEditingMatch({ ...editingMatch, match: updatedMatch });
-                  } else {
-                    // Création d'un nouveau match
-                    setNewMatch({ ...newMatch, date: e.target.value });
-                  }
-                }}
-                className="form-input"
-              />
+        <div className="form-overlay">
+          <div className="edit-form match-edit-form">
+            <div className="edit-form-header">
+              <h3>{editingMatch.match ? 'Modifier le match' : 'Ajouter un match'}</h3>
             </div>
-            <div className="form-group">
-              <label htmlFor="match-teams">Équipes</label>
-                          <input
-                id="match-teams"
-                            type="text"
-                value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
-                onChange={(e) => {
-                  if (editingMatch.match) {
-                    // Modification d'un match existant
-                    const updatedMatch = { ...editingMatch.match, teams: e.target.value };
-                    setEditingMatch({ ...editingMatch, match: updatedMatch });
-                  } else {
-                    // Création d'un nouveau match
-                    setNewMatch({ ...newMatch, teams: e.target.value });
+            <div className="edit-form-content">
+              <div className="form-group">
+                <label htmlFor="match-date">Date et heure</label>
+                <input
+                  id="match-date"
+                  type="datetime-local"
+                  value={editingMatch.match ? editingMatch.match.date : newMatch.date}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      // Modification d'un match existant
+                      const updatedMatch = { ...editingMatch.match, date: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      // Création d'un nouveau match
+                      setNewMatch({ ...newMatch, date: e.target.value });
+                    }
+                  }}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="match-teams">Équipes</label>
+                <input
+                  id="match-teams"
+                  type="text"
+                  value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      // Modification d'un match existant
+                      const updatedMatch = { ...editingMatch.match, teams: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      // Création d'un nouveau match
+                      setNewMatch({ ...newMatch, teams: e.target.value });
+                    }
+                  }}
+                  placeholder="Ex: France vs Brésil"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="match-description">Description</label>
+                <input
+                  id="match-description"
+                  type="text"
+                  value={editingMatch.match ? editingMatch.match.description : newMatch.description}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      // Modification d'un match existant
+                      const updatedMatch = { ...editingMatch.match, description: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      // Création d'un nouveau match
+                      setNewMatch({ ...newMatch, description: e.target.value });
+                    }
+                  }}
+                  placeholder="Ex: Match de qualification"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-actions">
+                <button 
+                  className="add-button"
+                  onClick={() => {
+                    if (editingMatch.match) {
+                      // Mettre à jour un match existant
+                      handleUpdateMatch(
+                        editingMatch.venueId!, 
+                        editingMatch.match.id, 
+                        {
+                          date: editingMatch.match.date,
+                          teams: editingMatch.match.teams,
+                          description: editingMatch.match.description
+                        }
+                      );
+                      // Fermer le formulaire après la mise à jour
+                      finishEditingMatch();
+                    } else {
+                      // Ajouter un nouveau match
+                      handleAddMatch(editingMatch.venueId!);
+                    }
+                  }}
+                  disabled={
+                    editingMatch.match 
+                      ? !editingMatch.match.date || !editingMatch.match.teams || !editingMatch.match.description
+                      : !newMatch.date || !newMatch.teams || !newMatch.description
                   }
-                }}
-                placeholder="Ex: France vs Brésil"
-                className="form-input"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="match-description">Description</label>
-                          <input
-                id="match-description"
-                            type="text"
-                value={editingMatch.match ? editingMatch.match.description : newMatch.description}
-                onChange={(e) => {
-                  if (editingMatch.match) {
-                    // Modification d'un match existant
-                    const updatedMatch = { ...editingMatch.match, description: e.target.value };
-                    setEditingMatch({ ...editingMatch, match: updatedMatch });
-                  } else {
-                    // Création d'un nouveau match
-                    setNewMatch({ ...newMatch, description: e.target.value });
-                  }
-                }}
-                placeholder="Ex: Match de qualification"
-                className="form-input"
-              />
-            </div>
-            <div className="form-actions">
-              <button 
-                className="add-button"
-                onClick={() => {
-                  if (editingMatch.match) {
-                    // Mettre à jour un match existant
-                    handleUpdateMatch(
-                      editingMatch.venueId!, 
-                      editingMatch.match.id, 
-                      {
-                        date: editingMatch.match.date,
-                        teams: editingMatch.match.teams,
-                        description: editingMatch.match.description
-                      }
-                    );
-                    // Fermer le formulaire après la mise à jour
-                    finishEditingMatch();
-                  } else {
-                    // Ajouter un nouveau match
-                    handleAddMatch(editingMatch.venueId!);
-                  }
-                }}
-                disabled={
-                  editingMatch.match 
-                    ? !editingMatch.match.date || !editingMatch.match.teams || !editingMatch.match.description
-                    : !newMatch.date || !newMatch.teams || !newMatch.description
-                }
-              >
-                {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-              </button>
-              <button 
-                className="cancel-button"
-                onClick={finishEditingMatch}
-              >
-                Annuler
-              </button>
+                >
+                  {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
+                </button>
+                <button 
+                  className="cancel-button"
+                  onClick={finishEditingMatch}
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
         </div>
