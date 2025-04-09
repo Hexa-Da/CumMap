@@ -50,7 +50,7 @@ interface Venue {
   description: string;
   matches: Match[];
   address?: string;
-  type?: 'hotel' | 'venue';
+  type?: 'hotel' | 'venue' | 'party';
   sport: string;
   date: string;
   latitude: number;
@@ -202,7 +202,7 @@ function App() {
       address: "Zi Courtaboeuf, Rue Rio Solado N°2, 91940 Les Ulis",
       type: 'hotel',
       matches: [],
-      sport: 'Football',
+      sport: 'Hotel',
       date: '',
       latitude: 48.6819,
       longitude: 2.1694
@@ -214,10 +214,49 @@ function App() {
       address: "7 Rue du Pont des Halles, 94150 Rungis",
       type: 'hotel',
       matches: [],
-      sport: 'Football',
+      sport: 'Hotel',
       date: '',
       latitude: 48.7486,
       longitude: 2.3522
+    }
+  ]);
+
+  const [parties] = useState<Venue[]>([
+    {
+      name: "La Palmeraie",
+      position: [48.8392, 2.2756],
+      description: "Soirée Pompoms du 24 au 25 avril 2025, 21h-3h",
+      address: "20, rue du Colonel Pierre Avia, 75015 Paris",
+      type: 'party',
+      matches: [],
+      sport: 'Pompom',
+      date: '2025-04-24T21:00:00',
+      latitude: 48.8392,
+      longitude: 2.2756
+    },
+    {
+      name: "Bridge Club",
+      position: [48.8655, 2.3144],
+      description: "Soirée du 25 au 26 avril 2025, 21h-3h",
+      address: "3, Port des Champs-Élysées, 75008 Paris",
+      type: 'party',
+      matches: [],
+      sport: 'Party',
+      date: '2025-04-25T21:00:00',
+      latitude: 48.8655,
+      longitude: 2.3144
+    },
+    {
+      name: "Terminal 7",
+      position: [48.8323, 2.2883],
+      description: "Soirée du 26 au 27 avril 2025, 22h-4h",
+      address: "1, Place de la Porte de Versailles Pavillon 7 - Etage 7.4, 75015 Paris",
+      type: 'party',
+      matches: [],
+      sport: 'Party',
+      date: '2025-04-26T22:00:00',
+      latitude: 48.8323,
+      longitude: 2.2883
     }
   ]);
 
@@ -298,7 +337,8 @@ function App() {
     'Tennis': '🎾',
     'Tennis de table': '🏓',
     'Pompom': '🎀',
-    'Hotel': '🏨'
+    'Hotel': '🏨',
+    'Party': '🎉'
   };
 
   // Fonction pour géocoder une adresse avec Nominatim
@@ -678,8 +718,50 @@ function App() {
           markersRef.current.push(marker);
         }
       });
+
+      // Ajouter les marqueurs pour les soirées
+      parties.forEach(party => {
+        const marker = L.marker([party.latitude, party.longitude], {
+          icon: L.divIcon({
+            className: 'custom-marker party-marker',
+            html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : '🎉'}</span>
+                   </div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+          })
+        });
+
+        // Créer le contenu du popup pour la soirée
+        const popupContent = document.createElement('div');
+        popupContent.className = 'venue-popup';
+        
+        // Contenu de base de la soirée
+        popupContent.innerHTML = `
+          <h3>${party.name}</h3>
+          <p>${party.description}</p>
+          <p class="venue-address">${party.address}</p>
+        `;
+        
+        // Bouton Google Maps
+        const mapsButton = document.createElement('button');
+        mapsButton.className = 'maps-button';
+        mapsButton.textContent = 'Ouvrir dans Google Maps';
+        mapsButton.addEventListener('click', () => {
+          openInGoogleMaps(party);
+        });
+        popupContent.appendChild(mapsButton);
+
+        marker.bindPopup(popupContent);
+        
+        if (mapRef.current) {
+          marker.addTo(mapRef.current);
+          markersRef.current.push(marker);
+        }
+      });
     }
-  }, [venues, hotels, isEditing]);
+  }, [venues, hotels, parties, isEditing]);
 
   return (
     <div className="app">

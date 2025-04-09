@@ -865,6 +865,10 @@ html, body, #root {
   transform: translate(0, 0) !important;
 }
 
+.party-marker span {
+  transform: translate(0, 0) !important;
+}
+
 @media (max-width: 768px) {
   .emoji-selector {
     grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
