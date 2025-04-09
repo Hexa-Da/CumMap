@@ -403,10 +403,12 @@ function App() {
         
         try {
           await set(newVenueRef, newVenue);
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
+          setNewVenueName('');
+          setNewVenueDescription('');
+          setNewVenueAddress('');
           setSelectedSport('Football');
+          // Fermer le formulaire d'ajout après avoir ajouté le lieu
+          setIsAddingPlace(false);
         } catch (error) {
           console.error('Erreur lors de l\'ajout du lieu:', error);
           alert('Une erreur est survenue lors de l\'ajout du lieu.');
@@ -432,19 +434,22 @@ function App() {
       
       if (venue) {
         const matches = [...(venue.matches || [])];
-          const newMatchWithId = {
+        const newMatchWithId = {
           id: matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1,
-            ...newMatch
-          };
+          ...newMatch
+        };
         matches.push(newMatchWithId);
         
         await set(venueRef, {
-            ...venue,
+          ...venue,
           matches
         });
         
-      setNewMatch({ date: '', teams: '', description: '' });
+        setNewMatch({ date: '', teams: '', description: '' });
+        // Fermer uniquement le formulaire d'édition du match, mais garder le popup du lieu ouvert
         setEditingMatch({ venueId: null, match: null });
+        // Maintenir le popup ouvert
+        setOpenPopup(venueId);
       }
     }
   };
