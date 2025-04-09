@@ -65,13 +65,29 @@ interface HistoryAction {
   undo: () => Promise<void>;
 }
 
-// Initialiser Google Analytics
+// Initialiser Google Analytics correctement avec debugging
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXX';
-console.log('Valeur directe VITE_GA_MEASUREMENT_ID:', import.meta.env.VITE_GA_MEASUREMENT_ID);
-console.log('Toutes les variables d\'environnement:', import.meta.env);
-console.log('Initialisation de Google Analytics avec ID:', GA_MEASUREMENT_ID);
-ReactGA.initialize(GA_MEASUREMENT_ID);
-console.log('Google Analytics initialisé');
+console.log('[GA] ID de mesure utilisé:', GA_MEASUREMENT_ID);
+
+// Configuration avec mode test activé pour la validation
+ReactGA.initialize(GA_MEASUREMENT_ID, {
+  testMode: process.env.NODE_ENV !== 'production',
+  gaOptions: {
+    sendPageView: false // Nous enverrons manuellement le pageview
+  }
+});
+
+// Afficher explicitement l'objet ReactGA pour le déboggage
+console.log('[GA] Objet ReactGA:', ReactGA);
+
+// Envoyer un événement test pour vérifier la connexion
+ReactGA.event({
+  category: 'testing',
+  action: 'ga_test',
+  label: 'Validation de connexion GA4'
+});
+
+console.log('[GA] Google Analytics initialisé en mode test');
 
 // Composant pour la géolocalisation
 function LocationMarker() {
@@ -1435,12 +1451,26 @@ function App() {
 
   // Enregistrer la visite de la page au chargement
   useEffect(() => {
-    console.log('Envoi du pageview à Google Analytics');
-    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
-    console.log('Pageview envoyé');
+    // Forcer l'envoi d'un pageview après un court délai pour assurer le chargement complet
+    setTimeout(() => {
+      console.log('[GA] Envoi du pageview à Google Analytics');
+      ReactGA.send({ 
+        hitType: "pageview", 
+        page: window.location.pathname + window.location.search
+      });
+      console.log('[GA] Pageview envoyé');
+      
+      // Forcer un événement pour tester la connexion
+      ReactGA.event({
+        category: 'page',
+        action: 'view',
+        label: window.location.pathname
+      });
+    }, 1000);
     
     // Fonction pour enregistrer les événements personnalisés
     const trackEvent = (category: string, action: string) => {
+      console.log(`[GA] Envoi d'événement: ${category}/${action}`);
       ReactGA.event({
         category,
         action
