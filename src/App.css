@@ -124,6 +124,14 @@
   .retry-button:hover {
     background-color: var(--primary-hover);
   }
+
+  .location-error {
+    background-color: var(--bg-secondary);
+  }
+
+  .location-error p {
+    color: var(--text-color);
+  }
 }
 
 html, body, #root {
@@ -253,7 +261,7 @@ html, body, #root {
 
 /* Style pour l'icône d'hôtel */
 .hotel-icon {
-  filter: hue-rotate(120deg) saturate(15) brightness(1.2);
+  filter: hue-rotate(120deg) saturate(15) brightness(1.2) sepia(1);
 }
 
 .venue-popup {
@@ -564,4 +572,22 @@ html, body, #root {
 .retry-button:hover {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+}
+
+.location-error {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px var(--shadow-color);
+  z-index: 1000;
+}
+
+.location-error p {
+  color: var(--text-color);
+  margin-bottom: 1rem;
 }

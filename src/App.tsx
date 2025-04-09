@@ -233,7 +233,7 @@ function App() {
     description: ''
   });
   const [openPopup, setOpenPopup] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState(false);
+  const [locationError, setLocationError] = useState<string | false>(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
@@ -370,17 +370,39 @@ function App() {
 
   const handleLocationError = (error: GeolocationPositionError) => {
     console.error('Erreur de géolocalisation:', error);
-    setLocationError(true);
+    
+    // Afficher un message d'erreur plus spécifique
+    let errorMessage = "Impossible d'accéder à votre position. ";
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        errorMessage += "Veuillez autoriser l'accès à la géolocalisation dans les paramètres de votre navigateur.";
+        break;
+      case error.POSITION_UNAVAILABLE:
+        errorMessage += "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
+        break;
+      case error.TIMEOUT:
+        errorMessage += "La demande a expiré. Veuillez réessayer.";
+        break;
+      default:
+        errorMessage += "Une erreur inattendue s'est produite.";
+    }
+    setLocationError(errorMessage);
     setLocationLoading(false);
   };
 
   const retryLocation = () => {
     setLocationError(false);
     setLocationLoading(true);
+    
+    // Réessayer avec des options optimisées
     navigator.geolocation.getCurrentPosition(
       handleLocationSuccess,
       handleLocationError,
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { 
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
     );
   };
 
@@ -423,7 +445,7 @@ function App() {
       <main className="app-main">
         {locationError ? (
           <div className="location-error">
-            <p>Impossible d'accéder à votre position. Vérifiez que la géolocalisation est activée.</p>
+            <p>{locationError}</p>
             <button className="retry-button" onClick={retryLocation}>
               Réessayer
             </button>
