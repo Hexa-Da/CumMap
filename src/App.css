@@ -415,9 +415,30 @@ html, body, #root {
   filter: brightness(0);
 }
 
-/* Style pour l'icône d'hôtel */
+/* Style spécifique pour les icônes d'hôtel */
 .hotel-icon {
-  filter: grayscale(100%) brightness(0.7);
+  filter: saturate(10) brightness(0.9);
+  width: 30px !important;
+  height: 30px !important;
+  transform: rotate(0deg);
+  background-color: #1976D2;
+  border-radius: 50%;
+  border: 2px solid white !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 600 !important;
+}
+
+.hotel-icon div {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  font-size: 16px !important;
 }
 
 /* Style pour les pointeurs par défaut */

@@ -1288,15 +1288,15 @@ function App() {
         }
       });
 
-      // Ajouter les marqueurs pour les hôtels
+      // Ajouter les marqueurs pour les hôtels - s'assurer qu'ils sont bien rendus ici
       hotels.forEach(hotel => {
         const marker = L.marker([hotel.latitude, hotel.longitude], {
           icon: L.divIcon({
             className: 'hotel-icon',
-            html: `<div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fa fa-hotel"></i></div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-            popupAnchor: [0, -12]
+            html: `<div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: white; background-color: #1976D2; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"><span style="font-size: 16px;">🏨</span></div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
           })
         });
 
@@ -1335,7 +1335,7 @@ function App() {
         
         popupContent.appendChild(buttonsContainer);
 
-        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles
+        // Ajouter les boutons d'édition si on est en mode édition
         if (isEditing) {
           // Boutons d'édition
           const editButtonsContainer = document.createElement('div');
@@ -1364,10 +1364,6 @@ function App() {
 
         marker.bindPopup(popupContent);
         
-        marker.on('click', () => {
-          handlePopupOpen && handlePopupOpen(hotel.id || '');
-        });
-
         if (mapRef.current) {
           marker.addTo(mapRef.current);
           markersRef.current.push(marker);
