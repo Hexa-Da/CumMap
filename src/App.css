@@ -256,17 +256,17 @@ html, body, #root {
 
 /* Style pour l'icône de localisation de l'utilisateur */
 .user-location-icon {
-  filter: hue-rotate(120deg) saturate(1.5) brightness(0);
+  filter: brightness(0);
 }
 
 /* Style pour l'icône d'hôtel */
 .hotel-icon {
-  filter: hue-rotate(180deg) saturate(1.5);
+  filter: grayscale(100%) brightness(0.7);
 }
 
 /* Style pour les pointeurs par défaut */
 .default-marker-icon {
-  filter: hue-rotate(180deg) saturate(15) brightness(1.2) sepia(1);
+  filter: hue-rotate(180deg) saturate(1.5);
 }
 
 .venue-popup {
