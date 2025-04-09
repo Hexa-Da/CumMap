@@ -48,10 +48,49 @@
   box-sizing: border-box;
 }
 
+:root {
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --success-color: #2ecc71;
+  --success-hover: #27ae60;
+  --danger-color: #e74c3c;
+  --danger-hover: #c0392b;
+  --warning-color: #f39c12;
+  --warning-hover: #d35400;
+  --text-color: #2c3e50;
+  --text-color-light: #7f8c8d;
+  --bg-color: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --border-color: #e0e0e0;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #4a9eff;
+    --primary-hover: #3a8eef;
+    --success-color: #2ecc71;
+    --success-hover: #27ae60;
+    --danger-color: #ff6b6b;
+    --danger-hover: #ff5252;
+    --warning-color: #f39c12;
+    --warning-hover: #d35400;
+    --text-color: #ecf0f1;
+    --text-color-light: #bdc3c7;
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --border-color: #404040;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .app {
@@ -62,19 +101,23 @@ html, body, #root {
 }
 
 .app-header {
-  background-color: #2c3e50;
-  color: white;
+  background-color: var(--bg-secondary);
+  color: var(--text-color);
   padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  z-index: 1000;
 }
 
 .app-header h1 {
   margin: 0;
   font-size: clamp(1.2rem, 4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .controls {
@@ -87,20 +130,22 @@ html, body, #root {
 .edit-button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 4px;
-  background-color: #3498db;
+  border-radius: 6px;
+  background-color: var(--primary-color);
   color: white;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
   font-size: clamp(0.8rem, 3vw, 1rem);
+  box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .edit-button:hover {
-  background-color: #2980b9;
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .edit-button.active {
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
 }
 
 .edit-form {
@@ -108,29 +153,43 @@ html, body, #root {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .edit-form input {
   padding: 0.5rem;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
   min-width: 150px;
   flex: 1;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: border-color 0.3s;
+}
+
+.edit-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .edit-form button {
   padding: 0.5rem 1rem;
-  background-color: #2ecc71;
+  background-color: var(--success-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
 .edit-form button:hover {
-  background-color: #27ae60;
+  background-color: var(--success-hover);
+  transform: translateY(-1px);
 }
 
 .edit-instructions {
@@ -152,70 +211,83 @@ html, body, #root {
 
 /* Style pour l'icône d'hôtel */
 .hotel-icon {
-  filter: hue-rotate(0deg) saturate(5) brightness(0.8) sepia(1) hue-rotate(-50deg);
+  filter: hue-rotate(0deg) saturate(10) brightness(0.9) sepia(1) hue-rotate(-30deg);
 }
 
 .venue-popup {
   min-width: min(250px, 90vw);
-  padding: 0.5rem;
+  padding: 1rem;
+  background-color: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow-color);
 }
 
 .venue-popup h3 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--text-color);
   font-size: clamp(1rem, 4vw, 1.2rem);
+  font-weight: 600;
 }
 
 .venue-popup p {
   margin: 0 0 0.5rem 0;
-  color: #34495e;
+  color: var(--text-color-light);
   font-size: clamp(0.8rem, 3vw, 0.9rem);
 }
 
 .venue-address {
   font-style: italic;
-  color: #7f8c8d !important;
+  color: var(--text-color-light) !important;
   margin-bottom: 1rem !important;
 }
 
 .maps-button {
   width: 100%;
   padding: 0.5rem;
-  background-color: #3498db;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   margin-bottom: 1rem;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
+  transition: all 0.3s ease;
 }
 
 .maps-button:hover {
-  background-color: #2980b9;
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .matches-list {
   margin-top: 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color);
   padding-top: 1rem;
 }
 
 .matches-list h4 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--text-color);
   font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+  font-weight: 600;
 }
 
 .match-item {
   margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  padding: 0.75rem;
+  background-color: var(--bg-secondary);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: transform 0.3s ease;
+}
+
+.match-item:hover {
+  transform: translateY(-2px);
 }
 
 .match-date {
   font-weight: bold;
-  color: #e74c3c;
+  color: var(--danger-color);
   margin: 0 0 0.25rem 0;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
 }
@@ -228,7 +300,7 @@ html, body, #root {
 
 .match-description {
   font-size: clamp(0.7rem, 2.8vw, 0.8rem);
-  color: #666;
+  color: var(--text-color-light);
   margin: 0;
 }
 
@@ -241,10 +313,18 @@ html, body, #root {
 
 .match-edit-form input {
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
   width: 100%;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: border-color 0.3s;
+}
+
+.match-edit-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .match-edit-form button {
@@ -254,64 +334,71 @@ html, body, #root {
   cursor: pointer;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
   margin-top: 0.25rem;
+  transition: all 0.3s ease;
 }
 
 .match-edit-form button:first-of-type {
-  background-color: #2ecc71;
+  background-color: var(--success-color);
   color: white;
 }
 
 .match-edit-form button:last-of-type {
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
   color: white;
 }
 
 .edit-match-button {
   margin-top: 0.5rem;
   padding: 0.25rem 0.5rem;
-  background-color: #f39c12;
+  background-color: var(--warning-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: clamp(0.7rem, 2.8vw, 0.8rem);
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 .edit-match-button:hover {
-  background-color: #d35400;
+  background-color: var(--warning-hover);
+  transform: translateY(-1px);
 }
 
 .add-match-button {
   width: 100%;
   padding: 0.5rem;
-  background-color: #2ecc71;
+  background-color: var(--success-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   margin: 1rem 0;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
+  transition: all 0.3s ease;
 }
 
 .add-match-button:hover {
-  background-color: #27ae60;
+  background-color: var(--success-hover);
+  transform: translateY(-1px);
 }
 
 .delete-button {
   width: 100%;
   margin-top: 1rem;
   padding: 0.5rem;
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
+  transition: all 0.3s ease;
 }
 
 .delete-button:hover {
-  background-color: #c0392b;
+  background-color: var(--danger-hover);
+  transform: translateY(-1px);
 }
 
 /* Styles pour les popups Leaflet */
@@ -322,6 +409,14 @@ html, body, #root {
 
 .leaflet-popup-content-wrapper {
   max-width: 90vw;
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 8px var(--shadow-color) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--bg-color) !important;
 }
 
 /* Media queries pour les petits écrans */
@@ -362,24 +457,27 @@ html, body, #root {
   border-radius: 4px;
   cursor: pointer;
   font-size: clamp(0.8rem, 3vw, 0.9rem);
+  transition: all 0.3s ease;
 }
 
 .save-button {
-  background-color: #2ecc71;
+  background-color: var(--success-color);
   color: white;
 }
 
 .save-button:hover {
-  background-color: #27ae60;
+  background-color: var(--success-hover);
+  transform: translateY(-1px);
 }
 
 .cancel-button {
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
   color: white;
 }
 
 .cancel-button:hover {
-  background-color: #c0392b;
+  background-color: var(--danger-hover);
+  transform: translateY(-1px);
 }
 
 .error-message {
@@ -387,10 +485,22 @@ html, body, #root {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #ff4444;
+  background-color: var(--danger-color);
   color: white;
   padding: 10px 20px;
   border-radius: 5px;
   z-index: 1000;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px var(--shadow-color);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
 }
