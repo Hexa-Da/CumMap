@@ -82,6 +82,39 @@
     --border-color: #404040;
     --shadow-color: rgba(0, 0, 0, 0.3);
   }
+
+  .leaflet-container {
+    background-color: var(--bg-color) !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-color) !important;
+  }
+
+  .leaflet-popup-tip {
+    background-color: var(--bg-secondary) !important;
+  }
+
+  .leaflet-control-attribution {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-color) !important;
+  }
+
+  .leaflet-control-zoom {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  .leaflet-control-zoom a {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+
+  .leaflet-control-zoom a:hover {
+    background-color: var(--bg-color) !important;
+  }
 }
 
 html, body, #root {
@@ -211,7 +244,7 @@ html, body, #root {
 
 /* Style pour l'icône d'hôtel */
 .hotel-icon {
-  filter: hue-rotate(0deg) saturate(10) brightness(0.9) sepia(1) hue-rotate(-30deg);
+  filter: hue-rotate(0deg) saturate(15) brightness(1.2) sepia(1) hue-rotate(-30deg);
 }
 
 .venue-popup {
