@@ -25,6 +25,14 @@ let UserIcon = new Icon({
   className: 'user-location-icon' // Cette classe nous permettra de styliser l'icône
 });
 
+let HotelIcon = new Icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  className: 'hotel-icon'
+});
+
 interface Match {
   id: number;
   date: string;
@@ -39,6 +47,7 @@ interface Venue {
   description: string;
   matches: Match[];
   address?: string;
+  type?: 'hotel' | 'venue';
 }
 
 // Composant pour la géolocalisation
@@ -172,6 +181,24 @@ function MapEvents({ onMapClick }: { onMapClick: (e: { latlng: { lat: number; ln
 
 function App() {
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [hotels] = useState<Venue[]>([
+    {
+      name: "F1 Les Ulis",
+      position: [48.6819, 2.1694],
+      description: "Hôtel F1 Les Ulis - Courtaboeuf",
+      address: "Zi Courtaboeuf, Rue Rio Solado N°2, 91940 Les Ulis",
+      type: 'hotel',
+      matches: []
+    },
+    {
+      name: "F1 Orly-Rungis",
+      position: [48.7486, 2.3522],
+      description: "Hôtel F1 Orly-Rungis",
+      address: "7 Rue du Pont des Halles, 94150 Rungis",
+      type: 'hotel',
+      matches: []
+    }
+  ]);
 
   // Charger les lieux depuis Firebase au démarrage
   useEffect(() => {
@@ -512,6 +539,24 @@ function App() {
                       </button>
                     </>
                   )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {hotels.map((hotel) => (
+            <Marker 
+              key={hotel.name} 
+              position={hotel.position}
+              icon={HotelIcon}
+            >
+              <Popup>
+                <div className="venue-popup">
+                  <h3>{hotel.name}</h3>
+                  <p>{hotel.description}</p>
+                  <p className="venue-address">{hotel.address}</p>
+                  <button className="maps-button" onClick={() => openInGoogleMaps(hotel)}>
+                    Ouvrir dans Google Maps
+                  </button>
                 </div>
               </Popup>
             </Marker>
