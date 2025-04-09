@@ -434,12 +434,117 @@ function App() {
     }
   };
 
-  // Gestionnaire d'événements pour écouter Ctrl+Z
+  // Fonction pour refaire la dernière action annulée
+  const redoLastAction = async () => {
+    if (historyIndex < history.length - 1) {
+      const nextAction = history[historyIndex + 1];
+      
+      // Recréer l'action en fonction du type
+      switch (nextAction.type) {
+        case 'ADD_VENUE':
+          // Ré-ajouter le lieu
+          {
+            const venueData = nextAction.data;
+            const venueRef = ref(db, `venues/${venueData.id}`);
+            await set(venueRef, {
+              name: venueData.name,
+              position: [venueData.latitude, venueData.longitude],
+              description: venueData.description,
+              address: venueData.address,
+              matches: venueData.matches || [],
+              sport: venueData.sport,
+              date: venueData.date,
+              latitude: venueData.latitude,
+              longitude: venueData.longitude
+            });
+          }
+          break;
+        case 'UPDATE_VENUE':
+          // Réappliquer la mise à jour
+          {
+            const { after } = nextAction.data;
+            const venueRef = ref(db, `venues/${after.id}`);
+            await set(venueRef, after);
+          }
+          break;
+        case 'DELETE_VENUE':
+          // Supprimer à nouveau le lieu
+          {
+            const venueData = nextAction.data;
+            const venueRef = ref(db, `venues/${venueData.id}`);
+            await set(venueRef, null);
+          }
+          break;
+        case 'ADD_MATCH':
+          // Ré-ajouter le match
+          {
+            const { venueId, match } = nextAction.data;
+            const venue = venues.find(v => v.id === venueId);
+            if (venue) {
+              const matches = [...(venue.matches || [])];
+              // Vérifier si le match existe déjà pour éviter les doublons
+              if (!matches.some(m => m.id === match.id)) {
+                matches.push(match);
+                const venueRef = ref(db, `venues/${venueId}`);
+                await set(venueRef, {
+                  ...venue,
+                  matches
+                });
+              }
+            }
+          }
+          break;
+        case 'UPDATE_MATCH':
+          // Réappliquer la mise à jour du match
+          {
+            const { venueId, matchId, after } = nextAction.data;
+            const venue = venues.find(v => v.id === venueId);
+            if (venue) {
+              const updatedMatches = venue.matches.map(match =>
+                match.id === matchId ? { ...match, ...after } : match
+              );
+              const venueRef = ref(db, `venues/${venueId}`);
+              await set(venueRef, {
+                ...venue,
+                matches: updatedMatches
+              });
+            }
+          }
+          break;
+        case 'DELETE_MATCH':
+          // Supprimer à nouveau le match
+          {
+            const { venueId, match } = nextAction.data;
+            const venue = venues.find(v => v.id === venueId);
+            if (venue) {
+              const updatedMatches = venue.matches.filter(m => m.id !== match.id);
+              const venueRef = ref(db, `venues/${venueId}`);
+              await set(venueRef, {
+                ...venue,
+                matches: updatedMatches
+              });
+            }
+          }
+          break;
+      }
+      
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  // Gestionnaire d'événements pour écouter Ctrl+Z (undo) et Shift+Ctrl+Z (redo)
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      // Ctrl+Z ou Cmd+Z (Mac) pour annuler
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         await undoLastAction();
+      }
+      
+      // Shift+Ctrl+Z ou Shift+Cmd+Z (Mac) pour refaire
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        await redoLastAction();
       }
     };
 
@@ -447,7 +552,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [history, historyIndex]);
+  }, [history, historyIndex, venues]);
 
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
