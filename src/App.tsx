@@ -69,10 +69,23 @@ function LocationMarker() {
           const newPosition = new LatLng(latitude, longitude);
           setPosition(newPosition);
           map.flyTo(newPosition, 16);
+          setError(null); // Réinitialiser l'erreur en cas de succès
         },
         (err) => {
           console.error('Erreur de géolocalisation:', err);
-          setError(`Erreur de géolocalisation: ${err.message}`);
+          let errorMessage = "Erreur de géolocalisation";
+          switch (err.code) {
+            case err.PERMISSION_DENIED:
+              errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
+              break;
+            case err.POSITION_UNAVAILABLE:
+              errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
+              break;
+            case err.TIMEOUT:
+              errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+              break;
+          }
+          setError(errorMessage);
         },
         options
       );
@@ -83,9 +96,11 @@ function LocationMarker() {
           const { latitude, longitude } = pos.coords;
           const newPosition = new LatLng(latitude, longitude);
           setPosition(newPosition);
+          setError(null); // Réinitialiser l'erreur en cas de succès
         },
         (err) => {
           console.error('Erreur de suivi de position:', err);
+          // Ne pas afficher d'erreur pour le watchPosition pour éviter les messages répétés
         },
         options
       );
@@ -101,6 +116,41 @@ function LocationMarker() {
     return (
       <div className="error-message">
         {error}
+        <button 
+          onClick={() => {
+            setError(null);
+            // Réessayer la géolocalisation
+            if (map) {
+              const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+              };
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  const newPosition = new LatLng(latitude, longitude);
+                  setPosition(newPosition);
+                  map.flyTo(newPosition, 16);
+                },
+                (err) => {
+                  console.error('Erreur de géolocalisation:', err);
+                },
+                options
+              );
+            }
+          }}
+          style={{
+            marginLeft: '10px',
+            padding: '5px 10px',
+            background: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Réessayer
+        </button>
       </div>
     );
   }
@@ -284,7 +334,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Cum Map</h1>
+        <h1>CumMap</h1>
         <div className="controls">
           <button 
             className={`edit-button ${isEditing ? 'active' : ''}`}
