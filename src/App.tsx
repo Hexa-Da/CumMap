@@ -1257,7 +1257,7 @@ function App() {
                       <div className="event-header">
                         <span className="event-type-badge">
                           {event.type === 'match' && venues.find(v => v.name === event.venue) 
-                            ? getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')
+                            ? `${getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')} Match`
                             : (event.type === 'match' ? '🏆 Match' : '🎉 Soirée')}
                         </span>
                         <span className="event-date">{formatDate(event.date)}</span>
