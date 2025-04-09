@@ -211,8 +211,8 @@ function App() {
     const mode = urlParams.get('mode');
     setIsAdminMode(mode === 'admin');
     
-    // En mode visiteur, on active quand même le mode édition pour voir les contrôles
-    setIsEditing(true);
+    // Par défaut, le mode édition est désactivé
+    setIsEditing(false);
   }, []);
   
   const [hotels, setHotels] = useState<Venue[]>([
