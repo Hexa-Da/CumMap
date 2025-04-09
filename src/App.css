@@ -1174,7 +1174,7 @@ html, body, #root {
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 900;
+  z-index: 1000;
   padding: 0.5rem 1rem;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -1212,7 +1212,7 @@ html, body, #root {
   background-color: var(--bg-color);
   box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
-  z-index: 999;
+  z-index: 990;
   padding: 1rem;
   transition: transform 0.3s ease;
   margin-top: 0;
@@ -1447,7 +1447,7 @@ html, body, #root {
   }
   
   .events-toggle-button {
-    z-index: 900 !important;
+    z-index: 1000 !important;
   }
 }
 
