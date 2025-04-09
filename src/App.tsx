@@ -194,6 +194,42 @@ function App() {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  
+  // Déterminer le mode d'accès (admin ou visiteur) en fonction de l'URL
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  
+  useEffect(() => {
+    // Vérifier si l'URL contient un paramètre 'mode=admin'
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    setIsAdminMode(mode === 'admin');
+    
+    // Si on est en mode admin, permettre l'édition par défaut
+    if (mode === 'admin') {
+      setIsEditing(true);
+    }
+  }, []);
+  
+  // Fonction pour générer les liens
+  const generateLinks = () => {
+    const currentUrl = window.location.href.split('?')[0]; // URL de base sans paramètres
+    const adminLink = `${currentUrl}?mode=admin`;
+    const visitorLink = currentUrl.replace(/\?mode=admin/, '');
+    
+    return { adminLink, visitorLink };
+  };
+  
+  // Fonction pour copier un lien au presse-papier
+  const copyLink = (link: string, type: string) => {
+    navigator.clipboard.writeText(link)
+      .then(() => {
+        alert(`Lien ${type} copié !`);
+      })
+      .catch(err => {
+        console.error('Erreur lors de la copie : ', err);
+      });
+  };
+
   const [hotels] = useState<Venue[]>([
     {
       name: "F1 Les Ulis",
@@ -913,8 +949,8 @@ function App() {
               <p class="match-description">${match.description}</p>
             `;
             
-            // Boutons d'édition en mode édition
-            if (isEditing) {
+            // Boutons d'édition en mode édition et admin seulement
+            if (isEditing && isAdminMode) {
               const matchActionsDiv = document.createElement('div');
               matchActionsDiv.className = 'match-actions';
               
@@ -945,8 +981,8 @@ function App() {
           popupContent.appendChild(matchesListDiv);
         }
 
-        // Ajouter les boutons d'édition si on est en mode édition
-        if (isEditing) {
+        // Ajouter les boutons d'édition si on est en mode édition et admin
+        if (isEditing && isAdminMode) {
           // Boutons d'édition
           const editButtonsContainer = document.createElement('div');
           editButtonsContainer.className = 'popup-buttons';
@@ -998,27 +1034,25 @@ function App() {
       hotels.forEach(hotel => {
         const marker = L.marker([hotel.latitude, hotel.longitude], {
           icon: L.divIcon({
-            className: 'custom-marker hotel-marker',
-            html: `<div style="background-color: #1976D2; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏨</span>
-                   </div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
+            className: 'hotel-icon',
+            html: `<div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fa fa-hotel"></i></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12]
           })
         });
 
-        // Créer le contenu du popup pour l'hôtel
+        // Créer le contenu du popup
         const popupContent = document.createElement('div');
-        popupContent.className = 'venue-popup';
+        popupContent.className = 'hotel-popup';
         
         // Contenu de base de l'hôtel
         popupContent.innerHTML = `
           <h3>${hotel.name}</h3>
           <p>${hotel.description}</p>
-          <p class="venue-address">${hotel.address}</p>
+          <p class="hotel-address">${hotel.address || `${hotel.latitude}, ${hotel.longitude}`}</p>
         `;
-        
+
         // Boutons d'actions
         const buttonsContainer = document.createElement('div');
         buttonsContainer.className = 'popup-buttons';
@@ -1043,8 +1077,39 @@ function App() {
         
         popupContent.appendChild(buttonsContainer);
 
+        // Ajouter les boutons d'édition si on est en mode édition et admin
+        if (isEditing && isAdminMode) {
+          // Boutons d'édition
+          const editButtonsContainer = document.createElement('div');
+          editButtonsContainer.className = 'popup-buttons';
+          
+          // Bouton Modifier
+          const editButton = document.createElement('button');
+          editButton.className = 'edit-button';
+          editButton.textContent = 'Modifier cet hôtel';
+          editButton.addEventListener('click', () => {
+            startEditingHotel(hotel);
+          });
+          editButtonsContainer.appendChild(editButton);
+          
+          // Bouton Supprimer
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'delete-button';
+          deleteButton.textContent = 'Supprimer cet hôtel';
+          deleteButton.addEventListener('click', () => {
+            deleteHotel(hotel.id || '');
+          });
+          editButtonsContainer.appendChild(deleteButton);
+          
+          popupContent.appendChild(editButtonsContainer);
+        }
+
         marker.bindPopup(popupContent);
         
+        marker.on('click', () => {
+          handlePopupOpen && handlePopupOpen(hotel.id || '');
+        });
+
         if (mapRef.current) {
           marker.addTo(mapRef.current);
           markersRef.current.push(marker);
@@ -1108,7 +1173,32 @@ function App() {
         }
       });
     }
-  }, [venues, hotels, parties, isEditing]);
+  }, [venues, hotels, parties, isEditing, isAdminMode]);
+
+  // Fonctions pour la gestion des hôtels
+  const startEditingHotel = (hotel: Venue) => {
+    setEditingVenue({ id: hotel.id || '', venue: hotel });
+    setIsEditing(true);
+    setIsAddingPlace(true);
+    // Pré-remplir les champs du formulaire avec les données de l'hôtel
+    setNewVenueName(hotel.name);
+    setNewVenueDescription(hotel.description);
+    setNewVenueAddress(hotel.address || '');
+  };
+
+  const deleteHotel = (hotelId: string) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet hôtel ?")) {
+      // Mettre à jour la liste des hôtels en local
+      const updatedHotels = hotels.filter(h => h.id !== hotelId);
+      // Mettre à jour l'état
+      setVenues(prevVenues => ({
+        ...prevVenues,
+        hotels: updatedHotels
+      }));
+      // Si firebase est utilisé, sauvegarder les changements
+      // Cette partie serait à adapter selon votre logique de sauvegarde
+    }
+  };
 
   return (
     <div className="app">
@@ -1127,19 +1217,21 @@ function App() {
               <option value="osmfr">OSM France</option>
             </select>
           )}
-          <button 
-            className={`edit-button ${isEditing ? 'active' : ''}`}
-            onClick={() => {
-              setIsEditing(!isEditing);
-              if (isEditing) {
-                setIsAddingPlace(false);
-                setEditingVenue({ id: null, venue: null });
-              }
-            }}
-          >
-            {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
-          </button>
-          {isEditing && (
+          {isAdminMode && (
+            <button 
+              className={`edit-button ${isEditing ? 'active' : ''}`}
+              onClick={() => {
+                setIsEditing(!isEditing);
+                if (isEditing) {
+                  setIsAddingPlace(false);
+                  setEditingVenue({ id: null, venue: null });
+                }
+              }}
+            >
+              {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
+            </button>
+          )}
+          {isAdminMode && isEditing && (
             <button 
               className="add-place-button"
               onClick={() => {
@@ -1158,6 +1250,23 @@ function App() {
             >
               Ajouter un lieu
             </button>
+          )}
+          {/* Boutons pour générer et copier les liens */}
+          {isAdminMode && (
+            <div className="link-buttons">
+              <button 
+                className="link-button admin-link"
+                onClick={() => copyLink(generateLinks().adminLink, 'administrateur')}
+              >
+                Copier lien admin
+              </button>
+              <button 
+                className="link-button visitor-link"
+                onClick={() => copyLink(generateLinks().visitorLink, 'visiteur')}
+              >
+                Copier lien visiteur
+              </button>
+            </div>
           )}
           {(isAddingPlace || editingVenue.id) && (
             <div className="edit-form">

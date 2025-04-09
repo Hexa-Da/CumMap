@@ -1460,3 +1460,49 @@ html, body, #root {
 .leaflet-left {
   z-index: 900 !important;
 }
+
+/* Styles pour les boutons de lien */
+.link-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.link-button {
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  color: white;
+}
+
+.admin-link {
+  background-color: #3f51b5;
+}
+
+.admin-link:hover {
+  background-color: #303f9f;
+}
+
+.visitor-link {
+  background-color: #4caf50;
+}
+
+.visitor-link:hover {
+  background-color: #388e3c;
+}
+
+@media (max-width: 768px) {
+  .link-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .link-button {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}
