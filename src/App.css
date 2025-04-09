@@ -972,19 +972,39 @@ html, body, #root {
 }
 
 .popup-buttons .edit-button {
-  background-color: var(--primary-color);
+  background-color: #FF9800; /* Orange */
   color: white;
   border: none;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  width: 100%;
   transition: all 0.3s ease;
 }
 
 .popup-buttons .edit-button:hover {
-  background-color: #1565C0;
+  background-color: #F57C00; /* Orange foncé */
   transform: translateY(-1px);
+}
+
+.popup-buttons .edit-button:active {
+  transform: translateY(0);
+  background-color: #EF6C00;
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup-buttons .edit-button {
+    background-color: #FFB74D; /* Orange clair */
+  }
+
+  .popup-buttons .edit-button:hover {
+    background-color: #FFA726;
+  }
+  
+  .popup-buttons .edit-button:active {
+    background-color: #FF9800;
+  }
 }
 
 .popup-buttons .delete-button {
@@ -994,13 +1014,33 @@ html, body, #root {
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  width: 100%;
   transition: all 0.3s ease;
 }
 
 .popup-buttons .delete-button:hover {
   background-color: #C62828;
   transform: translateY(-1px);
+}
+
+.popup-buttons .delete-button:active {
+  transform: translateY(0);
+  background-color: #B71C1C;
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup-buttons .delete-button {
+    background-color: #EF5350;
+  }
+
+  .popup-buttons .delete-button:hover {
+    background-color: #E53935;
+  }
+  
+  .popup-buttons .delete-button:active {
+    background-color: #D32F2F;
+  }
 }
 
 .emoji-preview {
