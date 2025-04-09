@@ -44,23 +44,26 @@ interface Venue {
 // Composant pour la géolocalisation
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null);
-
-  const map = useMapEvents({
-    locationfound(e) {
-      setPosition(e.latlng);
-      map.flyTo(e.latlng, map.getZoom());
-    },
-  });
+  const map = useMap();
 
   useEffect(() => {
-    const venuesRef = ref(db, 'venues');
-    onValue(venuesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setVenues(Object.values(data));
-      }
-    });
-  }, []);
+    if (map) {
+      map.locate({
+        setView: true,
+        maxZoom: 16,
+        timeout: 10000
+      });
+
+      map.on('locationfound', (e) => {
+        setPosition(e.latlng);
+        map.flyTo(e.latlng, map.getZoom());
+      });
+
+      map.on('locationerror', (e) => {
+        console.error('Erreur de géolocalisation:', e.message);
+      });
+    }
+  }, [map]);
 
   return position === null ? null : (
     <Marker position={position} icon={UserIcon}>
@@ -294,7 +297,7 @@ function App() {
                 click: () => handlePopupOpen(venue.id || ''),
               }}
             >
-              <Popup onClose={handlePopupClose}>
+              <Popup>
                 <div className="venue-popup">
                   <h3>{venue.name}</h3>
                   <p>{venue.description}</p>
