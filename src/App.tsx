@@ -126,41 +126,45 @@ function LocationMarker() {
     return (
       <div className="error-message">
         {error}
-        <button 
-          onClick={() => {
-            setError(null);
-            // Réessayer la géolocalisation
-            if (map) {
-              const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-              };
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  const { latitude, longitude } = pos.coords;
-                  const newPosition = new LatLng(latitude, longitude);
-                  setPosition(newPosition);
-                  map.flyTo(newPosition, 16);
-                },
-                (err) => {
-                  console.error('Erreur de géolocalisation:', err);
-                },
-                options
-              );
-            }
-          }}
-          style={{
-            marginLeft: '10px',
-            padding: '5px 10px',
-            background: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Réessayer
-        </button>
+        <div className="retry-container" onClick={() => {
+          setError(null);
+          // Réessayer la géolocalisation
+          if (map) {
+            const options = {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            };
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const newPosition = new LatLng(latitude, longitude);
+                setPosition(newPosition);
+                map.flyTo(newPosition, 16);
+              },
+              (err) => {
+                console.error('Erreur de géolocalisation:', err);
+                let errorMessage = "Erreur de géolocalisation";
+                switch (err.code) {
+                  case err.PERMISSION_DENIED:
+                    errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
+                    break;
+                  case err.POSITION_UNAVAILABLE:
+                    errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
+                    break;
+                  case err.TIMEOUT:
+                    errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+                    break;
+                }
+                setError(errorMessage);
+              },
+              options
+            );
+          }
+        }}>
+          <div className="retry-icon"></div>
+          <span>Réessayer</span>
+        </div>
       </div>
     );
   }
@@ -345,6 +349,25 @@ function App() {
     }
   };
 
+  // Fonction pour supprimer un match
+  const deleteMatch = async (venueId: string, matchId: number) => {
+    const venueRef = ref(db, `venues/${venueId}`);
+    const venue = venues.find(v => v.id === venueId);
+    
+    if (venue) {
+      const updatedMatches = venue.matches.filter(match => match.id !== matchId);
+      await set(venueRef, {
+        ...venue,
+        matches: updatedMatches
+      });
+    }
+  };
+
+  // Fonction pour vérifier si un match est passé
+  const isMatchPassed = (matchDate: string) => {
+    return new Date(matchDate) < new Date();
+  };
+
   // Fonction pour ouvrir dans Google Maps
   const openInGoogleMaps = (venue: Venue) => {
     const query = encodeURIComponent(venue.address || `${venue.position[0]},${venue.position[1]}`);
@@ -447,9 +470,10 @@ function App() {
         {locationError ? (
           <div className="location-error">
             <p>{locationError}</p>
-            <button className="retry-button" onClick={retryLocation}>
-              Réessayer
-            </button>
+            <div className="retry-container" onClick={retryLocation}>
+              <div className="retry-icon"></div>
+              <span>Réessayer</span>
+            </div>
           </div>
         ) : locationLoading ? (
           <div className="loading">Chargement de la carte...</div>
@@ -513,6 +537,15 @@ function App() {
                                   >
                                     Enregistrer
                                   </button>
+                                  <button 
+                                    className="cancel-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      finishEditingMatch();
+                                    }}
+                                  >
+                                    Annuler
+                                  </button>
                                 </div>
                               </div>
                             ) : (
@@ -521,15 +554,26 @@ function App() {
                                 <p className="match-teams">{match.teams}</p>
                                 <p className="match-description">{match.description}</p>
                                 {isEditing && (
-                                  <button 
-                                    className="edit-match-button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      startEditingMatch(venue.id || '', match);
-                                    }}
-                                  >
-                                    Modifier
-                                  </button>
+                                  <div className="match-actions">
+                                    <button 
+                                      className="edit-match-button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        startEditingMatch(venue.id || '', match);
+                                      }}
+                                    >
+                                      Modifier
+                                    </button>
+                                    <button 
+                                      className="delete-match-button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteMatch(venue.id || '', match.id);
+                                      }}
+                                    >
+                                      Supprimer
+                                    </button>
+                                  </div>
                                 )}
                               </>
                             )}
