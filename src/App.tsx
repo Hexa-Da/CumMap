@@ -1256,16 +1256,13 @@ function App() {
                     >
                       <div className="event-header">
                         <span className="event-type-badge">
-                          {event.type === 'match' ? '🏆 Match' : '🎉 Soirée'}
+                          {event.type === 'match' && venues.find(v => v.name === event.venue) 
+                            ? getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')
+                            : (event.type === 'match' ? '🏆 Match' : '🎉 Soirée')}
                         </span>
                         <span className="event-date">{formatDate(event.date)}</span>
                       </div>
                       <div className="event-title-container">
-                        {event.type === 'match' && venues.find(v => v.name === event.venue) && (
-                          <span className="event-sport-icon">
-                            {getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')}
-                          </span>
-                        )}
                         <h3 className="event-name">{event.name}</h3>
                       </div>
                       {event.type === 'match' && event.venue && (

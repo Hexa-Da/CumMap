@@ -1099,6 +1099,11 @@ html, body, #root {
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 24px;
 }
 
 .event-date {
@@ -1294,6 +1299,11 @@ html, body, #root {
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 24px;
 }
 
 .event-date {
