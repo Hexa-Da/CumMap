@@ -67,7 +67,11 @@ interface HistoryAction {
 
 // Initialiser Google Analytics
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXX';
+console.log('Valeur directe VITE_GA_MEASUREMENT_ID:', import.meta.env.VITE_GA_MEASUREMENT_ID);
+console.log('Toutes les variables d\'environnement:', import.meta.env);
+console.log('Initialisation de Google Analytics avec ID:', GA_MEASUREMENT_ID);
 ReactGA.initialize(GA_MEASUREMENT_ID);
+console.log('Google Analytics initialisé');
 
 // Composant pour la géolocalisation
 function LocationMarker() {
@@ -1431,7 +1435,9 @@ function App() {
 
   // Enregistrer la visite de la page au chargement
   useEffect(() => {
+    console.log('Envoi du pageview à Google Analytics');
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+    console.log('Pageview envoyé');
     
     // Fonction pour enregistrer les événements personnalisés
     const trackEvent = (category: string, action: string) => {
