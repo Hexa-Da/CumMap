@@ -1061,6 +1061,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 5px var(--shadow-color);
+  transform: rotate(180deg);
 }
 
 /* Styles pour la liste des événements */
@@ -1256,6 +1257,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   min-width: 30px;
+  transform: rotate(180deg);
 }
 
 .event-name {
