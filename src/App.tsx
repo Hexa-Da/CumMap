@@ -353,6 +353,7 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
+  const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
   
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
@@ -995,6 +996,7 @@ function App() {
       teams?: string;
       venue?: string;
       isPassed: boolean;
+      sport?: string; // Ajout du sport pour le filtrage
     }> = [];
 
     // Ajouter les matchs
@@ -1011,7 +1013,8 @@ function App() {
             type: 'match',
             teams: match.teams,
             venue: venue.name,
-            isPassed: isMatchPassed(match.date)
+            isPassed: isMatchPassed(match.date),
+            sport: venue.sport // Ajout du sport
           });
         });
       }
@@ -1027,12 +1030,26 @@ function App() {
         address: party.address || `${party.latitude}, ${party.longitude}`,
         location: [party.latitude, party.longitude],
         type: 'party',
-        isPassed: isMatchPassed(party.date)
+        isPassed: isMatchPassed(party.date),
+        sport: party.sport // Ajout du sport
       });
     });
 
     // Trier par date (du plus récent au plus ancien)
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  // Fonction pour filtrer les événements
+  const getFilteredEvents = () => {
+    const allEvents = getAllEvents();
+    if (eventFilter === 'all') return allEvents;
+    
+    return allEvents.filter(event => {
+      if (eventFilter === 'party') {
+        return event.type === 'party';
+      }
+      return event.type === 'match' && event.sport === eventFilter;
+    });
   };
 
   // Fonction pour formater la date
@@ -1755,8 +1772,46 @@ function App() {
             {activeTab === 'events' && (
               <div className="events-panel">
                 <h2>Événements à venir</h2>
+                <div className="event-filters">
+                  <button 
+                    className={`filter-button ${eventFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('all')}
+                  >
+                    Tous
+                  </button>
+                  <button 
+                    className={`filter-button ${eventFilter === 'party' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('party')}
+                  >
+                    Soirées
+                  </button>
+                  <button 
+                    className={`filter-button ${eventFilter === 'Football' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('Football')}
+                  >
+                    Football
+                  </button>
+                  <button 
+                    className={`filter-button ${eventFilter === 'Basketball' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('Basketball')}
+                  >
+                    Basketball
+                  </button>
+                  <button 
+                    className={`filter-button ${eventFilter === 'Handball' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('Handball')}
+                  >
+                    Handball
+                  </button>
+                  <button 
+                    className={`filter-button ${eventFilter === 'Rugby' ? 'active' : ''}`}
+                    onClick={() => setEventFilter('Rugby')}
+                  >
+                    Rugby
+                  </button>
+                </div>
                 <div className="events-list">
-                  {getAllEvents().map(event => (
+                  {getFilteredEvents().map(event => (
                     <div 
                       key={event.id} 
                       className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent === event.id ? 'selected' : ''}`}

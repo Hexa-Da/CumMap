@@ -1227,24 +1227,60 @@ html, body, #root {
   position: absolute;
   top: 0;
   left: 0;
-  width: 350px;
-  max-width: 100%;
+  width: 300px;
   height: 100%;
   background-color: var(--bg-color);
-  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
   overflow-y: auto;
-  z-index: 990;
-  padding: 1rem;
-  transition: transform 0.3s ease;
-  margin-top: 0;
+  padding: 20px;
 }
 
-.events-panel h2 {
-  text-align: center;
-  margin: 2.5rem 0 1rem 0;
+.event-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.filter-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--bg-color);
   color: var(--text-color);
-  font-size: 1.3rem;
-  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.filter-button:hover {
+  background-color: var(--bg-secondary);
+  transform: translateY(-1px);
+}
+
+.filter-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-button {
+    background-color: var(--bg-secondary);
+  }
+  
+  .filter-button:hover {
+    background-color: var(--bg-color);
+  }
+  
+  .filter-button.active {
+    background-color: var(--primary-color);
+  }
 }
 
 /* Styles pour la liste d'événements */
