@@ -639,6 +639,11 @@ function App() {
     // Vérifier les droits admin seulement au moment de la suppression
     if (!checkAdminRights()) return;
     
+    // Demander confirmation avant la suppression
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible.')) {
+      return;
+    }
+    
     // Sauvegarder l'état du lieu avant suppression pour pouvoir annuler
     const venue = venues.find(v => v.id === id);
     if (venue) {
@@ -788,6 +793,11 @@ function App() {
   const deleteMatch = async (venueId: string, matchId: number) => {
     // Vérifier les droits admin seulement au moment de la suppression
     if (!checkAdminRights()) return;
+    
+    // Demander confirmation avant la suppression
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce match ? Cette action est irréversible.')) {
+      return;
+    }
     
     const venueRef = ref(db, `venues/${venueId}`);
     const venue = venues.find(v => v.id === venueId);
