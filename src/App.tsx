@@ -1079,6 +1079,7 @@ function App() {
       if (eventFilter === 'party') {
         return event.type === 'party';
       }
+      // Vérifier si le sport de l'événement correspond au filtre
       return event.type === 'match' && event.sport === eventFilter;
     });
   };
@@ -1578,6 +1579,7 @@ function App() {
         }
       }
     } else {
+      // Pour les matchs, y compris la natation
       const venue = venues.find(v => v.id === event.venueId);
       if (venue) {
         mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
