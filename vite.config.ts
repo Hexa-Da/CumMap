@@ -12,17 +12,7 @@ export default defineConfig(({ mode }) => {
     base: './',
     build: {
       rollupOptions: {
-        external: ['uuid'],
-        output: {
-          globals: {
-            uuid: 'uuid'
-          }
-        }
-      }
-    },
-    resolve: {
-      alias: {
-        'uuid': 'uuid/dist/esm-browser/index.js'
+        external: ['uuid']
       }
     },
     optimizeDeps: {
