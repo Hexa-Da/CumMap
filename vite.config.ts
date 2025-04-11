@@ -24,6 +24,9 @@ export default defineConfig(({ mode }) => {
       alias: {
         'uuid': 'uuid/dist/esm-browser/index.js'
       }
+    },
+    optimizeDeps: {
+      include: ['uuid']
     }
   }
 })
