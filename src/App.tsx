@@ -468,7 +468,6 @@ function App() {
 
   // Fonction pour vérifier les droits d'administration avant d'exécuter une action
   const checkAdminRights = () => {
-    // Vérifier si on est en mode admin
     if (!isAdminMode) {
       alert('Cette action nécessite des droits d\'administrateur. Veuillez utiliser le lien administrateur.');
       return false;
@@ -616,6 +615,8 @@ function App() {
 
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
+    if (!checkAdminRights()) return;
+
     if (!newVenueName || !newVenueDescription || !newVenueAddress) {
       return;
     }
@@ -668,6 +669,8 @@ function App() {
 
   // Fonction pour supprimer un lieu
   const deleteVenue = async (id: string) => {
+    if (!checkAdminRights()) return;
+
     // Demander confirmation avant la suppression
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible.')) {
       return;
@@ -818,6 +821,8 @@ function App() {
 
   // Fonction pour supprimer un match
   const deleteMatch = async (venueId: string, matchId: number) => {
+    if (!checkAdminRights()) return;
+
     // Demander confirmation avant la suppression
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce match ? Cette action est irréversible.')) {
       return;
@@ -854,7 +859,7 @@ function App() {
   // Fonction pour mettre à jour un lieu existant
   const handleUpdateVenue = async () => {
     if (!checkAdminRights()) return;
-    
+
     if (editingVenue.id && newVenueName && newVenueDescription) {
       // Trouver le lieu dans la liste
       const venue = venues.find(v => v.id === editingVenue.id);
@@ -974,6 +979,8 @@ function App() {
 
   // Fonction pour commencer l'édition d'un lieu
   const startEditingVenue = (venue: Venue) => {
+    if (!checkAdminRights()) return;
+
     // Fermer le formulaire d'édition de match s'il est ouvert
     if (editingMatch.venueId) {
       finishEditingMatch();
@@ -1449,6 +1456,8 @@ function App() {
 
   // Fonction pour commencer l'édition d'un match
   const startEditingMatch = (venueId: string, match: Match | null) => {
+    if (!checkAdminRights()) return;
+
     // Fermer le formulaire d'édition de lieu s'il est ouvert
     if (editingVenue.id || isAddingPlace) {
       setEditingVenue({ id: null, venue: null });
