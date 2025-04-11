@@ -1527,15 +1527,15 @@ function App() {
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
+    setActiveTab('map'); // Fermer le panneau en revenant à l'onglet map
+    
     if (event.type === 'party') {
-      // Extraire l'ID de la soirée du format "party-{id}"
       const partyId = event.id.split('-')[1];
       const party = parties.find(p => p.id === partyId || p.name === partyId);
       if (party) {
         mapRef.current?.flyTo([party.latitude, party.longitude], 18, {
           duration: 2.5
         });
-        // Trouver et ouvrir le popup du marqueur de la soirée
         const marker = markersRef.current.find(m => 
           m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
         );
@@ -1551,7 +1551,6 @@ function App() {
         mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
           duration: 2.5
         });
-        // Trouver et ouvrir le popup du marqueur du lieu
         const marker = markersRef.current.find(m => 
           m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
         );
@@ -1796,7 +1795,7 @@ function App() {
               <div className="events-panel">
                 <div className="events-panel-header">
                   <h3>Événements à venir</h3>
-                                <button 
+                  <button 
                     className="close-events-button"
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
@@ -1804,8 +1803,8 @@ function App() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                                </button>
-                              </div>
+                  </button>
+                </div>
                 <div className="event-filters">
                   <select 
                     className="filter-select"
@@ -1824,7 +1823,7 @@ function App() {
                     <option value="Tennis">Tennis</option>
                     <option value="Trail">Trail</option>
                   </select>
-                            </div>
+                </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
@@ -1832,15 +1831,15 @@ function App() {
                       className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent?.id === event.id ? 'selected' : ''}`}
                       onClick={() => {
                         setSelectedEvent(event);
+                        setActiveTab('map'); // Fermer le panneau en revenant à l'onglet map
+                        
                         if (event.type === 'party') {
-                          // Extraire l'ID de la soirée du format "party-{id}"
                           const partyId = event.id.split('-')[1];
                           const party = parties.find(p => p.id === partyId || p.name === partyId);
                           if (party) {
                             mapRef.current?.flyTo([party.latitude, party.longitude], 18, {
                               duration: 2.5
                             });
-                            // Trouver et ouvrir le popup du marqueur de la soirée
                             const marker = markersRef.current.find(m => 
                               m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
                             );
@@ -1856,7 +1855,6 @@ function App() {
                             mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
                               duration: 2.5
                             });
-                            // Trouver et ouvrir le popup du marqueur du lieu
                             const marker = markersRef.current.find(m => 
                               m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
                             );
@@ -1886,24 +1884,24 @@ function App() {
                       <p className="event-description">{event.description}</p>
                       <p className="event-address">{event.address}</p>
                       <div className="event-actions">
-                                <button 
+                        <button 
                           className="maps-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
-                                  }}
-                                >
+                          }}
+                        >
                           Ouvrir dans Google Maps
-                                </button>
-                      <button 
+                        </button>
+                        <button 
                           className="copy-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                             copyToClipboard(event.address);
-                        }}
-                      >
+                          }}
+                        >
                           Copier l'adresse
-                      </button>
+                        </button>
                       </div>
                     </div>
                   ))}
