@@ -10,10 +10,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: './',
+    optimizeDeps: {
+      include: ['uuid']
+    },
     build: {
-      rollupOptions: {
-        external: ['uuid'],
-      },
+      commonjsOptions: {
+        include: [/uuid/]
+      }
     }
   }
 })
