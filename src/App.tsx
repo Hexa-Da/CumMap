@@ -433,7 +433,18 @@ function App() {
 
   // Modifier la fonction getSportIcon pour utiliser des emojis
   const getSportIcon = (sport: string) => {
-    return sportEmojis[sport] || '🏟️';
+    const sportIcons: { [key: string]: string } = {
+      'Football': '⚽',
+      'Basketball': '🏀',
+      'Handball': '🤾',
+      'Rugby': '🏉',
+      'Ultimate': '🥏', // Nouvelle icône pour l'Ultimate
+      'Natation': '🏊', // Nouvelle icône pour la Natation
+      'Badminton': '🏸',
+      'Tennis': '🎾',
+      'Trail': '🏃'
+    };
+    return sportIcons[sport] || '🏆';
   };
 
   // Fonction pour vérifier les droits d'administration avant d'exécuter une action
