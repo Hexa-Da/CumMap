@@ -399,6 +399,20 @@ function App() {
     Hotel: '🏨'
   };
 
+  const sports = [
+    'Football',
+    'Basketball',
+    'Handball',
+    'Rugby',
+    'Ultimate',
+    'Natation',
+    'Badminton',
+    'Tennis',
+    'Trail',
+    'Volley-ball',
+    'Ping-pong'
+  ];
+
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
     try {
@@ -442,7 +456,9 @@ function App() {
       'Natation': '🏊',
       'Badminton': '🏸',
       'Tennis': '🎾',
-      'Trail': '🏃'
+      'Trail': '🏃',
+      'Volley-ball': '🏐',
+      'Ping-pong': '🏓'
     };
     return sportIcons[sport] || '🏆';
   };
@@ -1828,6 +1844,8 @@ function App() {
                     <option value="Badminton">Badminton</option>
                     <option value="Tennis">Tennis</option>
                     <option value="Trail">Trail</option>
+                    <option value="Volley-ball">Volley-ball</option>
+                    <option value="Ping-pong">Ping-pong</option>
                   </select>
                             </div>
                 <div className="events-list">
