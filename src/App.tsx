@@ -385,6 +385,8 @@ function App() {
   // État pour gérer les droits d'admin
   const [isAdmin, setIsAdmin] = useState(true);
 
+  const [isEventsPanelOpen, setIsEventsPanelOpen] = useState(false);
+
   const mapStyles = {
     osm: {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -782,7 +784,7 @@ function App() {
       
       try {
         await set(venueRef, {
-          ...venue,
+            ...venue,
           matches: updatedMatches
         });
         
@@ -921,7 +923,7 @@ function App() {
             console.error('Erreur lors de la géolocalisation de l\'adresse:', error);
             // Mettre à jour sans changer les coordonnées
             const updatedVenue = {
-              ...venue,
+          ...venue,
               name: newVenueName,
               description: newVenueDescription,
               address: newVenueAddress,
@@ -1833,10 +1835,8 @@ function App() {
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
                   >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                                </button>
+                    Fermé
+                  </button>
                               </div>
                 <div className="event-filters">
                   <select 
