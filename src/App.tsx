@@ -468,14 +468,12 @@ function App() {
 
   // Fonction pour vérifier les droits d'administration avant d'exécuter une action
   const checkAdminRights = () => {
-    // En mode développement, toujours retourner true
-    if (process.env.NODE_ENV === 'development') {
-      return true;
+    // Vérifier si on est en mode admin
+    if (!isAdminMode) {
+      alert('Cette action nécessite des droits d\'administrateur.');
+      return false;
     }
-    
-    // En production, vérifier le mot de passe
-    const password = prompt('Entrez le mot de passe admin:');
-    return password === 'admin';
+    return true;
   };
 
   // Fonction pour ajouter une action à l'historique
