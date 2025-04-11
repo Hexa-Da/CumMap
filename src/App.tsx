@@ -8,6 +8,7 @@ import { db } from './firebase';
 import React from 'react';
 import L from 'leaflet';
 import ReactGA from 'react-ga4';
+import { v4 as uuidv4 } from 'uuid';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -37,26 +38,40 @@ let HotelIcon = new Icon({
   className: 'hotel-icon'
 });
 
-interface Match {
-  id: number;
-  date: string;
-  teams: string;
-  description: string;
-}
-
-interface Venue {
-  id?: string;  // ID Firebase est une string
+interface BaseItem {
+  id: string;
   name: string;
-  position: [number, number];
   description: string;
-  matches: Match[];
-  address?: string;
-  type?: 'hotel' | 'venue' | 'party';
-  sport: string;
-  date: string;
+  address: string;
   latitude: number;
   longitude: number;
+  position: [number, number];
+  date: string;
+  emoji: string;
+  sport: string;
 }
+
+interface Venue extends BaseItem {
+  type: 'venue';
+  matches: Match[];
+}
+
+interface Match extends BaseItem {
+  type: 'match';
+  teams: string;
+  time: string;
+  venueId: string;
+}
+
+interface Hotel extends BaseItem {
+  type: 'hotel';
+}
+
+interface Party extends BaseItem {
+  type: 'party';
+}
+
+type Place = Venue | Hotel | Party;
 
 // Interface pour les actions d'historique
 interface HistoryAction {
@@ -240,69 +255,74 @@ function App() {
     setIsEditing(false);
   }, []);
   
-  const [hotels, setHotels] = useState<Venue[]>([
+  const [hotels, setHotels] = useState<Hotel[]>([
     {
+      id: '1',
       name: "F1 Les Ulis",
       position: [48.6819, 2.1694],
       description: "Hôtel F1 Les Ulis - Courtaboeuf",
       address: "Zi Courtaboeuf, Rue Rio Solado N°2, 91940 Les Ulis",
       type: 'hotel',
-      matches: [],
-      sport: 'Hotel',
       date: '',
       latitude: 48.6819,
-      longitude: 2.1694
+      longitude: 2.1694,
+      emoji: '🏨',
+      sport: 'Hotel'
     },
     {
+      id: '2',
       name: "F1 Orly-Rungis",
       position: [48.7486, 2.3522],
       description: "Hôtel F1 Orly-Rungis",
       address: "7 Rue du Pont des Halles, 94150 Rungis",
       type: 'hotel',
-      matches: [],
-      sport: 'Hotel',
       date: '',
       latitude: 48.7486,
-      longitude: 2.3522
+      longitude: 2.3522,
+      emoji: '🏨',
+      sport: 'Hotel'
     }
   ]);
 
-  const [parties] = useState<Venue[]>([
+  const [parties] = useState<Party[]>([
     {
+      id: '1',
       name: "La Palmeraie",
       position: [48.8392, 2.2756],
       description: "Soirée Pompoms du 24 au 25 avril 2025, 21h-3h",
       address: "20, rue du Colonel Pierre Avia, 75015 Paris",
       type: 'party',
-      matches: [],
-      sport: 'Pompom',
       date: '2025-04-24T21:00:00',
       latitude: 48.8392,
-      longitude: 2.2756
+      longitude: 2.2756,
+      emoji: '🎉',
+      sport: 'Pompom'
     },
     {
+      id: '2',
       name: "Bridge Club",
       position: [48.8655, 2.3144],
       description: "Soirée du 25 au 26 avril 2025, 21h-3h",
       address: "3, Port des Champs-Élysées, 75008 Paris",
       type: 'party',
-      matches: [],
-      sport: 'Party',
       date: '2025-04-25T21:00:00',
       latitude: 48.8655,
-      longitude: 2.3144
+      longitude: 2.3144,
+      emoji: '🎉',
+      sport: 'Party'
     },
     {
+      id: '3',
       name: "Terminal 7",
       position: [48.8323, 2.2883],
       description: "Soirée du 26 au 27 avril 2025, 22h-4h",
       address: "1, Place de la Porte de Versailles Pavillon 7 - Etage 7.4, 75015 Paris",
       type: 'party',
-      matches: [],
-      sport: 'Party',
       date: '2025-04-26T22:00:00',
       latitude: 48.8323,
-      longitude: 2.2883
+      longitude: 2.2883,
+      emoji: '🎉',
+      sport: 'Party'
     }
   ]);
 
@@ -319,7 +339,8 @@ function App() {
           sport: value.sport || '',
           date: value.date || '',
           latitude: value.position ? value.position[0] : 0,
-          longitude: value.position ? value.position[1] : 0
+          longitude: value.position ? value.position[1] : 0,
+          emoji: value.emoji || ''
         }));
         setVenues(venuesArray);
       } else {
@@ -333,6 +354,7 @@ function App() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingPlace, setIsAddingPlace] = useState(false);
+  const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
@@ -514,7 +536,8 @@ function App() {
               sport: venueData.sport,
               date: venueData.date,
               latitude: venueData.latitude,
-              longitude: venueData.longitude
+              longitude: venueData.longitude,
+              emoji: venueData.emoji
             });
           }
           break;
@@ -638,7 +661,9 @@ function App() {
       sport: selectedSport,
       date: '',
       latitude: coordinates[0],
-      longitude: coordinates[1]
+      longitude: coordinates[1],
+      emoji: selectedEmoji,
+      type: 'venue'
     };
 
     try {
@@ -697,7 +722,8 @@ function App() {
             sport: venue.sport,
             date: venue.date,
             latitude: venue.latitude,
-            longitude: venue.longitude
+            longitude: venue.longitude,
+            emoji: venue.emoji
           });
         }
       });
@@ -707,77 +733,50 @@ function App() {
   };
 
   // Fonction pour ajouter un nouveau match
-  const handleAddMatch = async (venueId: string) => {
-    if (!checkAdminRights()) return;
-    
-    if (newMatch.date && newMatch.teams && newMatch.description) {
-      const venueRef = ref(db, `venues/${venueId}`);
-      const venue = venues.find(v => v.id === venueId);
-      
-      if (venue) {
-        const matches = [...(venue.matches || [])];
-          const newMatchWithId = {
-          id: matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1,
-            ...newMatch
-          };
-        matches.push(newMatchWithId);
-        
-        try {
-          const venueBefore = { ...venue };
-          await set(venueRef, {
-            ...venue,
-            matches
-          });
-          
-          // Ajouter l'action à l'historique avec une fonction d'annulation
-          addToHistory({
-            type: 'ADD_MATCH',
-            data: { venueId, match: newMatchWithId },
-            undo: async () => {
-              const undoRef = ref(db, `venues/${venueId}`);
-              await set(undoRef, venueBefore);
-            }
-          });
-          
-      setNewMatch({ date: '', teams: '', description: '' });
-          // Fermer uniquement le formulaire d'édition du match
-          setEditingMatch({ venueId: null, match: null });
-          // Conserver l'état du popup ouvert pour voir le match ajouté
-          setOpenPopup(venueId);
-          
-          // Forcer le rechargement du popup pour afficher le nouveau match
-          const marker = markersRef.current.find(m => 
-            m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
-          );
-          
-          if (marker) {
-            // Fermer puis rouvrir le popup pour actualiser son contenu
-            setTimeout(() => {
-              marker.openPopup();
-            }, 300);
-          }
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout du match:', error);
-          alert('Une erreur est survenue lors de l\'ajout du match.');
-        }
-      }
+  const handleAddMatch = (venueId: string) => {
+    if (!isAdmin) {
+      alert('Seuls les administrateurs peuvent ajouter des matchs.');
+      return;
     }
+
+    const venue = venues.find(v => v.id === venueId);
+    if (!venue) return;
+
+    const matchId = uuidv4();
+    const newMatch: Match = {
+      id: matchId,
+      name: `${venue.name} - Match`,
+      description: '',
+      address: venue.address,
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      position: [venue.latitude, venue.longitude],
+      date: new Date().toISOString().split('T')[0],
+      type: 'match',
+      teams: '',
+      sport: venue.sport,
+      time: new Date().toTimeString().split(' ')[0],
+      venueId: venue.id,
+      emoji: venue.emoji
+    };
+    setNewMatch(newMatch);
+    setSelectedVenue(venue);
+    setIsAddingMatch(true);
   };
 
   // Fonction pour mettre à jour un match
-  const handleUpdateMatch = async (venueId: string, matchId: number, updatedData: Partial<Match>) => {
+  const handleUpdateMatch = async (venueId: string, matchId: string, updatedData: Partial<Match>) => {
     if (!checkAdminRights()) return;
     
     const venueRef = ref(db, `venues/${venueId}`);
     const venue = venues.find(v => v.id === venueId);
     
     if (venue) {
-      // Sauvegarder l'état avant modification pour pouvoir annuler
       const venueBefore = { ...venue };
       const matchBefore = venue.matches.find(m => m.id === matchId);
       
       const updatedMatches = venue.matches.map(match =>
-            match.id === matchId ? { ...match, ...updatedData } : match
+        match.id === matchId ? { ...match, ...updatedData } : match
       );
       
       try {
@@ -786,7 +785,6 @@ function App() {
           matches: updatedMatches
         });
         
-        // Ajouter l'action à l'historique avec une fonction d'annulation
         if (matchBefore) {
           addToHistory({
             type: 'UPDATE_MATCH',
@@ -798,16 +796,13 @@ function App() {
           });
         }
         
-        // Maintenir le popup ouvert après la mise à jour
         setOpenPopup(venueId);
         
-        // Forcer le rechargement du popup pour afficher les modifications
         const marker = markersRef.current.find(m => 
           m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
         );
         
         if (marker) {
-          // Fermer puis rouvrir le popup pour actualiser son contenu
           setTimeout(() => {
             marker.openPopup();
           }, 300);
@@ -820,7 +815,7 @@ function App() {
   };
 
   // Fonction pour supprimer un match
-  const deleteMatch = async (venueId: string, matchId: number) => {
+  const deleteMatch = async (venueId: string, matchId: string) => {
     if (!checkAdminRights()) return;
 
     // Demander confirmation avant la suppression
@@ -1084,23 +1079,26 @@ function App() {
     });
   };
 
-  // Fonction pour formater la date
-  const formatDate = (dateString: string) => {
+  // Fonction pour formater la date et l'heure
+  const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    return days[date.getDay()];
+    const day = days[date.getDay()];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day} ${hours}:${minutes}`;
   };
 
   // Fonction pour ouvrir dans Google Maps
-  const openInGoogleMaps = (venue: Venue) => {
+  const openInGoogleMaps = (place: Place) => {
     // Tracker l'ouverture dans Google Maps
     ReactGA.event({
       category: 'navigation',
       action: 'open_google_maps',
-      label: venue.name
+      label: place.name
     });
 
-    const query = encodeURIComponent(venue.address || `${venue.position[0]},${venue.position[1]}`);
+    const query = encodeURIComponent(place.address || `${place.latitude},${place.longitude}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
 
@@ -1253,7 +1251,7 @@ function App() {
             const matchItemDiv = document.createElement('div');
             matchItemDiv.className = `match-item ${isMatchPassed(match.date) ? 'match-passed' : ''}`;
             matchItemDiv.innerHTML = `
-              <p class="match-date">${formatDate(match.date)}</p>
+              <p class="match-date">${formatDateTime(match.date)}</p>
               <p class="match-teams">${match.teams}</p>
               <p class="match-description">${match.description}</p>
             `;
@@ -1865,43 +1863,7 @@ function App() {
                     <div 
                       key={event.id} 
                       className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent?.id === event.id ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setActiveTab('map'); // Fermer le panneau en revenant à l'onglet map
-                        
-                        if (event.type === 'party') {
-                          const partyId = event.id.split('-')[1];
-                          const party = parties.find(p => p.id === partyId || p.name === partyId);
-                          if (party) {
-                            mapRef.current?.flyTo([party.latitude, party.longitude], 18, {
-                              duration: 2.5
-                            });
-                            const marker = markersRef.current.find(m => 
-                              m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
-                            );
-                            if (marker) {
-                              setTimeout(() => {
-                                marker.openPopup();
-                              }, 2500);
-                            }
-                          }
-                        } else {
-                          const venue = venues.find(v => v.id === event.venueId);
-                          if (venue) {
-                            mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
-                              duration: 2.5
-                            });
-                            const marker = markersRef.current.find(m => 
-                              m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
-                            );
-                            if (marker) {
-                              setTimeout(() => {
-                                marker.openPopup();
-                              }, 2500);
-                            }
-                          }
-                        }
-                      }}
+                      onClick={() => handleEventSelect(event)}
                     >
                       <div className="event-header">
                         <span className="event-type-badge">
@@ -1909,7 +1871,7 @@ function App() {
                             ? `${getSportIcon(event.sport || '')} ${event.sport}`
                             : '🎉 Soirée'}
                         </span>
-                        <span className="event-date">{formatDate(event.date)}</span>
+                        <span className="event-date">{formatDateTime(event.date)}</span>
                       </div>
                       <div className="event-title-container">
                         <h3 className="event-name">{event.name}</h3>
