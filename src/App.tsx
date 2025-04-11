@@ -622,9 +622,9 @@ function App() {
             }
           });
           
-          setNewVenueName('');
-          setNewVenueDescription('');
-          setNewVenueAddress('');
+        setNewVenueName('');
+        setNewVenueDescription('');
+        setNewVenueAddress('');
           setSelectedSport('Football');
           // Fermer le formulaire d'ajout après avoir ajouté le lieu
           setIsAddingPlace(false);
@@ -640,9 +640,6 @@ function App() {
 
   // Fonction pour supprimer un lieu
   const deleteVenue = async (id: string) => {
-    // Vérifier les droits admin seulement au moment de la suppression
-    if (!checkAdminRights()) return;
-    
     // Demander confirmation avant la suppression
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible.')) {
       return;
@@ -674,7 +671,7 @@ function App() {
         }
       });
       
-      setSelectedVenue(null);
+    setSelectedVenue(null);
     }
   };
 
@@ -689,10 +686,10 @@ function App() {
       
       if (venue) {
         const matches = [...(venue.matches || [])];
-        const newMatchWithId = {
+          const newMatchWithId = {
           id: matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1,
-          ...newMatch
-        };
+            ...newMatch
+          };
         matches.push(newMatchWithId);
         
         try {
@@ -712,7 +709,7 @@ function App() {
             }
           });
           
-          setNewMatch({ date: '', teams: '', description: '' });
+      setNewMatch({ date: '', teams: '', description: '' });
           // Fermer uniquement le formulaire d'édition du match
           setEditingMatch({ venueId: null, match: null });
           // Conserver l'état du popup ouvert pour voir le match ajouté
@@ -795,9 +792,6 @@ function App() {
 
   // Fonction pour supprimer un match
   const deleteMatch = async (venueId: string, matchId: number) => {
-    // Vérifier les droits admin seulement au moment de la suppression
-    if (!checkAdminRights()) return;
-    
     // Demander confirmation avant la suppression
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce match ? Cette action est irréversible.')) {
       return;
@@ -854,7 +848,7 @@ function App() {
             if (data && data.length > 0) {
               // Mettre à jour avec les nouvelles coordonnées
               const updatedVenue = {
-                ...venue,
+          ...venue,
                 name: newVenueName,
                 description: newVenueDescription,
                 address: newVenueAddress,
@@ -1650,40 +1644,40 @@ function App() {
           )}
           {(isAddingPlace || editingVenue.id) && (
             <div className="form-overlay">
-              <div className="edit-form">
+            <div className="edit-form">
                 <div className="edit-form-header">
                   <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
                 </div>
                 <div className="edit-form-content">
                   <div className="form-group">
                     <label htmlFor="venue-name">Nom du lieu</label>
-                    <input
+              <input
                       id="venue-name"
-                      type="text"
-                      value={newVenueName}
-                      onChange={(e) => setNewVenueName(e.target.value)}
+                type="text"
+                value={newVenueName}
+                onChange={(e) => setNewVenueName(e.target.value)}
                       placeholder="Ex: Stade de France"
                       className="form-input"
-                    />
+              />
                   </div>
                   <div className="form-group">
                     <label htmlFor="venue-description">Description</label>
-                    <input
+              <input
                       id="venue-description"
-                      type="text"
-                      value={newVenueDescription}
-                      onChange={(e) => setNewVenueDescription(e.target.value)}
+                type="text"
+                value={newVenueDescription}
+                onChange={(e) => setNewVenueDescription(e.target.value)}
                       placeholder="Ex: Stade principal de football"
                       className="form-input"
-                    />
+              />
                   </div>
                   <div className="form-group">
                     <label htmlFor="venue-address">Adresse</label>
-                    <input
+              <input
                       id="venue-address"
-                      type="text"
-                      value={newVenueAddress}
-                      onChange={(e) => setNewVenueAddress(e.target.value)}
+                type="text"
+                value={newVenueAddress}
+                onChange={(e) => setNewVenueAddress(e.target.value)}
                       placeholder="Entrez l'adresse complète"
                       className="form-input"
                     />
@@ -1766,18 +1760,18 @@ function App() {
           <div className="loading">Chargement de la carte...</div>
         ) : (
           <div className="map-container">
-            <MapContainer
-              center={[48.8566, 2.3522]}
-              zoom={12}
+        <MapContainer
+          center={[48.8566, 2.3522]}
+          zoom={12}
               style={{ height: '100%', width: '100%' }}
               ref={(map) => { mapRef.current = map || null; }}
               zoomControl={false}
-            >
-              <TileLayer
+        >
+          <TileLayer
                 url={mapStyles[mapStyle as keyof typeof mapStyles].url}
                 attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
-              />
-              <LocationMarker />
+          />
+          <LocationMarker />
               <div className="leaflet-control-container">
                 <div className="leaflet-top leaflet-right">
                   <div className="leaflet-control-zoom leaflet-bar leaflet-control">
@@ -1808,11 +1802,22 @@ function App() {
               }}
             >
               {activeTab === 'map' ? '📆 Événements' : '✖️ Fermer'}
-            </button>
+                  </button>
             
             {activeTab === 'events' && (
               <div className="events-panel">
-                <h2>Événements à venir</h2>
+                <div className="events-panel-header">
+                  <h3>Événements à venir</h3>
+                  <button 
+                    className="close-events-button"
+                    onClick={() => setActiveTab('map')}
+                    title="Fermer le panneau"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
                 <div className="event-filters">
                   <select 
                     className="filter-select"
@@ -1826,7 +1831,7 @@ function App() {
                     <option value="Handball">Handball</option>
                     <option value="Rugby">Rugby</option>
                   </select>
-                </div>
+                            </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
@@ -1851,24 +1856,24 @@ function App() {
                       <p className="event-description">{event.description}</p>
                       <p className="event-address">{event.address}</p>
                       <div className="event-actions">
-                        <button 
+                                <button 
                           className="maps-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
-                          }}
-                        >
+                                  }}
+                                >
                           Ouvrir dans Google Maps
-                        </button>
-                        <button 
+                                </button>
+                      <button 
                           className="copy-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                        onClick={(e) => {
+                          e.stopPropagation();
                             copyToClipboard(event.address);
-                          }}
-                        >
+                        }}
+                      >
                           Copier l'adresse
-                        </button>
+                      </button>
                       </div>
                     </div>
                   ))}
@@ -1889,9 +1894,9 @@ function App() {
             <div className="edit-form-content">
               <div className="form-group">
                 <label htmlFor="match-date">Date et heure</label>
-                <input
+                          <input
                   id="match-date"
-                  type="datetime-local"
+                            type="datetime-local"
                   value={editingMatch.match ? editingMatch.match.date : newMatch.date}
                   onChange={(e) => {
                     if (editingMatch.match) {
@@ -1908,9 +1913,9 @@ function App() {
               </div>
               <div className="form-group">
                 <label htmlFor="match-teams">Équipes</label>
-                <input
+                          <input
                   id="match-teams"
-                  type="text"
+                            type="text"
                   value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
                   onChange={(e) => {
                     if (editingMatch.match) {
@@ -1928,9 +1933,9 @@ function App() {
               </div>
               <div className="form-group">
                 <label htmlFor="match-description">Description</label>
-                <input
+                          <input
                   id="match-description"
-                  type="text"
+                            type="text"
                   value={editingMatch.match ? editingMatch.match.description : newMatch.description}
                   onChange={(e) => {
                     if (editingMatch.match) {
@@ -1947,7 +1952,7 @@ function App() {
                 />
               </div>
               <div className="form-actions">
-                <button 
+                            <button 
                   className="add-button"
                   onClick={() => {
                     if (editingMatch.match) {
@@ -1975,16 +1980,16 @@ function App() {
                   }
                 >
                   {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-                </button>
-                <button 
-                  className="cancel-button"
+                            </button>
+                            <button 
+                              className="cancel-button"
                   onClick={finishEditingMatch}
-                >
-                  Annuler
-                </button>
-              </div>
-            </div>
-          </div>
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                </div>
         </div>
       )}
     </div>
