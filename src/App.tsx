@@ -350,7 +350,7 @@ function App() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapStyle, setMapStyle] = useState('osm');
   const [activeTab, setActiveTab] = useState<'map' | 'events'>('map');
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
   const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
@@ -588,53 +588,53 @@ function App() {
 
   // Fonction pour ajouter un nouveau lieu
   const handleAddVenue = async () => {
-    // Vérifier les droits admin seulement au moment de l'ajout
-    if (!checkAdminRights()) return;
-    
-    if (newVenueName && newVenueDescription && newVenueAddress) {
+    if (!newVenueName || !newVenueDescription || !newVenueAddress) {
+      return;
+    }
+
       const coordinates = await geocodeAddress(newVenueAddress);
-      if (coordinates) {
-        const venuesRef = ref(db, 'venues');
-        const newVenueRef = push(venuesRef);
-        const newVenue: Omit<Venue, 'id'> = {
+    if (!coordinates) {
+      alert('Adresse non trouvée. Veuillez vérifier l\'adresse saisie.');
+      return;
+    }
+
+    const venuesRef = ref(db, 'venues');
+    const newVenueRef = push(venuesRef);
+    const newVenue: Omit<Venue, 'id'> = {
           name: newVenueName,
           position: coordinates,
           description: newVenueDescription,
           address: newVenueAddress,
-          matches: [],
-          sport: selectedSport,
-          date: '',
-          latitude: coordinates[0],
-          longitude: coordinates[1]
-        };
-        
-        try {
-          await set(newVenueRef, newVenue);
-          
-          // Ajouter l'action à l'historique avec une fonction d'annulation
-          const venueId = newVenueRef.key || '';
-          addToHistory({
-            type: 'ADD_VENUE',
-            data: { ...newVenue, id: venueId },
-            undo: async () => {
-              const undoRef = ref(db, `venues/${venueId}`);
-              await set(undoRef, null);
-            }
-          });
-          
+      matches: [],
+      sport: selectedSport,
+      date: '',
+      latitude: coordinates[0],
+      longitude: coordinates[1]
+    };
+
+    try {
+      await set(newVenueRef, newVenue);
+      
+      // Ajouter l'action à l'historique avec une fonction d'annulation
+      const venueId = newVenueRef.key || '';
+      addToHistory({
+        type: 'ADD_VENUE',
+        data: { ...newVenue, id: venueId },
+        undo: async () => {
+          const undoRef = ref(db, `venues/${venueId}`);
+          await set(undoRef, null);
+        }
+      });
+      
         setNewVenueName('');
         setNewVenueDescription('');
         setNewVenueAddress('');
-          setSelectedSport('Football');
-          // Fermer le formulaire d'ajout après avoir ajouté le lieu
-          setIsAddingPlace(false);
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout du lieu:', error);
-          alert('Une erreur est survenue lors de l\'ajout du lieu.');
-        }
-      } else {
-        alert('Adresse non trouvée. Veuillez vérifier l\'adresse saisie.');
-      }
+      setSelectedSport('Football');
+      // Fermer le formulaire d'ajout après avoir ajouté le lieu
+      setIsAddingPlace(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du lieu:', error);
+      alert('Une erreur est survenue lors de l\'ajout du lieu.');
     }
   };
 
@@ -677,7 +677,6 @@ function App() {
 
   // Fonction pour ajouter un nouveau match
   const handleAddMatch = async (venueId: string) => {
-    // Vérifier les droits admin seulement au moment de l'ajout
     if (!checkAdminRights()) return;
     
     if (newMatch.date && newMatch.teams && newMatch.description) {
@@ -736,7 +735,6 @@ function App() {
 
   // Fonction pour mettre à jour un match
   const handleUpdateMatch = async (venueId: string, matchId: number, updatedData: Partial<Match>) => {
-    // Vérifier les droits admin seulement au moment de la mise à jour
     if (!checkAdminRights()) return;
     
     const venueRef = ref(db, `venues/${venueId}`);
@@ -827,7 +825,6 @@ function App() {
 
   // Fonction pour mettre à jour un lieu existant
   const handleUpdateVenue = async () => {
-    // Vérifier les droits admin seulement au moment de la mise à jour
     if (!checkAdminRights()) return;
     
     if (editingVenue.id && newVenueName && newVenueDescription) {
@@ -992,8 +989,9 @@ function App() {
       type: 'match' | 'party';
       teams?: string;
       venue?: string;
+      venueId?: string;
       isPassed: boolean;
-      sport?: string; // Ajout du sport pour le filtrage
+      sport?: string;
     }> = [];
 
     // Ajouter les matchs
@@ -1010,8 +1008,9 @@ function App() {
             type: 'match',
             teams: match.teams,
             venue: venue.name,
+            venueId: venue.id,
             isPassed: isMatchPassed(match.date),
-            sport: venue.sport // Ajout du sport
+            sport: venue.sport
           });
         });
       }
@@ -1028,7 +1027,7 @@ function App() {
         location: [party.latitude, party.longitude],
         type: 'party',
         isPassed: isMatchPassed(party.date),
-        sport: party.sport // Ajout du sport
+        sport: party.sport
       });
     });
 
@@ -1148,58 +1147,8 @@ function App() {
   };
 
   // Fonction pour centrer la carte sur un événement
-  const centerOnEvent = (eventId: string) => {
-    // Tracker l'événement de sélection d'un événement
-    ReactGA.event({
-      category: 'event',
-      action: 'select_event',
-      label: eventId
-    });
-
-    setSelectedEvent(eventId);
-    
-    // Trouver l'événement correspondant
-    const allEvents = getAllEvents();
-    const event = allEvents.find(e => e.id === eventId);
-    
-    if (event) {
-      // Extraire les coordonnées
-      const [lat, lng] = event.location;
-      
-      // Centrer la carte
-      if (mapRef.current) {
-        mapRef.current.flyTo([lat, lng], 16);
-      }
-      
-      // Ouvrir le popup correspondant
-      if (event.type === 'match') {
-        const [_, venueId, matchId] = eventId.split('-');
-        const marker = markersRef.current.find(m => {
-          const venue = venues.find(v => v.id === venueId);
-          return venue && m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude;
-        });
-        
-        if (marker) {
-          marker.openPopup();
-        }
-      } else if (event.type === 'party') {
-        const [_, partyId] = eventId.split('-');
-        const party = parties.find(p => p.id === partyId || p.name === partyId);
-        
-        if (party) {
-          const marker = markersRef.current.find(m => 
-            m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
-          );
-          
-          if (marker) {
-            marker.openPopup();
-          }
-        }
-      }
-    }
-    
-    // Basculer vers l'onglet carte
-    setActiveTab('map');
+  const centerOnEvent = (event: any) => {
+    handleEventSelect(event);
   };
 
   // Générer les marqueurs pour la carte
@@ -1576,6 +1525,45 @@ function App() {
     }
   }, [eventFilter]);
 
+  const handleEventSelect = (event: any) => {
+    setSelectedEvent(event);
+    if (event.type === 'party') {
+      // Extraire l'ID de la soirée du format "party-{id}"
+      const partyId = event.id.split('-')[1];
+      const party = parties.find(p => p.id === partyId || p.name === partyId);
+      if (party) {
+        mapRef.current?.flyTo([party.latitude, party.longitude], 18, {
+          duration: 2.5
+        });
+        // Trouver et ouvrir le popup du marqueur de la soirée
+        const marker = markersRef.current.find(m => 
+          m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
+        );
+        if (marker) {
+          setTimeout(() => {
+            marker.openPopup();
+          }, 2500);
+        }
+      }
+    } else {
+      const venue = venues.find(v => v.id === event.venueId);
+      if (venue) {
+        mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
+          duration: 2.5
+        });
+        // Trouver et ouvrir le popup du marqueur du lieu
+        const marker = markersRef.current.find(m => 
+          m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+        );
+        if (marker) {
+          setTimeout(() => {
+            marker.openPopup();
+          }, 2500);
+        }
+      }
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -1808,7 +1796,7 @@ function App() {
               <div className="events-panel">
                 <div className="events-panel-header">
                   <h3>Événements à venir</h3>
-                  <button 
+                                <button 
                     className="close-events-button"
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
@@ -1816,8 +1804,8 @@ function App() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                  </button>
-                </div>
+                                </button>
+                              </div>
                 <div className="event-filters">
                   <select 
                     className="filter-select"
@@ -1830,14 +1818,56 @@ function App() {
                     <option value="Basketball">Basketball</option>
                     <option value="Handball">Handball</option>
                     <option value="Rugby">Rugby</option>
+                    <option value="Ultimate">Ultimate</option>
+                    <option value="Natation">Natation</option>
+                    <option value="Badminton">Badminton</option>
+                    <option value="Tennis">Tennis</option>
+                    <option value="Trail">Trail</option>
                   </select>
                             </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
                       key={event.id} 
-                      className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent === event.id ? 'selected' : ''}`}
-                      onClick={() => centerOnEvent(event.id)}
+                      className={`event-item ${event.isPassed ? 'passed' : ''} ${event.type === 'match' ? 'match-event' : 'party-event'} ${selectedEvent?.id === event.id ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        if (event.type === 'party') {
+                          // Extraire l'ID de la soirée du format "party-{id}"
+                          const partyId = event.id.split('-')[1];
+                          const party = parties.find(p => p.id === partyId || p.name === partyId);
+                          if (party) {
+                            mapRef.current?.flyTo([party.latitude, party.longitude], 18, {
+                              duration: 2.5
+                            });
+                            // Trouver et ouvrir le popup du marqueur de la soirée
+                            const marker = markersRef.current.find(m => 
+                              m.getLatLng().lat === party.latitude && m.getLatLng().lng === party.longitude
+                            );
+                            if (marker) {
+                              setTimeout(() => {
+                                marker.openPopup();
+                              }, 2500);
+                            }
+                          }
+                        } else {
+                          const venue = venues.find(v => v.id === event.venueId);
+                          if (venue) {
+                            mapRef.current?.flyTo([venue.latitude, venue.longitude], 18, {
+                              duration: 2.5
+                            });
+                            // Trouver et ouvrir le popup du marqueur du lieu
+                            const marker = markersRef.current.find(m => 
+                              m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+                            );
+                            if (marker) {
+                              setTimeout(() => {
+                                marker.openPopup();
+                              }, 2500);
+                            }
+                          }
+                        }
+                      }}
                     >
                       <div className="event-header">
                         <span className="event-type-badge">

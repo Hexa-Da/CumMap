@@ -1264,6 +1264,13 @@ html, body, #root {
   opacity: 0.8;
 }
 
+.event-filters {
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+}
+
 .close-events-button {
   background: none;
   border: none;
@@ -1297,13 +1304,6 @@ html, body, #root {
     background-color: var(--bg-secondary);
     color: var(--primary-color);
   }
-}
-
-.event-filters {
-  margin-bottom: 16px;
-  padding: 8px;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
 }
 
 .filter-select {
