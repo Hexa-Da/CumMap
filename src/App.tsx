@@ -470,7 +470,7 @@ function App() {
   const checkAdminRights = () => {
     // Vérifier si on est en mode admin
     if (!isAdminMode) {
-      alert('Cette action nécessite des droits d\'administrateur.');
+      alert('Cette action nécessite des droits d\'administrateur. Veuillez utiliser le lien administrateur.');
       return false;
     }
     return true;
