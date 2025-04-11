@@ -894,7 +894,18 @@ html, body, #root {
 }
 
 .custom-marker {
-  transition: transform 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: opacity, transform;
+}
+
+.custom-marker.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-marker.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .custom-marker span {
@@ -1237,49 +1248,53 @@ html, body, #root {
 }
 
 .event-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-bottom: 16px;
   padding: 8px;
   background-color: var(--bg-secondary);
   border-radius: 8px;
 }
 
-.filter-button {
-  padding: 6px 12px;
-  border: none;
+.filter-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   background-color: var(--bg-color);
   color: var(--text-color);
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
-  white-space: nowrap;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
 }
 
-.filter-button:hover {
-  background-color: var(--bg-secondary);
-  transform: translateY(-1px);
+.filter-select:hover {
+  border-color: var(--primary-color);
 }
 
-.filter-button.active {
-  background-color: var(--primary-color);
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
-  .filter-button {
+  .filter-select {
     background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
   }
   
-  .filter-button:hover {
-    background-color: var(--bg-color);
+  .filter-select:hover {
+    border-color: var(--primary-color);
   }
   
-  .filter-button.active {
-    background-color: var(--primary-color);
+  .filter-select:focus {
+    border-color: var(--primary-color);
   }
 }
 

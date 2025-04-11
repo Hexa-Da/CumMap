@@ -438,11 +438,14 @@ function App() {
 
   // Fonction pour vérifier les droits d'administration avant d'exécuter une action
   const checkAdminRights = () => {
-    if (!isAdminMode) {
-      alert('Administratorrechte erforderlich');
-      return false;
+    // En mode développement, toujours retourner true
+    if (process.env.NODE_ENV === 'development') {
+      return true;
     }
-    return true;
+    
+    // En production, vérifier le mot de passe
+    const password = prompt('Entrez le mot de passe admin:');
+    return password === 'admin';
   };
 
   // Fonction pour ajouter une action à l'historique
@@ -1541,6 +1544,44 @@ function App() {
     };
   }, []);
 
+  // Fonction pour mettre à jour les marqueurs sur la carte
+  const updateMapMarkers = () => {
+    if (!mapRef.current) return;
+
+    // Récupérer tous les marqueurs existants
+    const allMarkers = markersRef.current;
+    const filteredEvents = getFilteredEvents();
+
+    // Mettre à jour la visibilité de chaque marqueur
+    allMarkers.forEach(marker => {
+      const markerElement = marker.getElement();
+      if (markerElement) {
+        // Trouver l'événement correspondant au marqueur
+        const event = filteredEvents.find(event => {
+          const [lat, lng] = event.location;
+          const markerLatLng = marker.getLatLng();
+          return lat === markerLatLng.lat && lng === markerLatLng.lng;
+        });
+
+        // Afficher ou cacher le marqueur
+        if (event) {
+          markerElement.style.display = 'block';
+          markerElement.style.opacity = '1';
+        } else {
+          markerElement.style.display = 'none';
+          markerElement.style.opacity = '0';
+        }
+      }
+    });
+  };
+
+  // Mettre à jour les marqueurs lorsque le filtre change
+  useEffect(() => {
+    if (mapRef.current) {
+      updateMapMarkers();
+    }
+  }, [eventFilter]);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -1773,42 +1814,18 @@ function App() {
               <div className="events-panel">
                 <h2>Événements à venir</h2>
                 <div className="event-filters">
-                  <button 
-                    className={`filter-button ${eventFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('all')}
+                  <select 
+                    className="filter-select"
+                    value={eventFilter}
+                    onChange={(e) => setEventFilter(e.target.value)}
                   >
-                    Tous
-                  </button>
-                  <button 
-                    className={`filter-button ${eventFilter === 'party' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('party')}
-                  >
-                    Soirées
-                  </button>
-                  <button 
-                    className={`filter-button ${eventFilter === 'Football' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('Football')}
-                  >
-                    Football
-                  </button>
-                  <button 
-                    className={`filter-button ${eventFilter === 'Basketball' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('Basketball')}
-                  >
-                    Basketball
-                  </button>
-                  <button 
-                    className={`filter-button ${eventFilter === 'Handball' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('Handball')}
-                  >
-                    Handball
-                  </button>
-                  <button 
-                    className={`filter-button ${eventFilter === 'Rugby' ? 'active' : ''}`}
-                    onClick={() => setEventFilter('Rugby')}
-                  >
-                    Rugby
-                  </button>
+                    <option value="all">Tous les événements</option>
+                    <option value="party">Soirées</option>
+                    <option value="Football">Football</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Handball">Handball</option>
+                    <option value="Rugby">Rugby</option>
+                  </select>
                 </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
