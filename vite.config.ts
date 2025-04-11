@@ -10,12 +10,19 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: './',
-    optimizeDeps: {
-      include: ['uuid']
-    },
     build: {
-      commonjsOptions: {
-        include: [/uuid/]
+      rollupOptions: {
+        external: ['uuid'],
+        output: {
+          globals: {
+            uuid: 'uuid'
+          }
+        }
+      }
+    },
+    resolve: {
+      alias: {
+        'uuid': 'uuid/dist/esm-browser/index.js'
       }
     }
   }
