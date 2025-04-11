@@ -1062,13 +1062,8 @@ function App() {
   // Fonction pour formater la date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    return days[date.getDay()];
   };
 
   // Fonction pour ouvrir dans Google Maps
@@ -1806,7 +1801,7 @@ function App() {
               <div className="events-panel">
                 <div className="events-panel-header">
                   <h3>Événements à venir</h3>
-                  <button 
+                                <button 
                     className="close-events-button"
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
@@ -1814,8 +1809,8 @@ function App() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                  </button>
-                </div>
+                                </button>
+                              </div>
                 <div className="event-filters">
                   <select 
                     className="filter-select"
@@ -1834,7 +1829,7 @@ function App() {
                     <option value="Tennis">Tennis</option>
                     <option value="Trail">Trail</option>
                   </select>
-                </div>
+                            </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
@@ -1881,7 +1876,7 @@ function App() {
                       <div className="event-header">
                         <span className="event-type-badge">
                           {event.type === 'match' 
-                            ? `${getSportIcon(event.sport || '')} Match`
+                            ? `${getSportIcon(event.sport || '')} ${event.sport}`
                             : '🎉 Soirée'}
                         </span>
                         <span className="event-date">{formatDate(event.date)}</span>
@@ -1895,24 +1890,24 @@ function App() {
                       <p className="event-description">{event.description}</p>
                       <p className="event-address">{event.address}</p>
                       <div className="event-actions">
-                        <button 
+                                <button 
                           className="maps-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
-                          }}
-                        >
+                                  }}
+                                >
                           Ouvrir dans Google Maps
-                        </button>
-                        <button 
+                                </button>
+                      <button 
                           className="copy-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                        onClick={(e) => {
+                          e.stopPropagation();
                             copyToClipboard(event.address);
-                          }}
-                        >
+                        }}
+                      >
                           Copier l'adresse
-                        </button>
+                      </button>
                       </div>
                     </div>
                   ))}
