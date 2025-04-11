@@ -359,6 +359,9 @@ function App() {
   const [history, setHistory] = useState<HistoryAction[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // État pour gérer les droits d'admin
+  const [isAdmin, setIsAdmin] = useState(true);
+
   const mapStyles = {
     osm: {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
