@@ -389,6 +389,9 @@ function App() {
     'Base-ball': '⚾',
     Golf: '⛳',
     'Ping-pong': '🏓',
+    Ultimate: '🥏',
+    Natation: '🏊',
+    Trail: '🏃',
     Other: '🎯',
     Pompom: '🎀',
     Party: '🎉',
@@ -1639,6 +1642,9 @@ function App() {
                       <option value="Base-ball">Base-ball ⚾</option>
                       <option value="Golf">Golf ⛳</option>
                       <option value="Ping-pong">Ping-pong 🏓</option>
+                      <option value="Ultimate">Ultimate 🥏</option>
+                      <option value="Natation">Natation 🏊</option>
+                      <option value="Trail">Trail 🏃</option>
                       <option value="Other">Autre 🎯</option>
                     </select>
                   </div>
