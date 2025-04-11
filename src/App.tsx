@@ -438,8 +438,8 @@ function App() {
       'Basketball': '🏀',
       'Handball': '🤾',
       'Rugby': '🏉',
-      'Ultimate': '🥏', // Nouvelle icône pour l'Ultimate
-      'Natation': '🏊', // Nouvelle icône pour la Natation
+      'Ultimate': '🥏',
+      'Natation': '🏊',
       'Badminton': '🏸',
       'Tennis': '🎾',
       'Trail': '🏃'
@@ -1880,9 +1880,9 @@ function App() {
                     >
                       <div className="event-header">
                         <span className="event-type-badge">
-                          {event.type === 'match' && venues.find(v => v.name === event.venue) 
-                            ? `${getSportIcon(venues.find(v => v.name === event.venue)?.sport || '')} Match`
-                            : (event.type === 'match' ? '🏆 Match' : '🎉 Soirée')}
+                          {event.type === 'match' 
+                            ? `${getSportIcon(event.sport || '')} Match`
+                            : '🎉 Soirée'}
                         </span>
                         <span className="event-date">{formatDate(event.date)}</span>
                       </div>
