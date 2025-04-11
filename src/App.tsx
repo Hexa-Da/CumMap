@@ -1239,43 +1239,49 @@ function App() {
         const matchesListDiv = document.createElement('div');
         matchesListDiv.className = 'matches-list';
         
-        venue.matches.forEach(match => {
-          const matchItemDiv = document.createElement('div');
-          matchItemDiv.className = `match-item ${isMatchPassed(match.date) ? 'match-passed' : ''}`;
-          matchItemDiv.innerHTML = `
-            <p class="match-date">${formatDate(match.date)}</p>
-            <p class="match-teams">${match.teams}</p>
-            <p class="match-description">${match.description}</p>
-          `;
+        if (venue.matches && venue.matches.length > 0) {
+          matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
           
-          // Boutons d'édition en mode édition - toujours visibles
-          if (isEditing) {
-            const matchActionsDiv = document.createElement('div');
-            matchActionsDiv.className = 'match-actions';
+          venue.matches.forEach(match => {
+            const matchItemDiv = document.createElement('div');
+            matchItemDiv.className = `match-item ${isMatchPassed(match.date) ? 'match-passed' : ''}`;
+            matchItemDiv.innerHTML = `
+              <p class="match-date">${formatDate(match.date)}</p>
+              <p class="match-teams">${match.teams}</p>
+              <p class="match-description">${match.description}</p>
+            `;
             
-            const editButton = document.createElement('button');
-            editButton.className = 'edit-match-button';
-            editButton.textContent = 'Modifier';
-            editButton.addEventListener('click', (e) => {
-              e.stopPropagation();
-              startEditingMatch(venue.id || '', match);
-            });
+            // Boutons d'édition en mode édition - toujours visibles
+            if (isEditing) {
+              const matchActionsDiv = document.createElement('div');
+              matchActionsDiv.className = 'match-actions';
+              
+              const editButton = document.createElement('button');
+              editButton.className = 'edit-match-button';
+              editButton.textContent = 'Modifier';
+              editButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startEditingMatch(venue.id || '', match);
+              });
+              
+              const deleteButton = document.createElement('button');
+              deleteButton.className = 'delete-match-button';
+              deleteButton.textContent = 'Supprimer';
+              deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteMatch(venue.id || '', match.id);
+              });
+              
+              matchActionsDiv.appendChild(editButton);
+              matchActionsDiv.appendChild(deleteButton);
+              matchItemDiv.appendChild(matchActionsDiv);
+            }
             
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'delete-match-button';
-            deleteButton.textContent = 'Supprimer';
-            deleteButton.addEventListener('click', (e) => {
-              e.stopPropagation();
-              deleteMatch(venue.id || '', match.id);
-            });
-            
-            matchActionsDiv.appendChild(editButton);
-            matchActionsDiv.appendChild(deleteButton);
-            matchItemDiv.appendChild(matchActionsDiv);
-          }
+            matchesListDiv.appendChild(matchItemDiv);
+          });
           
-          matchesListDiv.appendChild(matchItemDiv);
-        });
+          popupContent.appendChild(matchesListDiv);
+        }
 
         // Ajouter les boutons d'édition si on est en mode édition - toujours visibles
         if (isEditing) {
