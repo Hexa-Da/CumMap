@@ -409,7 +409,7 @@ function App() {
     'Badminton',
     'Tennis',
     'Trail',
-    'Volley-ball',
+    'Volleyball',
     'Ping-pong'
   ];
 
@@ -457,7 +457,7 @@ function App() {
       'Badminton': '🏸',
       'Tennis': '🎾',
       'Trail': '🏃',
-      'Volley-ball': '🏐',
+      'Volleyball': '🏐',
       'Ping-pong': '🏓'
     };
     return sportIcons[sport] || '🏆';
@@ -1844,7 +1844,7 @@ function App() {
                     <option value="Badminton">Badminton</option>
                     <option value="Tennis">Tennis</option>
                     <option value="Trail">Trail</option>
-                    <option value="Volley-ball">Volley-ball</option>
+                    <option value="Volleyball">Volleyball</option>
                     <option value="Ping-pong">Ping-pong</option>
                   </select>
                             </div>
