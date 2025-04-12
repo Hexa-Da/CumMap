@@ -1605,31 +1605,34 @@ html, body, #root {
 .fullscreen-button {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 80px;
   z-index: 995;
-  padding: 8px 12px;
+  padding: 8px;
   background-color: var(--bg-color);
   color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   box-shadow: 0 2px 6px var(--shadow-color);
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
 }
 
 .fullscreen-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px var(--shadow-color);
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
 }
 
 .fullscreen-button svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
