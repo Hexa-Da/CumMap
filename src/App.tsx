@@ -1610,6 +1610,14 @@ function App() {
     }
   };
 
+  const toggleEditing = () => {
+    setIsEditing(!isEditing);
+    if (isEditing) {
+      setIsAddingPlace(false);
+      setEditingVenue({ id: null, venue: null });
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -1617,146 +1625,26 @@ function App() {
         <div className="controls">
           <button
             className={`edit-button ${isEditing ? 'active' : ''}`}
-            onClick={() => {
-              // Tracker le changement de mode édition
-              ReactGA.event({
-                category: 'app',
-                action: 'toggle_edit_mode',
-                label: isEditing ? 'off' : 'on'
-              });
-              
-              setIsEditing(!isEditing);
-              if (isEditing) {
-                setIsAddingPlace(false);
-                setEditingVenue({ id: null, venue: null });
-              }
-            }}
+            onClick={toggleEditing}
           >
-            {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
+            {isEditing ? 'Quitter le mode édition' : 'Mode édition'}
           </button>
-          {/* Afficher toujours le bouton d'ajout de lieu */}
-          {isEditing && (
-            <button 
-              className="add-place-button"
-              onClick={() => {
-                // Fermer le formulaire d'édition de match s'il est ouvert
-                if (editingMatch.venueId) {
-                  finishEditingMatch();
-                }
-                
-                setIsAddingPlace(true);
-                setEditingVenue({ id: null, venue: null });
-                setNewVenueName('');
-                setNewVenueDescription('');
-                setNewVenueAddress('');
-                setSelectedSport('Football');
-              }}
+          {!isEditing && (
+            <button
+              className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
             >
-              Ajouter un lieu
+              {isFullscreen ? (
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+              )}
             </button>
-          )}
-          {(isAddingPlace || editingVenue.id) && (
-            <div className="form-overlay">
-            <div className="edit-form">
-                <div className="edit-form-header">
-                  <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
-                </div>
-                <div className="edit-form-content">
-                  <div className="form-group">
-                    <label htmlFor="venue-name">Nom du lieu</label>
-              <input
-                      id="venue-name"
-                type="text"
-                value={newVenueName}
-                onChange={(e) => setNewVenueName(e.target.value)}
-                      placeholder="Ex: Stade de France"
-                      className="form-input"
-              />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-description">Description</label>
-              <input
-                      id="venue-description"
-                type="text"
-                value={newVenueDescription}
-                onChange={(e) => setNewVenueDescription(e.target.value)}
-                      placeholder="Ex: Stade principal de football"
-                      className="form-input"
-              />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-address">Adresse</label>
-              <input
-                      id="venue-address"
-                type="text"
-                value={newVenueAddress}
-                onChange={(e) => setNewVenueAddress(e.target.value)}
-                      placeholder="Entrez l'adresse complète"
-                      className="form-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-sport">Sport</label>
-                    <select
-                      id="venue-sport"
-                      value={selectedSport}
-                      onChange={(e) => {
-                        setSelectedSport(e.target.value);
-                        setSelectedEmoji(sportEmojis[e.target.value] || '⚽');
-                      }}
-                      className="form-input"
-                    >
-                      <option value="Football">Football ⚽</option>
-                      <option value="Basketball">Basketball 🏀</option>
-                      <option value="Handball">Handball 🤾</option>
-                      <option value="Rugby">Rugby 🏉</option>
-                      <option value="Volleyball">Volleyball 🏐</option>
-                      <option value="Tennis">Tennis 🎾</option>
-                      <option value="Badminton">Badminton 🏸</option>
-                      <option value="Hockey">Hockey 🏑</option>
-                      <option value="Base-ball">Base-ball ⚾</option>
-                      <option value="Golf">Golf ⛳</option>
-                      <option value="Ping-pong">Ping-pong 🏓</option>
-                      <option value="Ultimate">Ultimate 🥏</option>
-                      <option value="Natation">Natation 🏊</option>
-                      <option value="Trail">Trail 🏃</option>
-                      <option value="Other">Autre 🎯</option>
-                    </select>
-                  </div>
-                  <div className="form-actions">
-                    <button 
-                      className="add-button"
-                      onClick={() => {
-                        if (editingVenue.id) {
-                          handleUpdateVenue();
-                        } else {
-                          handleAddVenue();
-                        }
-                      }}
-                      disabled={!newVenueName || !newVenueDescription}
-                    >
-                      {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
-                    </button>
-                    <button 
-                      className="cancel-button"
-                      onClick={() => {
-                        if (editingVenue.id) {
-                          cancelEditingVenue();
-                        } else {
-                          setIsAddingPlace(false);
-                          setNewVenueName('');
-                          setNewVenueDescription('');
-                          setNewVenueAddress('');
-                          setSelectedSport('Football');
-                        }
-                      }}
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
           {!isEditing && (
             <select
@@ -1766,7 +1654,8 @@ function App() {
             >
               <option value="streets">Rues</option>
               <option value="satellite">Satellite</option>
-              <option value="terrain">Terrain</option>
+              <option value="light">Clair</option>
+              <option value="dark">Sombre</option>
             </select>
           )}
         </div>
