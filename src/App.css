@@ -1616,7 +1616,6 @@ html, body, #root {
   justify-content: center;
   width: 35px;
   height: 35px;
-  margin-left: 8px;
 }
 
 .fullscreen-button:hover {
