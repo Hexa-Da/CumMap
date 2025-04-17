@@ -4,12 +4,17 @@ import { Icon, LatLng } from 'leaflet';
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
-import { db } from './firebase';
+import { auth, database, provider } from './firebase';
 import React from 'react';
 import L from 'leaflet';
 import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+
+// Vérification de l'initialisation
+console.log('Firebase Auth:', auth);
+console.log('Google Provider:', provider);
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -243,19 +248,44 @@ function App() {
   const markersRef = useRef<L.Marker[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   
-  // Déterminer le mode d'accès (admin ou visiteur) en fonction de l'URL
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  // Suppression du mode admin basé sur l'URL
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   useEffect(() => {
-    // Vérifier si l'URL contient un paramètre 'mode=admin'
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
-    setIsAdminMode(mode === 'admin');
-    
-    // Par défaut, le mode édition est désactivé
-    setIsEditing(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('État de l\'authentification changé:', user);
+      if (user) {
+        console.log('Utilisateur connecté - UID:', user.uid);
+        console.log('Email:', user.email);
+        console.log('Nom:', user.displayName);
+        setUser(user);
+        
+        // Vérifier si l'utilisateur est admin
+        const adminsRef = ref(database, 'admins');
+        onValue(adminsRef, (snapshot) => {
+          const admins = snapshot.val();
+          setIsAdmin(admins && admins[user.uid]);
+        });
+      } else {
+        console.log('Aucun utilisateur connecté');
+        setUser(null);
+        setIsAdmin(false);
+      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
-  
+
+  // Fonction pour vérifier les droits d'administration avant d'exécuter une action
+  const checkAdminRights = () => {
+    if (!isAdmin) {
+      alert('Cette action nécessite des droits d\'administrateur.');
+      return false;
+    }
+    return true;
+  };
+
   const [hotels, setHotels] = useState<Hotel[]>([
     {
       id: '1',
@@ -329,7 +359,7 @@ function App() {
 
   // Charger les lieux depuis Firebase au démarrage
   useEffect(() => {
-    const venuesRef = ref(db, 'venues');
+    const venuesRef = ref(database, 'venues');
     const unsubscribe = onValue(venuesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -353,7 +383,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const [isEditing, setIsEditing] = useState(false);
   const [isAddingPlace, setIsAddingPlace] = useState(false);
   const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
@@ -381,9 +410,6 @@ function App() {
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-
-  // État pour gérer les droits d'admin
-  const [isAdmin, setIsAdmin] = useState(true);
 
   const [isEventsPanelOpen, setIsEventsPanelOpen] = useState(false);
 
@@ -491,15 +517,6 @@ function App() {
     return sportIcons[sport] || '🏆';
   };
 
-  // Fonction pour vérifier les droits d'administration avant d'exécuter une action
-  const checkAdminRights = () => {
-    if (!isAdminMode) {
-      alert('Cette action nécessite des droits d\'administrateur. Veuillez utiliser le lien administrateur.');
-      return false;
-    }
-    return true;
-  };
-
   // Fonction pour ajouter une action à l'historique
   const addToHistory = (action: HistoryAction) => {
     // Supprimer les actions futures (si on est revenu en arrière)
@@ -529,7 +546,7 @@ function App() {
           // Ré-ajouter le lieu
           {
             const venueData = nextAction.data;
-            const venueRef = ref(db, `venues/${venueData.id}`);
+            const venueRef = ref(database, `venues/${venueData.id}`);
             await set(venueRef, {
               name: venueData.name,
               position: [venueData.latitude, venueData.longitude],
@@ -548,7 +565,7 @@ function App() {
           // Réappliquer la mise à jour
           {
             const { after } = nextAction.data;
-            const venueRef = ref(db, `venues/${after.id}`);
+            const venueRef = ref(database, `venues/${after.id}`);
             await set(venueRef, after);
           }
           break;
@@ -556,7 +573,7 @@ function App() {
           // Supprimer à nouveau le lieu
           {
             const venueData = nextAction.data;
-            const venueRef = ref(db, `venues/${venueData.id}`);
+            const venueRef = ref(database, `venues/${venueData.id}`);
             await set(venueRef, null);
           }
           break;
@@ -570,7 +587,7 @@ function App() {
               // Vérifier si le match existe déjà pour éviter les doublons
               if (!matches.some(m => m.id === match.id)) {
                 matches.push(match);
-                const venueRef = ref(db, `venues/${venueId}`);
+                const venueRef = ref(database, `venues/${venueId}`);
                 await set(venueRef, {
                   ...venue,
                   matches
@@ -588,7 +605,7 @@ function App() {
               const updatedMatches = venue.matches.map(match =>
                 match.id === matchId ? { ...match, ...after } : match
               );
-              const venueRef = ref(db, `venues/${venueId}`);
+              const venueRef = ref(database, `venues/${venueId}`);
               await set(venueRef, {
                 ...venue,
                 matches: updatedMatches
@@ -603,7 +620,7 @@ function App() {
             const venue = venues.find(v => v.id === venueId);
             if (venue) {
               const updatedMatches = venue.matches.filter(m => m.id !== match.id);
-              const venueRef = ref(db, `venues/${venueId}`);
+              const venueRef = ref(database, `venues/${venueId}`);
               await set(venueRef, {
                 ...venue,
                 matches: updatedMatches
@@ -653,7 +670,7 @@ function App() {
       return;
     }
 
-    const venuesRef = ref(db, 'venues');
+    const venuesRef = ref(database, 'venues');
     const newVenueRef = push(venuesRef);
     const newVenue: Omit<Venue, 'id'> = {
           name: newVenueName,
@@ -678,7 +695,7 @@ function App() {
         type: 'ADD_VENUE',
         data: { ...newVenue, id: venueId },
         undo: async () => {
-          const undoRef = ref(db, `venues/${venueId}`);
+          const undoRef = ref(database, `venues/${venueId}`);
           await set(undoRef, null);
         }
       });
@@ -707,7 +724,7 @@ function App() {
     // Sauvegarder l'état du lieu avant suppression pour pouvoir annuler
     const venue = venues.find(v => v.id === id);
     if (venue) {
-      const venueRef = ref(db, `venues/${id}`);
+      const venueRef = ref(database, `venues/${id}`);
       await set(venueRef, null);
       
       // Ajouter l'action à l'historique avec une fonction d'annulation
@@ -715,7 +732,7 @@ function App() {
         type: 'DELETE_VENUE',
         data: venue,
         undo: async () => {
-          const undoRef = ref(db, `venues/${id}`);
+          const undoRef = ref(database, `venues/${id}`);
           await set(undoRef, {
             name: venue.name,
             position: [venue.latitude, venue.longitude],
@@ -771,7 +788,7 @@ function App() {
   const handleUpdateMatch = async (venueId: string, matchId: string, updatedData: Partial<Match>) => {
     if (!checkAdminRights()) return;
     
-    const venueRef = ref(db, `venues/${venueId}`);
+    const venueRef = ref(database, `venues/${venueId}`);
     const venue = venues.find(v => v.id === venueId);
     
     if (venue) {
@@ -793,7 +810,7 @@ function App() {
             type: 'UPDATE_MATCH',
             data: { venueId, matchId, before: matchBefore, after: { ...matchBefore, ...updatedData } },
             undo: async () => {
-              const undoRef = ref(db, `venues/${venueId}`);
+              const undoRef = ref(database, `venues/${venueId}`);
               await set(undoRef, venueBefore);
             }
           });
@@ -826,7 +843,7 @@ function App() {
       return;
     }
     
-    const venueRef = ref(db, `venues/${venueId}`);
+    const venueRef = ref(database, `venues/${venueId}`);
     const venue = venues.find(v => v.id === venueId);
     
     if (venue) {
@@ -846,7 +863,7 @@ function App() {
           type: 'DELETE_MATCH',
           data: { venueId, match: matchToDelete },
           undo: async () => {
-            const undoRef = ref(db, `venues/${venueId}`);
+            const undoRef = ref(database, `venues/${venueId}`);
             await set(undoRef, venueBefore);
           }
         });
@@ -865,7 +882,7 @@ function App() {
       if (venue) {
         // Sauvegarder l'état avant modification pour pouvoir annuler
         const venueBefore = { ...venue };
-        const venueRef = ref(db, `venues/${editingVenue.id}`);
+        const venueRef = ref(database, `venues/${editingVenue.id}`);
         
         // Si l'adresse a changé, essayer de la géocoder
         if (newVenueAddress !== venue.address) {
@@ -893,7 +910,7 @@ function App() {
                 type: 'UPDATE_VENUE',
                 data: { before: venueBefore, after: updatedVenue },
                 undo: async () => {
-                  const undoRef = ref(db, `venues/${editingVenue.id}`);
+                  const undoRef = ref(database, `venues/${editingVenue.id}`);
                   await set(undoRef, venueBefore);
                 }
               });
@@ -914,7 +931,7 @@ function App() {
                 type: 'UPDATE_VENUE',
                 data: { before: venueBefore, after: updatedVenue },
                 undo: async () => {
-                  const undoRef = ref(db, `venues/${editingVenue.id}`);
+                  const undoRef = ref(database, `venues/${editingVenue.id}`);
                   await set(undoRef, venueBefore);
                 }
               });
@@ -937,7 +954,7 @@ function App() {
               type: 'UPDATE_VENUE',
               data: { before: venueBefore, after: updatedVenue },
               undo: async () => {
-                const undoRef = ref(db, `venues/${editingVenue.id}`);
+                const undoRef = ref(database, `venues/${editingVenue.id}`);
                 await set(undoRef, venueBefore);
               }
             });
@@ -958,7 +975,7 @@ function App() {
             type: 'UPDATE_VENUE',
             data: { before: venueBefore, after: updatedVenue },
             undo: async () => {
-              const undoRef = ref(db, `venues/${editingVenue.id}`);
+              const undoRef = ref(database, `venues/${editingVenue.id}`);
               await set(undoRef, venueBefore);
             }
           });
@@ -1454,7 +1471,7 @@ function App() {
         }
       });
     }
-  }, [venues, hotels, parties, isEditing, isAdminMode]);
+  }, [venues, hotels, parties, isEditing, isAdmin]);
 
   // Fonction pour commencer l'édition d'un match
   const startEditingMatch = (venueId: string, match: Match | null) => {
@@ -1610,17 +1627,88 @@ function App() {
     }
   };
 
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('Démarrage de l\'écouteur d\'authentification...');
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('État de l\'authentification changé:', user);
+      if (user) {
+        console.log('Utilisateur connecté - UID:', user.uid);
+        console.log('Email:', user.email);
+        console.log('Nom:', user.displayName);
+        setUser(user);
+        
+        // Vérifier si l'utilisateur est admin
+        const adminsRef = ref(database, 'admins');
+        onValue(adminsRef, (snapshot) => {
+          const admins = snapshot.val();
+          setIsAdmin(admins && admins[user.uid]);
+        });
+      } else {
+        console.log('Aucun utilisateur connecté');
+        setUser(null);
+        setIsAdmin(false);
+      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const signInWithGoogle = async () => {
+    try {
+      console.log('Tentative de connexion...');
+      console.log('Provider configuré:', provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log('Résultat de la connexion:', result);
+      console.log('UID de l\'utilisateur:', result.user.uid);
+      console.log('Email de l\'utilisateur:', result.user.email);
+    } catch (error) {
+      console.error('Erreur détaillée de connexion:', error);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
+
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>CumMap</h1>
+      <div className="app-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1>CumMap</h1>
+          <button 
+            className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {isFullscreen ? (
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+              </svg>
+            )}
+          </button>
+        </div>
         <div className="controls">
           {!isEditing && activeTab === 'map' && (
             <select 
               className="map-style-selector"
               value={mapStyle}
               onChange={(e) => {
-                // Tracker le changement de style de carte
                 ReactGA.event({
                   category: 'map',
                   action: 'change_map_style',
@@ -1780,7 +1868,7 @@ function App() {
             </div>
           )}
         </div>
-      </header>
+      </div>
       <main className="app-main">
         {locationError ? (
           <div className="location-error">
@@ -2031,21 +2119,37 @@ function App() {
                           </div>
                         </div>
                       )}
-            <button
-              className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
-              onClick={toggleFullscreen}
-              title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+      
+      {/* Bouton d'administration discret */}
+      <div 
+        className="admin-button"
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 1000,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          color: 'white',
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '20px'
+        }}
+        onClick={() => {
+          if (!user) {
+            signInWithGoogle();
+          } else {
+            auth.signOut();
+          }
+        }}
+        title={user ? "Se déconnecter" : "Se connecter"}
       >
-        {isFullscreen ? (
-          <svg viewBox="0 0 24 24">
-            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24">
-            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-          </svg>
-        )}
-      </button>
+        {user ? "🔓" : "🔒"}
+      </div>
     </div>
   );
 }
