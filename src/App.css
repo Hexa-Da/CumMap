@@ -1604,38 +1604,33 @@ html, body, #root {
 
 .fullscreen-button {
   padding: 8px;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-shadow: 0 2px 6px var(--shadow-color);
+  background-color: transparent;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 35px;
-  height: 35px;
+  transition: opacity 0.3s ease;
 }
 
 .fullscreen-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px var(--shadow-color);
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  opacity: 0.8;
 }
 
-.fullscreen-button svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+.admin-button {
+  padding: 8px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: opacity 0.3s ease;
 }
 
-.fullscreen-button.active {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+.admin-button:hover {
+  opacity: 0.8;
 }
 
 .login-button {

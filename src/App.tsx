@@ -1702,6 +1702,29 @@ function App() {
               </svg>
             )}
           </button>
+          <button 
+            className="admin-button"
+            onClick={() => {
+              if (!user) {
+                signInWithGoogle();
+              } else {
+                auth.signOut();
+              }
+            }}
+            title={user ? "Se déconnecter" : "Se connecter"}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px'
+            }}
+          >
+            {user ? "🔓" : "🔒"}
+          </button>
         </div>
         <div className="controls">
           {!isEditing && activeTab === 'map' && (
@@ -2119,37 +2142,6 @@ function App() {
                           </div>
                         </div>
                       )}
-      
-      {/* Bouton d'administration discret */}
-      <div 
-        className="admin-button"
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 1000,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          color: 'white',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          fontSize: '20px'
-        }}
-        onClick={() => {
-          if (!user) {
-            signInWithGoogle();
-          } else {
-            auth.signOut();
-          }
-        }}
-        title={user ? "Se déconnecter" : "Se connecter"}
-      >
-        {user ? "🔓" : "🔒"}
-      </div>
     </div>
   );
 }
