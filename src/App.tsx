@@ -1727,7 +1727,7 @@ function App() {
           </button>
         </div>
         <div className="controls">
-          {!isEditing && activeTab === 'map' && (
+          {!isEditing && (
             <select 
               className="map-style-selector"
               value={mapStyle}
