@@ -38,24 +38,14 @@ Vous pouvez y découvrir toutes les fonctionnalités de l'application, notamment
 - **TypeScript** : Pour un développement plus robuste
 - **Vite** : Outil de build moderne
 - **Leaflet** : Bibliothèque de cartographie interactive
-- **CSS Modules** : Pour un style modulaire
-- **React Router** : Pour la gestion des routes
 
 ### Backend & Base de données
 - **Firebase** : 
   - **Realtime Database** : Stockage des données en temps réel
   - **Authentication** : Gestion des utilisateurs avec Google
-  - **Storage** : Stockage des fichiers et médias
 
 ### Analytics
 - **Google Analytics 4** : Suivi des événements et interactions utilisateurs
-
-## 🏗️ Architecture
-
-L'application suit une architecture moderne en trois couches :
-1. **Présentation** : Interface utilisateur React avec composants réutilisables
-2. **Logique métier** : Services et hooks personnalisés pour la gestion des données
-3. **Persistence** : Firebase Realtime Database pour le stockage des données
 
 ## 🔧 Installation et développement
 
@@ -105,12 +95,3 @@ Les contributions sont les bienvenues ! Pour contribuer au projet :
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
-## 👥 Équipe
-
-- [Nom Prénom] - Développeur principal
-- [Nom Prénom] - Designer UI/UX
-- [Nom Prénom] - Développeur backend
-
-## 📞 Contact
-
-Pour toute question ou suggestion, n'hésitez pas à nous contacter à [email@example.com](mailto:email@example.com)
