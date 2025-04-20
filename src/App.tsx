@@ -11,6 +11,7 @@ import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import logo from './assets/logo.svg';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);
@@ -66,6 +67,7 @@ interface Match extends BaseItem {
   type: 'match';
   teams: string;
   time: string;
+  endTime?: string; // Rendre endTime optionnel
   venueId: string;
 }
 
@@ -391,7 +393,7 @@ function App() {
   const [selectedSport, setSelectedSport] = useState('Football');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [editingMatch, setEditingMatch] = useState<{venueId: string | null, match: Match | null}>({ venueId: null, match: null });
-  const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string}>({
+  const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string, endTime?: string}>({
     date: '',
     teams: '',
     description: ''
@@ -447,6 +449,11 @@ function App() {
     Ultimate: '🥏',
     Natation: '🏊',
     Trail: '🏃',
+    Boxe: '🥊',
+    Athlétisme: '🏃‍♂️',
+    Pétanque: '🎯',
+    Escalade: '🧗‍♂️',
+    'Jeux de société': '🎲',
     Other: '🎯',
     Pompom: '🎀',
     Party: '🎉',
@@ -464,7 +471,12 @@ function App() {
     'Tennis',
     'Trail',
     'Volleyball',
-    'Ping-pong'
+    'Ping-pong',
+    'Boxe',
+    'Athlétisme',
+    'Pétanque',
+    'Escalade',
+    'Jeux de société'
   ];
 
   // Fonction pour géocoder une adresse avec Nominatim
@@ -512,7 +524,12 @@ function App() {
       'Tennis': '🎾',
       'Trail': '🏃',
       'Volleyball': '🏐',
-      'Ping-pong': '🏓'
+      'Ping-pong': '🏓',
+      'Boxe': '🥊',
+      'Athlétisme': '🏃‍♂️',
+      'Pétanque': '🎯',
+      'Escalade': '🧗‍♂️',
+      'Jeux de société': '🎲'
     };
     return sportIcons[sport] || '🏆';
   };
@@ -656,27 +673,43 @@ function App() {
     };
   }, [history, historyIndex, venues]);
 
-  // Fonction pour ajouter un nouveau lieu
+  // Ajouter ces états au début du composant App
+  const [tempMarker, setTempMarker] = useState<[number, number] | null>(null);
+  const [isPlacingMarker, setIsPlacingMarker] = useState(false);
+
+  // Modifier la fonction qui gère l'ajout d'un lieu
   const handleAddVenue = async () => {
     if (!checkAdminRights()) return;
 
-    if (!newVenueName || !newVenueDescription || !newVenueAddress) {
+    if (!newVenueName || !newVenueDescription || (!newVenueAddress && !tempMarker)) {
+      alert('Veuillez remplir tous les champs requis ou placer un marqueur sur la carte.');
       return;
     }
 
-      const coordinates = await geocodeAddress(newVenueAddress);
+    let coordinates: [number, number] | null = null;
+    
+    if (tempMarker) {
+      coordinates = tempMarker;
+    } else if (newVenueAddress) {
+      coordinates = await geocodeAddress(newVenueAddress);
+      if (!coordinates) {
+        alert('Adresse non trouvée. Veuillez vérifier l\'adresse saisie ou placer un marqueur sur la carte.');
+        return;
+      }
+    }
+
     if (!coordinates) {
-      alert('Adresse non trouvée. Veuillez vérifier l\'adresse saisie.');
+      alert('Une erreur est survenue lors de la récupération des coordonnées.');
       return;
     }
 
     const venuesRef = ref(database, 'venues');
     const newVenueRef = push(venuesRef);
     const newVenue: Omit<Venue, 'id'> = {
-          name: newVenueName,
-          position: coordinates,
-          description: newVenueDescription,
-          address: newVenueAddress,
+      name: newVenueName,
+      position: coordinates,
+      description: newVenueDescription,
+      address: newVenueAddress || `${coordinates[0]}, ${coordinates[1]}`,
       matches: [],
       sport: selectedSport,
       date: '',
@@ -689,7 +722,6 @@ function App() {
     try {
       await set(newVenueRef, newVenue);
       
-      // Ajouter l'action à l'historique avec une fonction d'annulation
       const venueId = newVenueRef.key || '';
       addToHistory({
         type: 'ADD_VENUE',
@@ -700,15 +732,31 @@ function App() {
         }
       });
       
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
+      setNewVenueName('');
+      setNewVenueDescription('');
+      setNewVenueAddress('');
       setSelectedSport('Football');
-      // Fermer le formulaire d'ajout après avoir ajouté le lieu
+      setTempMarker(null);
+      setIsPlacingMarker(false);
       setIsAddingPlace(false);
     } catch (error) {
       console.error('Erreur lors de l\'ajout du lieu:', error);
       alert('Une erreur est survenue lors de l\'ajout du lieu.');
+    }
+  };
+
+  // Ajouter le gestionnaire de clic sur la carte
+  const handleMapClick = (e: { latlng: { lat: number; lng: number } }) => {
+    if (isPlacingMarker) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      setTempMarker([lat, lng]);
+      // Garder uniquement les coordonnées comme adresse
+      setNewVenueAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      
+      // Réactiver le formulaire après le placement du marqueur
+      setIsPlacingMarker(false);
+      setIsAddingPlace(true);
     }
   };
 
@@ -753,35 +801,81 @@ function App() {
   };
 
   // Fonction pour ajouter un nouveau match
-  const handleAddMatch = (venueId: string) => {
-    if (!isAdmin) {
-      alert('Seuls les administrateurs peuvent ajouter des matchs.');
-      return;
-    }
+  const handleAddMatch = async (venueId: string) => {
+    if (!checkAdminRights()) return;
 
     const venue = venues.find(v => v.id === venueId);
     if (!venue) return;
 
+    if (!newMatch.date || !newMatch.teams || !newMatch.description) {
+      alert('Veuillez remplir tous les champs requis (date de début, équipes et description)');
+      return;
+    }
+
     const matchId = uuidv4();
-    const newMatch: Match = {
+    const match: Match = {
       id: matchId,
       name: `${venue.name} - Match`,
-      description: '',
+      description: newMatch.description,
       address: venue.address,
       latitude: venue.latitude,
       longitude: venue.longitude,
       position: [venue.latitude, venue.longitude],
-      date: new Date().toISOString().split('T')[0],
+      date: newMatch.date,
       type: 'match',
-      teams: '',
+      teams: newMatch.teams,
       sport: venue.sport,
-      time: new Date().toTimeString().split(' ')[0],
+      time: new Date(newMatch.date).toTimeString().split(' ')[0],
+      endTime: newMatch.endTime || '', // Rendre endTime optionnel
       venueId: venue.id,
       emoji: venue.emoji
     };
-    setNewMatch(newMatch);
-    setSelectedVenue(venue);
-    setIsAddingMatch(true);
+
+    try {
+      const venueRef = ref(database, `venues/${venueId}`);
+      const updatedMatches = [...(venue.matches || []), match];
+      
+      await set(venueRef, {
+        ...venue,
+        matches: updatedMatches
+      });
+
+      // Ajouter l'action à l'historique
+      addToHistory({
+        type: 'ADD_MATCH',
+        data: { venueId, match },
+        undo: async () => {
+          const undoRef = ref(database, `venues/${venueId}`);
+          await set(undoRef, {
+            ...venue,
+            matches: venue.matches || []
+          });
+        }
+      });
+
+      // Réinitialiser le formulaire
+      setNewMatch({
+        date: '',
+        teams: '',
+        description: '',
+        endTime: ''
+      });
+      setEditingMatch({ venueId: null, match: null });
+      setOpenPopup(venueId);
+
+      // Ouvrir le popup du lieu après l'ajout
+      const marker = markersRef.current.find(m => 
+        m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+      );
+      if (marker) {
+        setTimeout(() => {
+          marker.openPopup();
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du match:', error);
+      alert('Une erreur est survenue lors de l\'ajout du match.');
+    }
   };
 
   // Fonction pour mettre à jour un match
@@ -796,12 +890,16 @@ function App() {
       const matchBefore = venue.matches.find(m => m.id === matchId);
       
       const updatedMatches = venue.matches.map(match =>
-        match.id === matchId ? { ...match, ...updatedData } : match
+        match.id === matchId ? { 
+          ...match, 
+          ...updatedData,
+          endTime: updatedData.endTime || '' // Permettre une chaîne vide pour endTime
+        } : match
       );
       
       try {
         await set(venueRef, {
-            ...venue,
+          ...venue,
           matches: updatedMatches
         });
         
@@ -884,90 +982,22 @@ function App() {
         const venueBefore = { ...venue };
         const venueRef = ref(database, `venues/${editingVenue.id}`);
         
-        // Si l'adresse a changé, essayer de la géocoder
-        if (newVenueAddress !== venue.address) {
-          try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(newVenueAddress)}`);
-            const data = await response.json();
-            
-            if (data && data.length > 0) {
-              // Mettre à jour avec les nouvelles coordonnées
-              const updatedVenue = {
+        // Utiliser les coordonnées du marqueur temporaire si disponible
+        const coordinates: [number, number] = tempMarker || [venue.latitude, venue.longitude];
+        
+        // Créer l'objet de mise à jour
+        const updatedVenue = {
           ...venue,
-                name: newVenueName,
-                description: newVenueDescription,
-                address: newVenueAddress,
-                sport: selectedSport,
-                latitude: parseFloat(data[0].lat),
-                longitude: parseFloat(data[0].lon),
-                position: [parseFloat(data[0].lat), parseFloat(data[0].lon)]
-              };
-              
-              await set(venueRef, updatedVenue);
-              
-              // Ajouter l'action à l'historique avec une fonction d'annulation
-              addToHistory({
-                type: 'UPDATE_VENUE',
-                data: { before: venueBefore, after: updatedVenue },
-                undo: async () => {
-                  const undoRef = ref(database, `venues/${editingVenue.id}`);
-                  await set(undoRef, venueBefore);
-                }
-              });
-            } else {
-              // Garder les anciennes coordonnées mais mettre à jour les autres informations
-              const updatedVenue = {
-                ...venue,
-                name: newVenueName,
-                description: newVenueDescription,
-                address: newVenueAddress,
-                sport: selectedSport
-              };
-              
-              await set(venueRef, updatedVenue);
-              
-              // Ajouter l'action à l'historique avec une fonction d'annulation
-              addToHistory({
-                type: 'UPDATE_VENUE',
-                data: { before: venueBefore, after: updatedVenue },
-                undo: async () => {
-                  const undoRef = ref(database, `venues/${editingVenue.id}`);
-                  await set(undoRef, venueBefore);
-                }
-              });
-            }
-          } catch (error) {
-            console.error('Erreur lors de la géolocalisation de l\'adresse:', error);
-            // Mettre à jour sans changer les coordonnées
-            const updatedVenue = {
-          ...venue,
-              name: newVenueName,
-              description: newVenueDescription,
-              address: newVenueAddress,
-              sport: selectedSport
-            };
-            
-            await set(venueRef, updatedVenue);
-            
-            // Ajouter l'action à l'historique avec une fonction d'annulation
-            addToHistory({
-              type: 'UPDATE_VENUE',
-              data: { before: venueBefore, after: updatedVenue },
-              undo: async () => {
-                const undoRef = ref(database, `venues/${editingVenue.id}`);
-                await set(undoRef, venueBefore);
-              }
-            });
-          }
-        } else {
-          // Mettre à jour sans changer l'adresse ni les coordonnées
-          const updatedVenue = {
-            ...venue,
-            name: newVenueName,
-            description: newVenueDescription,
-            sport: selectedSport
-          };
-          
+          name: newVenueName,
+          description: newVenueDescription,
+          address: newVenueAddress || `${coordinates[0].toFixed(6)}, ${coordinates[1].toFixed(6)}`,
+          sport: selectedSport,
+          latitude: coordinates[0],
+          longitude: coordinates[1],
+          position: coordinates
+        };
+        
+        try {
           await set(venueRef, updatedVenue);
           
           // Ajouter l'action à l'historique avec une fonction d'annulation
@@ -979,15 +1009,19 @@ function App() {
               await set(undoRef, venueBefore);
             }
           });
+          
+          // Réinitialiser le formulaire et l'état d'édition
+          setNewVenueName('');
+          setNewVenueDescription('');
+          setNewVenueAddress('');
+          setSelectedSport('Football');
+          setTempMarker(null);
+          setEditingVenue({ id: null, venue: null });
+          setIsAddingPlace(false);
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour du lieu:', error);
+          alert('Une erreur est survenue lors de la mise à jour du lieu.');
         }
-        
-        // Réinitialiser le formulaire et l'état d'édition
-        setNewVenueName('');
-        setNewVenueDescription('');
-        setNewVenueAddress('');
-        setSelectedSport('Football');
-        setEditingVenue({ id: null, venue: null });
-        setIsAddingPlace(false);
       }
     }
   };
@@ -1010,6 +1044,8 @@ function App() {
     setNewVenueAddress(venue.address || '');
     setSelectedSport(venue.sport);
     setSelectedEmoji(sportEmojis[venue.sport as keyof typeof sportEmojis] || '⚽');
+    // Initialiser le marqueur temporaire avec la position actuelle du lieu
+    setTempMarker([venue.latitude, venue.longitude]);
   };
 
   // Fonction pour annuler l'édition
@@ -1019,12 +1055,26 @@ function App() {
     setNewVenueDescription('');
     setNewVenueAddress('');
     setSelectedSport('Football');
+    setTempMarker(null);
+    setIsPlacingMarker(false);
     setIsAddingPlace(false);
   };
 
   // Fonction pour vérifier si un match est passé
-  const isMatchPassed = (matchDate: string) => {
-    return new Date(matchDate) < new Date();
+  const isMatchPassed = (startDate: string, endTime?: string, type: 'match' | 'party' = 'match') => {
+    const now = new Date();
+    const start = new Date(startDate);
+    
+    // Si une heure de fin est spécifiée, l'utiliser
+    if (endTime) {
+      const end = new Date(endTime);
+      return now > end;
+    }
+    
+    // Sinon, utiliser les durées par défaut
+    const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
+    const end = new Date(start.getTime() + (defaultDuration * 60 * 60 * 1000));
+    return now > end;
   };
 
   // Fonction pour récupérer tous les événements (matchs et soirées)
@@ -1033,6 +1083,7 @@ function App() {
       id: string;
       name: string;
       date: string;
+      endTime?: string;
       description: string;
       address: string;
       location: [number, number];
@@ -1052,6 +1103,7 @@ function App() {
             id: `match-${venue.id}-${match.id}`,
             name: match.teams,
             date: match.date,
+            endTime: match.endTime,
             description: match.description,
             address: venue.address || `${venue.latitude}, ${venue.longitude}`,
             location: [venue.latitude, venue.longitude],
@@ -1059,7 +1111,7 @@ function App() {
             teams: match.teams,
             venue: venue.name,
             venueId: venue.id,
-            isPassed: isMatchPassed(match.date),
+            isPassed: isMatchPassed(match.date, match.endTime, 'match'),
             sport: venue.sport
           });
         });
@@ -1076,7 +1128,7 @@ function App() {
         address: party.address || `${party.latitude}, ${party.longitude}`,
         location: [party.latitude, party.longitude],
         type: 'party',
-        isPassed: isMatchPassed(party.date),
+        isPassed: isMatchPassed(party.date, undefined, 'party'),
         sport: party.sport
       });
     });
@@ -1100,12 +1152,20 @@ function App() {
   };
 
   // Fonction pour formater la date et l'heure
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = (dateString: string, endTimeString?: string) => {
     const date = new Date(dateString);
     const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     const day = days[date.getDay()];
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    if (endTimeString) {
+      const endTime = new Date(endTimeString);
+      const endHours = endTime.getHours().toString().padStart(2, '0');
+      const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
+      return `${day} ${hours}:${minutes} - ${endHours}:${endMinutes}`;
+    }
+    
     return `${day} ${hours}:${minutes}`;
   };
 
@@ -1267,11 +1327,14 @@ function App() {
         if (venue.matches && venue.matches.length > 0) {
           matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
           
-          venue.matches.forEach(match => {
+          // Trier les matchs par date
+          const sortedMatches = [...venue.matches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          
+          sortedMatches.forEach(match => {
             const matchItemDiv = document.createElement('div');
-            matchItemDiv.className = `match-item ${isMatchPassed(match.date) ? 'match-passed' : ''}`;
+            matchItemDiv.className = `match-item ${isMatchPassed(match.date, match.endTime) ? 'match-passed' : ''}`;
             matchItemDiv.innerHTML = `
-              <p class="match-date">${formatDateTime(match.date)}</p>
+              <p class="match-date">${formatDateTime(match.date, match.endTime)}</p>
               <p class="match-teams">${match.teams}</p>
               <p class="match-description">${match.description}</p>
             `;
@@ -1489,7 +1552,8 @@ function App() {
       setNewMatch({
         date: match.date,
         teams: match.teams,
-        description: match.description
+        description: match.description,
+        endTime: match.endTime
       });
     } else {
       setNewMatch({ date: '', teams: '', description: '' });
@@ -1677,6 +1741,7 @@ function App() {
     <div className="app">
       <div className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src={logo} alt="CumMap Logo" style={{ height: '40px', width: 'auto' }} />
           <h1>CumMap</h1>
           <button 
             className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
@@ -1761,6 +1826,8 @@ function App() {
               if (isEditing) {
                 setIsAddingPlace(false);
                 setEditingVenue({ id: null, venue: null });
+                setTempMarker(null); // Nettoyer le marqueur temporaire
+                setIsPlacingMarker(false); // Désactiver le mode placement
               }
             }}
           >
@@ -1787,7 +1854,7 @@ function App() {
               Ajouter un lieu
             </button>
           )}
-          {(isAddingPlace || editingVenue.id) && (
+          {(isAddingPlace || editingVenue.id) && !isPlacingMarker && (
             <div className="form-overlay">
             <div className="edit-form">
                 <div className="edit-form-header">
@@ -1818,14 +1885,39 @@ function App() {
                   </div>
                   <div className="form-group">
                     <label htmlFor="venue-address">Adresse</label>
-              <input
-                      id="venue-address"
-                type="text"
-                value={newVenueAddress}
-                onChange={(e) => setNewVenueAddress(e.target.value)}
-                      placeholder="Entrez l'adresse complète"
-                      className="form-input"
-                    />
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        id="venue-address"
+                        type="text"
+                        value={newVenueAddress}
+                        onChange={(e) => setNewVenueAddress(e.target.value)}
+                        placeholder="Entrez l'adresse ou cliquez sur la carte"
+                        className="form-input"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="place-marker-button"
+                        onClick={() => {
+                          setIsPlacingMarker(true);
+                          setIsAddingPlace(false); // Cacher le formulaire pendant le placement
+                        }}
+                        style={{
+                          padding: '8px',
+                          backgroundColor: '#f0f0f0',
+                          color: 'black',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📍 Placer sur la carte
+                      </button>
+                    </div>
+                    {tempMarker && (
+                      <p style={{ color: 'var(--success-color)', fontSize: '0.8rem', marginTop: '4px' }}>
+                        Position sélectionnée : {newVenueAddress}
+                      </p>
+                    )}
                   </div>
                   <div className="form-group">
                     <label htmlFor="venue-sport">Sport</label>
@@ -1852,6 +1944,11 @@ function App() {
                       <option value="Ultimate">Ultimate 🥏</option>
                       <option value="Natation">Natation 🏊</option>
                       <option value="Trail">Trail 🏃</option>
+                      <option value="Boxe">Boxe 🥊</option>
+                      <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                      <option value="Pétanque">Pétanque 🎯</option>
+                      <option value="Escalade">Escalade 🧗‍♂️</option>
+                      <option value="Jeux de société">Jeux de société 🎲</option>
                       <option value="Other">Autre 🎯</option>
                     </select>
                   </div>
@@ -1917,6 +2014,15 @@ function App() {
                 attribution={mapStyles[mapStyle as keyof typeof mapStyles].attribution}
           />
           <LocationMarker />
+          <MapEvents onMapClick={handleMapClick} />
+          {tempMarker && (
+            <Marker
+              position={tempMarker}
+              icon={DefaultIcon}
+            >
+              <Popup>Nouveau lieu</Popup>
+            </Marker>
+          )}
               <div className="leaflet-control-container">
                 <div className="leaflet-top leaflet-right">
                   <div className="leaflet-control-zoom leaflet-bar leaflet-control">
@@ -1980,6 +2086,11 @@ function App() {
                     <option value="Trail">Trail</option>
                     <option value="Volleyball">Volleyball</option>
                     <option value="Ping-pong">Ping-pong</option>
+                    <option value="Boxe">Boxe</option>
+                    <option value="Athlétisme">Athlétisme</option>
+                    <option value="Pétanque">Pétanque</option>
+                    <option value="Escalade">Escalade</option>
+                    <option value="Jeux de société">Jeux de société</option>
                   </select>
                             </div>
                 <div className="events-list">
@@ -2000,30 +2111,37 @@ function App() {
                       <div className="event-title-container">
                         <h3 className="event-name">{event.name}</h3>
                       </div>
-                      {event.type === 'match' && event.venue && (
-                        <p className="event-venue">Lieu: {event.venue}</p>
+                      {event.type === 'match' && (
+                        <>
+                          <p className="event-description">{event.description}</p>
+                          <p className="event-venue">{event.venue}</p>
+                        </>
                       )}
-                      <p className="event-description">{event.description}</p>
-                      <p className="event-address">{event.address}</p>
+                      {event.type === 'party' && (
+                        <>
+                          <p className="event-description">{event.description}</p>
+                          <p className="event-address">{event.address}</p>
+                        </>
+                      )}
                       <div className="event-actions">
-                                <button 
+                        <button 
                           className="maps-button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`, '_blank');
-                                  }}
-                                >
+                          }}
+                        >
                           Ouvrir dans Google Maps
-                                </button>
-                      <button 
+                        </button>
+                        <button 
                           className="copy-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                             copyToClipboard(event.address);
-                        }}
-                      >
+                          }}
+                        >
                           Copier l'adresse
-                      </button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2043,18 +2161,16 @@ function App() {
             </div>
             <div className="edit-form-content">
               <div className="form-group">
-                <label htmlFor="match-date">Date et heure</label>
-                          <input
+                <label htmlFor="match-date">Date et heure de début</label>
+                <input
                   id="match-date"
-                            type="datetime-local"
+                  type="datetime-local"
                   value={editingMatch.match ? editingMatch.match.date : newMatch.date}
                   onChange={(e) => {
                     if (editingMatch.match) {
-                      // Modification d'un match existant
                       const updatedMatch = { ...editingMatch.match, date: e.target.value };
                       setEditingMatch({ ...editingMatch, match: updatedMatch });
                     } else {
-                      // Création d'un nouveau match
                       setNewMatch({ ...newMatch, date: e.target.value });
                     }
                   }}
@@ -2062,18 +2178,34 @@ function App() {
                 />
               </div>
               <div className="form-group">
+                <label htmlFor="match-end-time">Heure de fin</label>
+                <input
+                  id="match-end-time"
+                  type="datetime-local"
+                  value={editingMatch.match ? editingMatch.match.endTime : (newMatch.endTime || '')}
+                  min={editingMatch.match ? editingMatch.match.date : newMatch.date}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, endTime: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, endTime: e.target.value });
+                    }
+                  }}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
                 <label htmlFor="match-teams">Équipes</label>
-                          <input
+                <input
                   id="match-teams"
-                            type="text"
+                  type="text"
                   value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
                   onChange={(e) => {
                     if (editingMatch.match) {
-                      // Modification d'un match existant
                       const updatedMatch = { ...editingMatch.match, teams: e.target.value };
                       setEditingMatch({ ...editingMatch, match: updatedMatch });
                     } else {
-                      // Création d'un nouveau match
                       setNewMatch({ ...newMatch, teams: e.target.value });
                     }
                   }}
@@ -2083,17 +2215,15 @@ function App() {
               </div>
               <div className="form-group">
                 <label htmlFor="match-description">Description</label>
-                          <input
+                <input
                   id="match-description"
-                            type="text"
+                  type="text"
                   value={editingMatch.match ? editingMatch.match.description : newMatch.description}
                   onChange={(e) => {
                     if (editingMatch.match) {
-                      // Modification d'un match existant
                       const updatedMatch = { ...editingMatch.match, description: e.target.value };
                       setEditingMatch({ ...editingMatch, match: updatedMatch });
                     } else {
-                      // Création d'un nouveau match
                       setNewMatch({ ...newMatch, description: e.target.value });
                     }
                   }}
@@ -2102,24 +2232,22 @@ function App() {
                 />
               </div>
               <div className="form-actions">
-                            <button 
+                <button 
                   className="add-button"
                   onClick={() => {
                     if (editingMatch.match) {
-                      // Mettre à jour un match existant
                       handleUpdateMatch(
                         editingMatch.venueId!, 
                         editingMatch.match.id, 
                         {
                           date: editingMatch.match.date,
+                          endTime: editingMatch.match.endTime || '',
                           teams: editingMatch.match.teams,
                           description: editingMatch.match.description
                         }
                       );
-                      // Fermer le formulaire après la mise à jour
                       finishEditingMatch();
                     } else {
-                      // Ajouter un nouveau match
                       handleAddMatch(editingMatch.venueId!);
                     }
                   }}
@@ -2130,18 +2258,18 @@ function App() {
                   }
                 >
                   {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
-                            </button>
-                            <button 
-                              className="cancel-button"
+                </button>
+                <button 
+                  className="cancel-button"
                   onClick={finishEditingMatch}
-                            >
-                              Annuler
-                            </button>
-                          </div>
-                        </div>
-                          </div>
-                        </div>
-                      )}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
