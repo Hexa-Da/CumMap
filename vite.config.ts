@@ -9,6 +9,17 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
-    base: './'
+    base: './',
+    build: {
+      rollupOptions: {
+        external: ['@rollup/rollup-linux-x64-gnu'],
+        output: {
+          manualChunks: undefined
+        }
+      }
+    },
+    optimizeDeps: {
+      exclude: ['@rollup/rollup-linux-x64-gnu']
+    }
   }
 })
