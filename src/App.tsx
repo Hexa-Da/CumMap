@@ -1903,14 +1903,14 @@ function App() {
                         }}
                         style={{
                           padding: '8px',
-                          backgroundColor: '#f0f0f0',
-                          color: 'black',
-                          border: 'none',
+                          backgroundColor: 'transparent',
+                          color: 'var(--text-color)',
+                          border: '1px solid var(--border-color)',
                           borderRadius: '4px',
                           cursor: 'pointer'
                         }}
                       >
-                        📍 Placer sur la carte
+                        📍
                       </button>
                     </div>
                     {tempMarker && (
