@@ -370,6 +370,10 @@ html, body, #root {
     width: 90vw;
     max-height: 80vh;
     padding: 15px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   
   .edit-form-header {
@@ -388,6 +392,28 @@ html, body, #root {
   .add-button, .cancel-button {
     max-width: none;
     width: 100%;
+  }
+
+  /* Ajout de styles pour le bouton "Placer sur la carte" */
+  .place-on-map-button {
+    position: relative;
+    margin-top: 0.5rem;
+    width: 100%;
+    z-index: 1;
+  }
+
+  /* Ajustement de la position du message flottant */
+  .floating-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3001;
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px var(--shadow-color);
   }
 }
 
