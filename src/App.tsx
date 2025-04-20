@@ -1902,12 +1902,15 @@ function App() {
                           setIsAddingPlace(false); // Cacher le formulaire pendant le placement
                         }}
                         style={{
-                          padding: '8px',
-                          backgroundColor: 'transparent',
-                          color: 'var(--text-color)',
+                          width: '32px',
+                          height: '32px',
+                          padding: '4px',
                           border: '1px solid var(--border-color)',
                           borderRadius: '4px',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
                         📍
