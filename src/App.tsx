@@ -1681,6 +1681,8 @@ function App() {
   };
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -1691,9 +1693,6 @@ function App() {
       setIsFullscreen(false);
     }
   };
-
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('Démarrage de l\'écouteur d\'authentification...');
@@ -1872,46 +1871,6 @@ function App() {
           >
             {user ? "🔓" : "🔒"}
           </button>
-          {showInstallPrompt && (
-            <button
-              className="install-button"
-              onClick={handleInstallClick}
-              title="Installer l'application sur votre appareil"
-              style={{
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                position: 'relative'
-              }}
-            >
-              ⬇️
-              <span 
-                style={{
-                  position: 'absolute',
-                  top: '-30px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-color)',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  whiteSpace: 'nowrap',
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease',
-                  pointerEvents: 'none'
-                }}
-                className="install-tooltip"
-              >
-                Installer l'application
-              </span>
-            </button>
-          )}
         </div>
         <div className="controls">
           {!isEditing && (
@@ -1975,142 +1934,6 @@ function App() {
             >
               Ajouter un lieu
             </button>
-          )}
-          {(isAddingPlace || editingVenue.id) && !isPlacingMarker && (
-            <div className="form-overlay">
-            <div className="edit-form">
-                <div className="edit-form-header">
-                  <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un nouveau lieu'}</h3>
-                </div>
-                <div className="edit-form-content">
-                  <div className="form-group">
-                    <label htmlFor="venue-name">Nom du lieu</label>
-              <input
-                      id="venue-name"
-                type="text"
-                value={newVenueName}
-                onChange={(e) => setNewVenueName(e.target.value)}
-                      placeholder="Ex: Stade de France"
-                      className="form-input"
-              />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-description">Description</label>
-              <input
-                      id="venue-description"
-                type="text"
-                value={newVenueDescription}
-                onChange={(e) => setNewVenueDescription(e.target.value)}
-                      placeholder="Ex: Stade principal de football"
-                      className="form-input"
-              />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-address">Adresse</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <input
-                        id="venue-address"
-                        type="text"
-                        value={newVenueAddress}
-                        onChange={(e) => setNewVenueAddress(e.target.value)}
-                        placeholder="Entrez l'adresse ou cliquez sur la carte"
-                        className="form-input"
-                        style={{ flex: 1 }}
-                      />
-                      <button
-                        className="place-marker-button"
-                        onClick={() => {
-                          setIsPlacingMarker(true);
-                          setIsAddingPlace(false); // Cacher le formulaire pendant le placement
-                        }}
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          padding: '4px',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        📍
-                      </button>
-                    </div>
-                    {tempMarker && (
-                      <p style={{ color: 'var(--success-color)', fontSize: '0.8rem', marginTop: '4px' }}>
-                        Position sélectionnée : {newVenueAddress}
-                      </p>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="venue-sport">Sport</label>
-                    <select
-                      id="venue-sport"
-                      value={selectedSport}
-                      onChange={(e) => {
-                        setSelectedSport(e.target.value);
-                        setSelectedEmoji(sportEmojis[e.target.value] || '⚽');
-                      }}
-                      className="form-input"
-                    >
-                      <option value="Football">Football ⚽</option>
-                      <option value="Basketball">Basketball 🏀</option>
-                      <option value="Handball">Handball 🤾</option>
-                      <option value="Rugby">Rugby 🏉</option>
-                      <option value="Volleyball">Volleyball 🏐</option>
-                      <option value="Tennis">Tennis 🎾</option>
-                      <option value="Badminton">Badminton 🏸</option>
-                      <option value="Hockey">Hockey 🏑</option>
-                      <option value="Base-ball">Base-ball ⚾</option>
-                      <option value="Golf">Golf ⛳</option>
-                      <option value="Ping-pong">Ping-pong 🏓</option>
-                      <option value="Ultimate">Ultimate 🥏</option>
-                      <option value="Natation">Natation 🏊</option>
-                      <option value="Trail">Trail 🏃</option>
-                      <option value="Boxe">Boxe 🥊</option>
-                      <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
-                      <option value="Pétanque">Pétanque 🍹</option>
-                      <option value="Escalade">Escalade 🧗‍♂️</option>
-                      <option value="Jeux de société">Jeux de société 🎲</option>
-                      <option value="Other">Autre 🎯</option>
-                    </select>
-                  </div>
-                  <div className="form-actions">
-                    <button 
-                      className="add-button"
-                      onClick={() => {
-                        if (editingVenue.id) {
-                          handleUpdateVenue();
-                        } else {
-                          handleAddVenue();
-                        }
-                      }}
-                      disabled={!newVenueName || !newVenueDescription}
-                    >
-                      {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
-                    </button>
-                    <button 
-                      className="cancel-button"
-                      onClick={() => {
-                        if (editingVenue.id) {
-                          cancelEditingVenue();
-                        } else {
-                          setIsAddingPlace(false);
-                          setNewVenueName('');
-                          setNewVenueDescription('');
-                          setNewVenueAddress('');
-                          setSelectedSport('Football');
-                        }
-                      }}
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
         </div>
       </div>
