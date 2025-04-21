@@ -5,24 +5,19 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/',
-  resolve: {
-    alias: {
-      'firebase/app': 'firebase/app',
-      'firebase/auth': 'firebase/auth'
-    }
-  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'leaflet-vendor': ['leaflet', 'react-leaflet']
-        }
+        },
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js'
       }
-    }
-  },
-  optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth']
+    },
+    assetsInlineLimit: 0
   },
   server: {
     headers: {
