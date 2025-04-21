@@ -16,11 +16,7 @@ export default defineConfig({
         format: 'iife',
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          leaflet: ['leaflet', 'react-leaflet']
-        }
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     }
   },
