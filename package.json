@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "npm install --legacy-peer-deps && npm install @rollup/rollup-linux-x64-gnu @esbuild/linux-x64 --save-dev && tsc && vite build && touch dist/.nojekyll",
+    "build": "tsc && vite build && touch dist/.nojekyll",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist"
