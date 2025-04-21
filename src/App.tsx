@@ -253,10 +253,6 @@ function App() {
   // Suppression du mode admin basé sur l'URL
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isAddingPlace, setIsAddingPlace] = useState(false);
-  const [isPlacingMarker, setIsPlacingMarker] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -389,6 +385,8 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  const [isAddingPlace, setIsAddingPlace] = useState(false);
+  const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
@@ -677,6 +675,7 @@ function App() {
 
   // Ajouter ces états au début du composant App
   const [tempMarker, setTempMarker] = useState<[number, number] | null>(null);
+  const [isPlacingMarker, setIsPlacingMarker] = useState(false);
 
   // Modifier la fonction qui gère l'ajout d'un lieu
   const handleAddVenue = async () => {
@@ -1681,8 +1680,6 @@ function App() {
   };
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -1694,41 +1691,8 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    // Forcer l'envoi d'un pageview après un court délai pour assurer le chargement complet
-    setTimeout(() => {
-      console.log('[GA] Envoi du pageview à Google Analytics');
-      ReactGA.send({ 
-        hitType: "pageview", 
-        page: window.location.pathname + window.location.search
-      });
-      console.log('[GA] Pageview envoyé');
-      
-      // Forcer un événement pour tester la connexion
-      ReactGA.event({
-        category: 'page',
-        action: 'view',
-        label: window.location.pathname
-      });
-    }, 1000);
-    
-    // Fonction pour enregistrer les événements personnalisés
-    const trackEvent = (category: string, action: string) => {
-      console.log(`[GA] Envoi d'événement: ${category}/${action}`);
-      ReactGA.event({
-        category,
-        action
-      });
-    };
-
-    // Tracker l'événement "app_loaded"
-    trackEvent('app', 'app_loaded');
-    
-    return () => {
-      // Tracker l'événement quand l'utilisateur quitte
-      trackEvent('app', 'app_closed');
-    };
-  }, []);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('Démarrage de l\'écouteur d\'authentification...');
@@ -1766,87 +1730,6 @@ function App() {
       console.log('Email de l\'utilisateur:', result.user.email);
     } catch (error) {
       console.error('Erreur détaillée de connexion:', error);
-    }
-  };
-
-  useEffect(() => {
-    // Gérer l'installation de l'application PWA
-    const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event triggered');
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallPrompt(true);
-    };
-
-    // Vérifier si l'application est déjà installée
-    const checkIfAppIsInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
-      const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
-      
-      console.log('Display mode check:', { isStandalone, isFullscreen, isMinimalUI });
-      
-      // Ne considérer que le mode standalone comme une installation
-      if (isStandalone) {
-        console.log('App is already installed (standalone mode)');
-        setShowInstallPrompt(false);
-      } else {
-        console.log('App is not installed, showing install button');
-        setShowInstallPrompt(true);
-      }
-    };
-
-    // Vérifier si le navigateur supporte l'installation
-    const checkInstallSupport = () => {
-      const isInstallSupported = 'getInstalledRelatedApps' in navigator;
-      console.log('Install support check:', isInstallSupported);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', () => {
-      console.log('App was installed');
-      setShowInstallPrompt(false);
-    });
-
-    checkIfAppIsInstalled();
-    checkInstallSupport();
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', () => {
-        setShowInstallPrompt(false);
-      });
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    console.log('Install button clicked');
-    if (deferredPrompt) {
-      console.log('Showing install prompt');
-      
-      // Personnaliser le message selon le type d'appareil
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const installMessage = isMobile ? "Ajouter à l'écran d'accueil" : "Ouvrir dans CumMap - Cartel Paris 2025";
-      
-      // Modifier le message du prompt
-      deferredPrompt.prompt = () => {
-        const promptEvent = new Event('beforeinstallprompt');
-        Object.assign(promptEvent, {
-          prompt: () => Promise.resolve({ outcome: 'accepted' }),
-          userChoice: Promise.resolve({ outcome: 'accepted' })
-        });
-        window.dispatchEvent(promptEvent);
-      };
-      
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log('User choice:', outcome);
-      if (outcome === 'accepted') {
-        setShowInstallPrompt(false);
-      }
-      setDeferredPrompt(null);
-    } else {
-      console.log('No deferred prompt available');
     }
   };
 
@@ -1907,46 +1790,6 @@ function App() {
           >
             {user ? "🔓" : "🔒"}
           </button>
-          {showInstallPrompt && (
-            <button
-              className="install-button"
-              onClick={handleInstallClick}
-              title="Installer l'application sur votre appareil"
-              style={{
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                position: 'relative'
-              }}
-            >
-              ⬇️
-              <span 
-                style={{
-                  position: 'absolute',
-                  top: '-30px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-color)',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  whiteSpace: 'nowrap',
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease',
-                  pointerEvents: 'none'
-                }}
-                className="install-tooltip"
-              >
-                Installer l'application
-              </span>
-            </button>
-          )}
         </div>
         <div className="controls">
           {!isEditing && (
