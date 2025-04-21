@@ -11,7 +11,7 @@ import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import logo from './assets/logo.svg';
+import favicon from './assets/favicon.svg';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);
@@ -1741,7 +1741,7 @@ function App() {
     <div className="app">
       <div className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={logo} alt="CumMap Logo" style={{ height: '40px', width: 'auto' }} />
+          <img src={favicon} alt="CumMap Logo" style={{ height: '40px', width: 'auto' }} />
           <h1>CumMap</h1>
           <button 
             className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
