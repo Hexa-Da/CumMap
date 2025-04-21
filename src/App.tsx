@@ -278,7 +278,7 @@ function App() {
     return true;
   };
 
-  const [hotels, setHotels] = useState<Hotel[]>([
+  const [hotels] = useState<Hotel[]>([
     {
       id: '1',
       name: "F1 Les Ulis",
