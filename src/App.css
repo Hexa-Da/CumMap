@@ -164,8 +164,8 @@ html, body, #root {
 }
 
 .app-header img {
-  height: 40px;
-  width: 40px;
+  height: 100px;
+  width: 100px;
   object-fit: contain;
   margin-right: 10px;
   padding: 2px;
