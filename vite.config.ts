@@ -12,9 +12,20 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom'],
           'leaflet-vendor': ['leaflet', 'react-leaflet']
         },
-        assetFileNames: 'assets/[name]-[hash][extname]',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js'
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name) {
+            if (/\.(gif|jpe?g|png|svg)$/.test(assetInfo.name)) {
+              return 'assets/images/[name]-[hash][extname]'
+            }
+            if (/\.css$/.test(assetInfo.name)) {
+              return 'assets/css/[name]-[hash][extname]'
+            }
+            return 'assets/[name]-[hash][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js'
       }
     },
     assetsInlineLimit: 0
