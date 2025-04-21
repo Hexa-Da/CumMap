@@ -443,9 +443,7 @@ html, body, #root {
 .app-main {
   flex: 1;
   position: relative;
-  min-height: 0;
-  height: 100%;
-  width: 100%;
+  height: calc(100vh - 62px); /* Ajuster en fonction de la hauteur du header */
   overflow: hidden;
 }
 
@@ -1153,7 +1151,7 @@ html, body, #root {
 
 /* Styles pour la liste des événements */
 .events-list-container {
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   padding: 1rem;
   background-color: var(--bg-color);
@@ -1171,7 +1169,6 @@ html, body, #root {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  padding-top: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1322,15 +1319,15 @@ html, body, #root {
 .events-panel {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 300px;
-  height: 100%;
+  right: 0;
+  width: 350px;
+  height: 100vh;
   background-color: var(--bg-color);
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid var(--border-color);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
 }
 
 .events-panel-header {
@@ -1761,5 +1758,29 @@ html, body, #root {
 @media (prefers-color-scheme: dark) {
   .app-header img {
     filter: brightness(1.2) contrast(1.1);
+  }
+}
+
+.events-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .events-panel {
+    background-color: var(--background-color);
+    border-left-color: var(--border-color);
+  }
+  
+  .events-list::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
   }
 }
