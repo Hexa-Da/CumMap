@@ -1481,6 +1481,10 @@ html, body, #root {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
+  display: -moz-box;
+  -moz-line-clamp: 2;
+  -moz-box-orient: vertical;
 }
 
 /* Pour les événements de type party qui n'ont pas d'icône de sport */
