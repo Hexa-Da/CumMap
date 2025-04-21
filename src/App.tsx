@@ -1333,6 +1333,67 @@ function App() {
     }
   };
 
+  // Fonction pour terminer l'édition d'un match
+  const finishEditingMatch = () => {
+    setEditingMatch({ venueId: null, match: null });
+    setNewMatch({
+      date: '',
+      teams: '',
+      description: '',
+      endTime: ''
+    });
+  };
+
+  // Fonction pour réessayer la géolocalisation
+  const retryLocation = () => {
+    setLocationError(false);
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation([latitude, longitude]);
+        setLocationLoading(false);
+      },
+      (err) => {
+        console.error('Erreur de géolocalisation:', err);
+        setLocationError("Erreur de géolocalisation. Veuillez vérifier les paramètres de votre navigateur.");
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Fonction pour formater la date et l'heure
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  // Fonction pour copier du texte dans le presse-papiers
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        // Succès
+        console.log('Texte copié dans le presse-papiers');
+      },
+      (err) => {
+        // Erreur
+        console.error('Erreur lors de la copie:', err);
+      }
+    );
+  };
+
   if (isLoading) {
     return <div>Chargement...</div>;
   }
