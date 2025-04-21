@@ -361,9 +361,11 @@ function App() {
 
   // Charger les lieux depuis Firebase au démarrage
   useEffect(() => {
+    console.log('Début du chargement des lieux depuis Firebase');
     const venuesRef = ref(database, 'venues');
     const unsubscribe = onValue(venuesRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('Données reçues de Firebase:', data);
       if (data) {
         const venuesArray = Object.entries(data).map(([key, value]: [string, any]) => ({
           ...value,
@@ -375,8 +377,10 @@ function App() {
           longitude: value.position ? value.position[1] : 0,
           emoji: value.emoji || ''
         }));
+        console.log('Lieux transformés:', venuesArray);
         setVenues(venuesArray);
       } else {
+        console.log('Aucune donnée reçue de Firebase');
         setVenues([]); // Si pas de données, initialiser avec un tableau vide
       }
     });
@@ -1099,6 +1103,10 @@ function App() {
 
   // Fonction pour récupérer tous les événements (matchs et soirées)
   const getAllEvents = () => {
+    console.log('Début de getAllEvents');
+    console.log('Lieux disponibles:', venues);
+    console.log('Soirées disponibles:', parties);
+    
     const events: Array<{
       id: string;
       name: string;
@@ -1117,7 +1125,9 @@ function App() {
 
     // Ajouter les matchs
     venues.forEach(venue => {
+      console.log('Traitement du lieu:', venue);
       if (venue.matches && venue.matches.length > 0) {
+        console.log('Matchs trouvés pour ce lieu:', venue.matches);
         venue.matches.forEach(match => {
           events.push({
             id: `match-${venue.id}-${match.id}`,
@@ -1140,6 +1150,7 @@ function App() {
 
     // Ajouter les soirées
     parties.forEach(party => {
+      console.log('Ajout de la soirée:', party);
       events.push({
         id: `party-${party.id || party.name}`,
         name: party.name,
@@ -1153,31 +1164,45 @@ function App() {
       });
     });
 
+    console.log('Événements générés:', events);
     // Trier par date (du plus récent au plus ancien)
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
-  // Fonction pour vérifier et réappliquer le filtre
-  const checkAndApplyFilter = useCallback(() => {
-    if (eventFilter !== 'all') {
-      const filteredEvents = getFilteredEvents();
-      setLastFilteredEvents(filteredEvents);
-      updateMapMarkers();
-    }
-  }, [eventFilter]);
-
-  // Fonction pour obtenir les événements filtrés
-  const getFilteredEvents = useCallback(() => {
-    const allEvents = getAllEvents();
-    if (eventFilter === 'all') return allEvents;
+  // Fonction pour récupérer les événements filtrés
+  const getFilteredEvents = () => {
+    console.log('Début de getFilteredEvents');
+    console.log('Filtre actuel:', eventFilter);
     
-    return allEvents.filter(event => {
-      if (eventFilter === 'party') {
-        return event.type === 'party';
-      }
-      return event.type === 'match' && event.sport === eventFilter;
-    });
-  }, [eventFilter]);
+    const allEvents = getAllEvents();
+    console.log('Tous les événements:', allEvents);
+    
+    let filteredEvents = allEvents;
+    
+    if (eventFilter !== 'all') {
+      filteredEvents = allEvents.filter(event => {
+        const matchesFilter = event.sport === eventFilter;
+        console.log(`Événement ${event.name} (${event.sport}) correspond au filtre ${eventFilter}:`, matchesFilter);
+        return matchesFilter;
+      });
+    }
+    
+    console.log('Événements filtrés:', filteredEvents);
+    setLastFilteredEvents(filteredEvents);
+    return filteredEvents;
+  };
+
+  // Fonction pour vérifier et appliquer le filtre
+  const checkAndApplyFilter = () => {
+    console.log('Vérification du filtre');
+    const currentTime = Date.now();
+    
+    if (!filterCheckRef.current || currentTime - filterCheckRef.current > 1000) {
+      console.log('Application du filtre');
+      filterCheckRef.current = currentTime;
+      getFilteredEvents();
+    }
+  };
 
   // Fonction pour mettre à jour les marqueurs
   const updateMapMarkers = useCallback(() => {
@@ -1206,32 +1231,6 @@ function App() {
       }
     });
   }, [getFilteredEvents]);
-
-  // Boucle de vérification continue du filtre
-  const checkFilterLoop = useCallback(() => {
-    const currentFilteredEvents = getFilteredEvents();
-    
-    // Vérifier si les événements filtrés ont changé
-    if (JSON.stringify(currentFilteredEvents) !== JSON.stringify(lastFilteredEvents)) {
-      setLastFilteredEvents(currentFilteredEvents);
-      updateMapMarkers();
-    }
-    
-    // Continuer la boucle
-    filterCheckRef.current = requestAnimationFrame(checkFilterLoop);
-  }, [lastFilteredEvents]);
-
-  // Démarrer la boucle de vérification
-  useEffect(() => {
-    filterCheckRef.current = requestAnimationFrame(checkFilterLoop);
-    
-    // Nettoyer la boucle lors du démontage
-    return () => {
-      if (filterCheckRef.current) {
-        cancelAnimationFrame(filterCheckRef.current);
-      }
-    };
-  }, [checkFilterLoop]);
 
   // Mettre à jour les marqueurs lorsque le filtre change
   useEffect(() => {
