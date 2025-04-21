@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon, LatLng } from 'leaflet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
 import { auth, database, provider } from './firebase';
@@ -361,9 +361,11 @@ function App() {
 
   // Charger les lieux depuis Firebase au démarrage
   useEffect(() => {
+    console.log('Début du chargement des lieux depuis Firebase');
     const venuesRef = ref(database, 'venues');
     const unsubscribe = onValue(venuesRef, (snapshot) => {
       const data = snapshot.val();
+      console.log('Données reçues de Firebase:', data);
       if (data) {
         const venuesArray = Object.entries(data).map(([key, value]: [string, any]) => ({
           ...value,
@@ -375,8 +377,10 @@ function App() {
           longitude: value.position ? value.position[1] : 0,
           emoji: value.emoji || ''
         }));
+        console.log('Lieux transformés:', venuesArray);
         setVenues(venuesArray);
       } else {
+        console.log('Aucune donnée reçue de Firebase');
         setVenues([]); // Si pas de données, initialiser avec un tableau vide
       }
     });
@@ -408,6 +412,8 @@ function App() {
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
   const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
+  const [lastFilteredEvents, setLastFilteredEvents] = useState<any[]>([]);
+  const filterCheckRef = useRef<number>();
   
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
@@ -743,6 +749,9 @@ function App() {
       console.error('Erreur lors de l\'ajout du lieu:', error);
       alert('Une erreur est survenue lors de l\'ajout du lieu.');
     }
+
+    // Vérifier et réappliquer le filtre après l'ajout
+    checkAndApplyFilter();
   };
 
   // Ajouter le gestionnaire de clic sur la carte
@@ -798,6 +807,9 @@ function App() {
       
     setSelectedVenue(null);
     }
+
+    // Vérifier et réappliquer le filtre après la suppression
+    checkAndApplyFilter();
   };
 
   // Fonction pour ajouter un nouveau match
@@ -876,6 +888,9 @@ function App() {
       console.error('Erreur lors de l\'ajout du match:', error);
       alert('Une erreur est survenue lors de l\'ajout du match.');
     }
+
+    // Vérifier et réappliquer le filtre après l'ajout
+    checkAndApplyFilter();
   };
 
   // Fonction pour mettre à jour un match
@@ -930,6 +945,9 @@ function App() {
         alert('Une erreur est survenue lors de la mise à jour du match.');
       }
     }
+
+    // Vérifier et réappliquer le filtre après la mise à jour
+    checkAndApplyFilter();
   };
 
   // Fonction pour supprimer un match
@@ -967,6 +985,9 @@ function App() {
         });
       }
     }
+
+    // Vérifier et réappliquer le filtre après la suppression
+    checkAndApplyFilter();
   };
 
   // Fonction pour mettre à jour un lieu existant
@@ -1024,6 +1045,9 @@ function App() {
         }
       }
     }
+
+    // Vérifier et réappliquer le filtre après la mise à jour
+    checkAndApplyFilter();
   };
 
   // Fonction pour commencer l'édition d'un lieu
@@ -1079,6 +1103,10 @@ function App() {
 
   // Fonction pour récupérer tous les événements (matchs et soirées)
   const getAllEvents = () => {
+    console.log('Début de getAllEvents');
+    console.log('Lieux disponibles:', venues);
+    console.log('Soirées disponibles:', parties);
+    
     const events: Array<{
       id: string;
       name: string;
@@ -1097,7 +1125,9 @@ function App() {
 
     // Ajouter les matchs
     venues.forEach(venue => {
+      console.log('Traitement du lieu:', venue);
       if (venue.matches && venue.matches.length > 0) {
+        console.log('Matchs trouvés pour ce lieu:', venue.matches);
         venue.matches.forEach(match => {
           events.push({
             id: `match-${venue.id}-${match.id}`,
@@ -1120,6 +1150,7 @@ function App() {
 
     // Ajouter les soirées
     parties.forEach(party => {
+      console.log('Ajout de la soirée:', party);
       events.push({
         id: `party-${party.id || party.name}`,
         name: party.name,
@@ -1133,488 +1164,56 @@ function App() {
       });
     });
 
+    console.log('Événements générés:', events);
     // Trier par date (du plus récent au plus ancien)
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
-  // Fonction pour filtrer les événements
+  // Fonction pour récupérer les événements filtrés
   const getFilteredEvents = () => {
+    console.log('Début de getFilteredEvents');
+    console.log('Filtre actuel:', eventFilter);
+    
     const allEvents = getAllEvents();
-    if (eventFilter === 'all') return allEvents;
+    console.log('Tous les événements:', allEvents);
     
-    return allEvents.filter(event => {
-      if (eventFilter === 'party') {
-        return event.type === 'party';
-      }
-      // Vérifier si le sport de l'événement correspond au filtre
-      return event.type === 'match' && event.sport === eventFilter;
-    });
-  };
-
-  // Fonction pour formater la date et l'heure
-  const formatDateTime = (dateString: string, endTimeString?: string) => {
-    const date = new Date(dateString);
-    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    const day = days[date.getDay()];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+    let filteredEvents = allEvents;
     
-    if (endTimeString) {
-      const endTime = new Date(endTimeString);
-      const endHours = endTime.getHours().toString().padStart(2, '0');
-      const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
-      return `${day} ${hours}:${minutes} - ${endHours}:${endMinutes}`;
+    if (eventFilter !== 'all') {
+      filteredEvents = allEvents.filter(event => {
+        const matchesFilter = event.sport === eventFilter;
+        console.log(`Événement ${event.name} (${event.sport}) correspond au filtre ${eventFilter}:`, matchesFilter);
+        return matchesFilter;
+      });
     }
     
-    return `${day} ${hours}:${minutes}`;
+    console.log('Événements filtrés:', filteredEvents);
+    setLastFilteredEvents(filteredEvents);
+    return filteredEvents;
   };
 
-  // Fonction pour ouvrir dans Google Maps
-  const openInGoogleMaps = (place: Place) => {
-    // Tracker l'ouverture dans Google Maps
-    ReactGA.event({
-      category: 'navigation',
-      action: 'open_google_maps',
-      label: place.name
-    });
-
-    const query = encodeURIComponent(place.address || `${place.latitude},${place.longitude}`);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-  };
-
-  // Fonction pour gérer l'ouverture des popups
-  const handlePopupOpen = (venueId: string) => {
-    setOpenPopup(venueId);
-  };
-
-  const handlePopupClose = () => {
-    if (!editingMatch.match && !editingMatch.venueId) {
-      setOpenPopup(null);
+  // Fonction pour vérifier et appliquer le filtre
+  const checkAndApplyFilter = () => {
+    console.log('Vérification du filtre');
+    const currentTime = Date.now();
+    
+    if (!filterCheckRef.current || currentTime - filterCheckRef.current > 1000) {
+      console.log('Application du filtre');
+      filterCheckRef.current = currentTime;
+      getFilteredEvents();
     }
   };
 
-  const handleLocationSuccess = (position: GeolocationPosition) => {
-    const { latitude, longitude } = position.coords;
-    setUserLocation([latitude, longitude]);
-    setLocationError(false);
-    setLocationLoading(false);
-  };
-
-  const handleLocationError = (error: GeolocationPositionError) => {
-    console.error('Erreur de géolocalisation:', error);
-    
-    // Afficher un message d'erreur plus spécifique
-    let errorMessage = "Impossible d'accéder à votre position. ";
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        errorMessage += "Veuillez autoriser l'accès à la géolocalisation dans les paramètres de votre navigateur.";
-        break;
-      case error.POSITION_UNAVAILABLE:
-        errorMessage += "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
-        break;
-      case error.TIMEOUT:
-        errorMessage += "La demande a expiré. Veuillez réessayer.";
-        break;
-      default:
-        errorMessage += "Une erreur inattendue s'est produite.";
-    }
-    setLocationError(errorMessage);
-    setLocationLoading(false);
-  };
-
-  const retryLocation = () => {
-    // Tracker la demande de géolocalisation
-    ReactGA.event({
-      category: 'location',
-      action: 'retry_location'
-    });
-    
-    setLocationError(false);
-    setLocationLoading(true);
-    
-    // Réessayer avec des options optimisées
-    navigator.geolocation.getCurrentPosition(
-      handleLocationSuccess,
-      handleLocationError,
-      { 
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  };
-
-  // Fonction pour copier au presse-papier
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        alert('Adresse copiée !');
-      })
-      .catch(err => {
-        console.error('Erreur lors de la copie : ', err);
-      });
-  };
-
-  // Fonction pour centrer la carte sur un événement
-  const centerOnEvent = (event: any) => {
-    handleEventSelect(event);
-  };
-
-  // Générer les marqueurs pour la carte
-  useEffect(() => {
-    if (!locationError && mapRef.current) {
-      // Nettoyer les marqueurs existants
-      markersRef.current.forEach(marker => {
-        marker.remove();
-      });
-      markersRef.current = [];
-
-      // Ajouter les marqueurs pour les lieux
-      venues.forEach(venue => {
-        const markerColor = getMarkerColor(venue.date);
-        const marker = L.marker([venue.latitude, venue.longitude], {
-          icon: L.divIcon({
-            className: 'custom-marker',
-            html: `<div class="marker-content" style="background-color: ${markerColor.color}; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getSportIcon(venue.sport)}</span>
-                   </div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
-          })
-        });
-
-        // Créer le contenu du popup
-        const popupContent = document.createElement('div');
-        popupContent.className = 'venue-popup';
-        
-        // Contenu de base du lieu
-        popupContent.innerHTML = `
-          <h3>${venue.name}</h3>
-          <p>${venue.description}</p>
-          <p><strong>Sport:</strong> ${venue.sport}</p>
-          <p class="venue-address">${venue.address || `${venue.latitude}, ${venue.longitude}`}</p>
-        `;
-
-        // Boutons d'actions
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'popup-buttons';
-        
-        // Bouton Google Maps
-        const mapsButton = document.createElement('button');
-        mapsButton.className = 'maps-button';
-        mapsButton.textContent = 'Ouvrir dans Google Maps';
-        mapsButton.addEventListener('click', () => {
-          openInGoogleMaps(venue);
-        });
-        buttonsContainer.appendChild(mapsButton);
-        
-        // Bouton Copier l'adresse
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-button';
-        copyButton.textContent = 'Copier l\'adresse';
-        copyButton.addEventListener('click', () => {
-          copyToClipboard(venue.address || `${venue.latitude},${venue.longitude}`);
-        });
-        buttonsContainer.appendChild(copyButton);
-        
-        popupContent.appendChild(buttonsContainer);
-
-        // Ajouter les matchs au popup
-        const matchesListDiv = document.createElement('div');
-        matchesListDiv.className = 'matches-list';
-        
-        if (venue.matches && venue.matches.length > 0) {
-          matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
-          
-          // Trier les matchs par date
-          const sortedMatches = [...venue.matches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          
-          sortedMatches.forEach(match => {
-            const matchItemDiv = document.createElement('div');
-            matchItemDiv.className = `match-item ${isMatchPassed(match.date, match.endTime) ? 'match-passed' : ''}`;
-            matchItemDiv.innerHTML = `
-              <p class="match-date">${formatDateTime(match.date, match.endTime)}</p>
-              <p class="match-teams">${match.teams}</p>
-              <p class="match-description">${match.description}</p>
-            `;
-            
-            // Boutons d'édition en mode édition - toujours visibles
-            if (isEditing) {
-              const matchActionsDiv = document.createElement('div');
-              matchActionsDiv.className = 'match-actions';
-              
-              const editButton = document.createElement('button');
-              editButton.className = 'edit-match-button';
-              editButton.textContent = 'Modifier';
-              editButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                startEditingMatch(venue.id || '', match);
-              });
-              
-              const deleteButton = document.createElement('button');
-              deleteButton.className = 'delete-match-button';
-              deleteButton.textContent = 'Supprimer';
-              deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteMatch(venue.id || '', match.id);
-              });
-              
-              matchActionsDiv.appendChild(editButton);
-              matchActionsDiv.appendChild(deleteButton);
-              matchItemDiv.appendChild(matchActionsDiv);
-            }
-            
-            matchesListDiv.appendChild(matchItemDiv);
-          });
-          
-          popupContent.appendChild(matchesListDiv);
-        }
-
-        // Ajouter les boutons d'édition si on est en mode édition - toujours visibles
-        if (isEditing) {
-          // Boutons d'édition
-          const editButtonsContainer = document.createElement('div');
-          editButtonsContainer.className = 'popup-buttons';
-          
-          // Bouton pour ajouter un match
-          const addMatchButton = document.createElement('button');
-          addMatchButton.className = 'add-match-button';
-          addMatchButton.textContent = 'Ajouter un match';
-          addMatchButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startEditingMatch(venue.id || '', null);
-          });
-          editButtonsContainer.appendChild(addMatchButton);
-          
-          // Bouton Modifier
-          const editButton = document.createElement('button');
-          editButton.className = 'edit-button';
-          editButton.textContent = 'Modifier ce lieu';
-          editButton.addEventListener('click', () => {
-            startEditingVenue(venue);
-          });
-          editButtonsContainer.appendChild(editButton);
-          
-          // Bouton Supprimer
-          const deleteButton = document.createElement('button');
-          deleteButton.className = 'delete-button';
-          deleteButton.textContent = 'Supprimer ce lieu';
-          deleteButton.addEventListener('click', () => {
-            deleteVenue(venue.id || '');
-          });
-          editButtonsContainer.appendChild(deleteButton);
-          
-          popupContent.appendChild(editButtonsContainer);
-        }
-
-        marker.bindPopup(popupContent);
-        
-        marker.on('click', () => {
-          handlePopupOpen(venue.id || '');
-        });
-
-        if (mapRef.current) {
-          marker.addTo(mapRef.current);
-          markersRef.current.push(marker);
-        }
-      });
-
-      // Ajouter les marqueurs pour les hôtels
-      hotels.forEach(hotel => {
-        const marker = L.marker([hotel.latitude, hotel.longitude], {
-          icon: L.divIcon({
-            className: 'custom-marker hotel-marker',
-            html: `<div style="background-color: #1976D2; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏨</span>
-                   </div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
-          })
-        });
-
-        // Créer le contenu du popup
-        const popupContent = document.createElement('div');
-        popupContent.className = 'venue-popup';
-        
-        // Contenu de base de l'hôtel
-        popupContent.innerHTML = `
-          <h3>${hotel.name}</h3>
-          <p>${hotel.description}</p>
-          <p class="venue-address">${hotel.address || `${hotel.latitude}, ${hotel.longitude}`}</p>
-        `;
-        
-        // Boutons d'actions
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'popup-buttons';
-        
-        // Bouton Google Maps
-        const mapsButton = document.createElement('button');
-        mapsButton.className = 'maps-button';
-        mapsButton.textContent = 'Ouvrir dans Google Maps';
-        mapsButton.addEventListener('click', () => {
-          openInGoogleMaps(hotel);
-        });
-        buttonsContainer.appendChild(mapsButton);
-        
-        // Bouton Copier l'adresse
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-button';
-        copyButton.textContent = 'Copier l\'adresse';
-        copyButton.addEventListener('click', () => {
-          copyToClipboard(hotel.address || `${hotel.latitude},${hotel.longitude}`);
-        });
-        buttonsContainer.appendChild(copyButton);
-        
-        popupContent.appendChild(buttonsContainer);
-
-        marker.bindPopup(popupContent);
-        
-        if (mapRef.current) {
-          marker.addTo(mapRef.current);
-          markersRef.current.push(marker);
-        }
-      });
-
-      // Ajouter les marqueurs pour les soirées
-      parties.forEach(party => {
-        const marker = L.marker([party.latitude, party.longitude], {
-          icon: L.divIcon({
-            className: 'custom-marker party-marker',
-            html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : '🎉'}</span>
-                   </div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
-          })
-        });
-
-        // Créer le contenu du popup pour la soirée
-        const popupContent = document.createElement('div');
-        popupContent.className = 'venue-popup';
-        
-        // Contenu de base de la soirée
-        popupContent.innerHTML = `
-          <h3>${party.name}</h3>
-          <p>${party.description}</p>
-          <p class="venue-address">${party.address}</p>
-        `;
-        
-        // Boutons d'actions
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'popup-buttons';
-        
-        // Bouton Google Maps
-        const mapsButton = document.createElement('button');
-        mapsButton.className = 'maps-button';
-        mapsButton.textContent = 'Ouvrir dans Google Maps';
-        mapsButton.addEventListener('click', () => {
-          openInGoogleMaps(party);
-        });
-        buttonsContainer.appendChild(mapsButton);
-        
-        // Bouton Copier l'adresse
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-button';
-        copyButton.textContent = 'Copier l\'adresse';
-        copyButton.addEventListener('click', () => {
-          copyToClipboard(party.address || `${party.latitude},${party.longitude}`);
-        });
-        buttonsContainer.appendChild(copyButton);
-        
-        popupContent.appendChild(buttonsContainer);
-
-        marker.bindPopup(popupContent);
-        
-        if (mapRef.current) {
-          marker.addTo(mapRef.current);
-          markersRef.current.push(marker);
-        }
-      });
-    }
-  }, [venues, hotels, parties, isEditing, isAdmin]);
-
-  // Fonction pour commencer l'édition d'un match
-  const startEditingMatch = (venueId: string, match: Match | null) => {
-    if (!checkAdminRights()) return;
-
-    // Fermer le formulaire d'édition de lieu s'il est ouvert
-    if (editingVenue.id || isAddingPlace) {
-      setEditingVenue({ id: null, venue: null });
-      setIsAddingPlace(false);
-    }
-    
-    setEditingMatch({ venueId, match });
-    
-    if (match) {
-      setNewMatch({
-        date: match.date,
-        teams: match.teams,
-        description: match.description,
-        endTime: match.endTime
-      });
-    } else {
-      setNewMatch({ date: '', teams: '', description: '' });
-    }
-  };
-
-  // Fonction pour terminer l'édition d'un match
-  const finishEditingMatch = () => {
-    setEditingMatch({ venueId: null, match: null });
-  };
-
-  // Enregistrer la visite de la page au chargement
-  useEffect(() => {
-    // Forcer l'envoi d'un pageview après un court délai pour assurer le chargement complet
-    setTimeout(() => {
-      console.log('[GA] Envoi du pageview à Google Analytics');
-      ReactGA.send({ 
-        hitType: "pageview", 
-        page: window.location.pathname + window.location.search
-      });
-      console.log('[GA] Pageview envoyé');
-      
-      // Forcer un événement pour tester la connexion
-      ReactGA.event({
-        category: 'page',
-        action: 'view',
-        label: window.location.pathname
-      });
-    }, 1000);
-    
-    // Fonction pour enregistrer les événements personnalisés
-    const trackEvent = (category: string, action: string) => {
-      console.log(`[GA] Envoi d'événement: ${category}/${action}`);
-      ReactGA.event({
-        category,
-        action
-      });
-    };
-
-    // Tracker l'événement "app_loaded"
-    trackEvent('app', 'app_loaded');
-    
-    return () => {
-      // Tracker l'événement quand l'utilisateur quitte
-      trackEvent('app', 'app_closed');
-    };
-  }, []);
-
-  // Fonction pour mettre à jour les marqueurs sur la carte
-  const updateMapMarkers = () => {
+  // Fonction pour mettre à jour les marqueurs
+  const updateMapMarkers = useCallback(() => {
     if (!mapRef.current) return;
 
-    // Récupérer tous les marqueurs existants
     const allMarkers = markersRef.current;
     const filteredEvents = getFilteredEvents();
 
-    // Mettre à jour la visibilité de chaque marqueur
     allMarkers.forEach(marker => {
       const markerElement = marker.getElement();
       if (markerElement) {
-        // Trouver l'événement correspondant au marqueur
         const event = filteredEvents.find(event => {
           const [lat, lng] = event.location;
           const markerLatLng = marker.getLatLng();
@@ -1631,7 +1230,7 @@ function App() {
         }
       }
     });
-  };
+  }, [getFilteredEvents]);
 
   // Mettre à jour les marqueurs lorsque le filtre change
   useEffect(() => {
@@ -1731,6 +1330,67 @@ function App() {
     } catch (error) {
       console.error('Erreur détaillée de connexion:', error);
     }
+  };
+
+  // Fonction pour terminer l'édition d'un match
+  const finishEditingMatch = () => {
+    setEditingMatch({ venueId: null, match: null });
+    setNewMatch({
+      date: '',
+      teams: '',
+      description: '',
+      endTime: ''
+    });
+  };
+
+  // Fonction pour réessayer la géolocalisation
+  const retryLocation = () => {
+    setLocationError(false);
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation([latitude, longitude]);
+        setLocationLoading(false);
+      },
+      (err) => {
+        console.error('Erreur de géolocalisation:', err);
+        setLocationError("Erreur de géolocalisation. Veuillez vérifier les paramètres de votre navigateur.");
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Fonction pour formater la date et l'heure
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  // Fonction pour copier du texte dans le presse-papiers
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        // Succès
+        console.log('Texte copié dans le presse-papiers');
+      },
+      (err) => {
+        // Erreur
+        console.error('Erreur lors de la copie:', err);
+      }
+    );
   };
 
   if (isLoading) {
@@ -2067,7 +1727,7 @@ function App() {
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
                   >
-                    Fermé
+                    Fermer
                                 </button>
                               </div>
                 <div className="event-filters">
