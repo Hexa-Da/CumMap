@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon, LatLng } from 'leaflet';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
 import { auth, database, provider } from './firebase';
@@ -12,7 +12,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import logo from './assets/logo.svg';
-import AppPromotion from './components/AppPromotion';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);
@@ -1604,7 +1603,7 @@ function App() {
   }, []);
 
   // Fonction pour mettre à jour les marqueurs sur la carte
-  const updateMapMarkers = useCallback(() => {
+  const updateMapMarkers = () => {
     if (!mapRef.current) return;
 
     // Récupérer tous les marqueurs existants
@@ -1632,23 +1631,14 @@ function App() {
         }
       }
     });
-  }, [getFilteredEvents]);
+  };
 
-  // Mettre à jour les marqueurs en continu
+  // Mettre à jour les marqueurs lorsque le filtre change
   useEffect(() => {
-    // Mettre à jour immédiatement au début
-    updateMapMarkers();
-    
-    // Créer un intervalle pour mettre à jour régulièrement
-    const intervalId = setInterval(() => {
+    if (mapRef.current) {
       updateMapMarkers();
-    }, 16); // ~60fps (1000ms / 60 ≈ 16ms)
-
-    // Nettoyer l'intervalle lors du démontage du composant
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [eventFilter, updateMapMarkers]);
+    }
+  }, [eventFilter]);
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
@@ -1703,6 +1693,7 @@ function App() {
 
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
     console.log('Démarrage de l\'écouteur d\'authentification...');
@@ -1713,6 +1704,13 @@ function App() {
         console.log('Email:', user.email);
         console.log('Nom:', user.displayName);
         setUser(user);
+        
+        // Vérifier si c'est la première connexion
+        const isFirstLogin = !localStorage.getItem('hasLoggedIn');
+        if (isFirstLogin) {
+          setShowDownloadModal(true);
+          localStorage.setItem('hasLoggedIn', 'true');
+        }
         
         // Vérifier si l'utilisateur est admin
         const adminsRef = ref(database, 'admins');
@@ -1749,7 +1747,33 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      {showDownloadModal && (
+        <div className="modal-overlay">
+          <div className="download-modal">
+            <h2>Bienvenue sur CumMap !</h2>
+            <p>Pour une meilleure expérience, nous vous recommandons d'installer l'application sur votre appareil.</p>
+            <div className="download-buttons">
+              <button 
+                className="download-button"
+                onClick={() => {
+                  // Lien vers l'installation PWA
+                  window.open(window.location.href, '_blank');
+                  setShowDownloadModal(false);
+                }}
+              >
+                Installer l'application
+              </button>
+              <button 
+                className="close-button"
+                onClick={() => setShowDownloadModal(false)}
+              >
+                Continuer sur le web
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src={logo} alt="CumMap Logo" style={{ height: '40px', width: 'auto' }} />
           <h1>CumMap</h1>
@@ -2001,7 +2025,7 @@ function App() {
             </div>
           )}
         </div>
-      </header>
+      </div>
       <main className="app-main">
         {locationError ? (
           <div className="location-error">
@@ -2164,7 +2188,125 @@ function App() {
           </div>
         )}
       </main>
-      <AppPromotion />
+      
+      {/* Formulaire d'ajout/modification de match */}
+      {editingMatch.venueId && (
+        <div className="form-overlay">
+          <div className="edit-form match-edit-form">
+            <div className="edit-form-header">
+              <h3>{editingMatch.match ? 'Modifier le match' : 'Ajouter un match'}</h3>
+            </div>
+            <div className="edit-form-content">
+              <div className="form-group">
+                <label htmlFor="match-date">Date et heure de début</label>
+                <input
+                  id="match-date"
+                  type="datetime-local"
+                  value={editingMatch.match ? editingMatch.match.date : newMatch.date}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, date: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, date: e.target.value });
+                    }
+                  }}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="match-end-time">Heure de fin</label>
+                <input
+                  id="match-end-time"
+                  type="datetime-local"
+                  value={editingMatch.match ? editingMatch.match.endTime : (newMatch.endTime || '')}
+                  min={editingMatch.match ? editingMatch.match.date : newMatch.date}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, endTime: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, endTime: e.target.value });
+                    }
+                  }}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="match-teams">Équipes</label>
+                <input
+                  id="match-teams"
+                  type="text"
+                  value={editingMatch.match ? editingMatch.match.teams : newMatch.teams}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, teams: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, teams: e.target.value });
+                    }
+                  }}
+                  placeholder="Ex: France vs Brésil"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="match-description">Description</label>
+                <input
+                  id="match-description"
+                  type="text"
+                  value={editingMatch.match ? editingMatch.match.description : newMatch.description}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, description: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, description: e.target.value });
+                    }
+                  }}
+                  placeholder="Ex: Match de qualification"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-actions">
+                <button 
+                  className="add-button"
+                  onClick={() => {
+                    if (editingMatch.match) {
+                      handleUpdateMatch(
+                        editingMatch.venueId!, 
+                        editingMatch.match.id, 
+                        {
+                          date: editingMatch.match.date,
+                          endTime: editingMatch.match.endTime || '',
+                          teams: editingMatch.match.teams,
+                          description: editingMatch.match.description
+                        }
+                      );
+                      finishEditingMatch();
+                    } else {
+                      handleAddMatch(editingMatch.venueId!);
+                    }
+                  }}
+                  disabled={
+                    editingMatch.match 
+                      ? !editingMatch.match.date || !editingMatch.match.teams || !editingMatch.match.description
+                      : !newMatch.date || !newMatch.teams || !newMatch.description
+                  }
+                >
+                  {editingMatch.match ? 'Mettre à jour' : 'Ajouter'}
+                </button>
+                <button 
+                  className="cancel-button"
+                  onClick={finishEditingMatch}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
