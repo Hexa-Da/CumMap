@@ -408,6 +408,7 @@ function App() {
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
   const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
+  const [appAction, setAppAction] = useState<number>(0); // Nouvel état pour suivre les actions
   
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
@@ -721,6 +722,7 @@ function App() {
 
     try {
       await set(newVenueRef, newVenue);
+      triggerMarkerUpdate(); // Ajouter cette ligne
       
       const venueId = newVenueRef.key || '';
       addToHistory({
@@ -757,6 +759,7 @@ function App() {
       // Réactiver le formulaire après le placement du marqueur
       setIsPlacingMarker(false);
       setIsAddingPlace(true);
+      triggerMarkerUpdate();
     }
   };
 
@@ -774,6 +777,7 @@ function App() {
     if (venue) {
       const venueRef = ref(database, `venues/${id}`);
       await set(venueRef, null);
+      triggerMarkerUpdate(); // Ajouter cette ligne
       
       // Ajouter l'action à l'historique avec une fonction d'annulation
       addToHistory({
@@ -839,7 +843,8 @@ function App() {
         ...venue,
         matches: updatedMatches
       });
-
+      triggerMarkerUpdate(); // Ajouter cette ligne
+      
       // Ajouter l'action à l'historique
       addToHistory({
         type: 'ADD_MATCH',
@@ -902,6 +907,7 @@ function App() {
           ...venue,
           matches: updatedMatches
         });
+        triggerMarkerUpdate(); // Ajouter cette ligne
         
         if (matchBefore) {
           addToHistory({
@@ -954,6 +960,7 @@ function App() {
         ...venue,
         matches: updatedMatches
       });
+      triggerMarkerUpdate(); // Ajouter cette ligne
       
       // Ajouter l'action à l'historique avec une fonction d'annulation
       if (matchToDelete) {
@@ -999,6 +1006,7 @@ function App() {
         
         try {
           await set(venueRef, updatedVenue);
+          triggerMarkerUpdate(); // Ajouter cette ligne
           
           // Ajouter l'action à l'historique avec une fonction d'annulation
           addToHistory({
@@ -1046,6 +1054,7 @@ function App() {
     setSelectedEmoji(sportEmojis[venue.sport as keyof typeof sportEmojis] || '⚽');
     // Initialiser le marqueur temporaire avec la position actuelle du lieu
     setTempMarker([venue.latitude, venue.longitude]);
+    triggerMarkerUpdate();
   };
 
   // Fonction pour annuler l'édition
@@ -1058,6 +1067,7 @@ function App() {
     setTempMarker(null);
     setIsPlacingMarker(false);
     setIsAddingPlace(false);
+    triggerMarkerUpdate();
   };
 
   // Fonction pour vérifier si un match est passé
@@ -1185,11 +1195,13 @@ function App() {
   // Fonction pour gérer l'ouverture des popups
   const handlePopupOpen = (venueId: string) => {
     setOpenPopup(venueId);
+    triggerMarkerUpdate();
   };
 
   const handlePopupClose = () => {
     if (!editingMatch.match && !editingMatch.venueId) {
       setOpenPopup(null);
+      triggerMarkerUpdate();
     }
   };
 
@@ -1558,11 +1570,13 @@ function App() {
     } else {
       setNewMatch({ date: '', teams: '', description: '' });
     }
+    triggerMarkerUpdate();
   };
 
   // Fonction pour terminer l'édition d'un match
   const finishEditingMatch = () => {
     setEditingMatch({ venueId: null, match: null });
+    triggerMarkerUpdate();
   };
 
   // Enregistrer la visite de la page au chargement
@@ -1615,7 +1629,7 @@ function App() {
       const markerElement = marker.getElement();
       if (markerElement) {
         // Trouver l'événement correspondant au marqueur
-        const event = filteredEvents.find(event => {
+        const event = filteredEvents.find(event => { 
           const [lat, lng] = event.location;
           const markerLatLng = marker.getLatLng();
           return lat === markerLatLng.lat && lng === markerLatLng.lng;
@@ -1633,16 +1647,17 @@ function App() {
     });
   };
 
-  // Mettre à jour les marqueurs lorsque le filtre change
+  // Mettre à jour les marqueurs lorsque le filtre change ou qu'une action est effectuée
   useEffect(() => {
     if (mapRef.current) {
       updateMapMarkers();
     }
-  }, [eventFilter]);
+  }, [eventFilter, appAction]);
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
     setActiveTab('map'); // Fermer le panneau en revenant à l'onglet map
+    triggerMarkerUpdate();
     
     if (event.type === 'party') {
       const partyId = event.id.split('-')[1];
@@ -1689,6 +1704,7 @@ function App() {
       document.exitFullscreen();
       setIsFullscreen(false);
     }
+    triggerMarkerUpdate();
   };
 
   const [user, setUser] = useState<any>(null);
@@ -1736,6 +1752,23 @@ function App() {
   if (isLoading) {
     return <div>Chargement...</div>;
   }
+
+  // Fonction pour déclencher une mise à jour des marqueurs
+  const triggerMarkerUpdate = () => {
+    setAppAction(prev => prev + 1);
+  };
+
+  // Fonction pour gérer le changement de style de carte
+  const handleMapStyleChange = (style: string) => {
+    setMapStyle(style);
+    triggerMarkerUpdate();
+  };
+
+  // Fonction pour gérer le changement d'onglet
+  const handleTabChange = (tab: 'map' | 'events') => {
+    setActiveTab(tab);
+    triggerMarkerUpdate();
+  };
 
   return (
     <div className="app">
@@ -1802,7 +1835,7 @@ function App() {
                   action: 'change_map_style',
                   label: e.target.value
                 });
-                setMapStyle(e.target.value);
+                handleMapStyleChange(e.target.value);
               }}
             >
               <option value="osm">OpenStreetMap</option>
@@ -1829,6 +1862,7 @@ function App() {
                 setTempMarker(null); // Nettoyer le marqueur temporaire
                 setIsPlacingMarker(false); // Désactiver le mode placement
               }
+              triggerMarkerUpdate();
             }}
           >
             {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
@@ -2052,7 +2086,7 @@ function App() {
                   action: 'change_tab',
                   label: activeTab === 'map' ? 'events' : 'map'
                 });
-                setActiveTab(activeTab === 'map' ? 'events' : 'map');
+                handleTabChange(activeTab === 'map' ? 'events' : 'map');
               }}
             >
               {activeTab === 'map' ? '📆 Événements' : '✖️ Fermer'}
