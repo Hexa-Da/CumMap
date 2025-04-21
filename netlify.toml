@@ -18,7 +18,13 @@
 [[headers]]
   for = "/manifest.json"
   [headers.values]
-    Content-Type = "application/json"
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Content-Type = "image/svg+xml"
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
@@ -40,12 +46,6 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/*.svg"
-  [headers.values]
-    Content-Type = "image/svg+xml"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
   for = "/*.json"
   [headers.values]
     Content-Type = "application/json"
@@ -60,6 +60,12 @@
 [[redirects]]
   from = "/manifest.json"
   to = "/manifest.json"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*.svg"
+  to = "/:splat.svg"
   status = 200
   force = true
 
