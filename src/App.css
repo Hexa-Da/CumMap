@@ -255,9 +255,9 @@ html, body, #root {
 
 .edit-form {
   position: fixed;
-  top: 50%;
+  top: 30%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -30%);
   background-color: var(--bg-color);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -411,6 +411,10 @@ html, body, #root {
     width: 90vw;
     max-height: 80vh;
     padding: 15px;
+    position: fixed !important;
+    top: 30% !important;
+    left: 50% !important;
+    transform: translate(-50%, -30%) !important;
   }
   
   .edit-form-header {
@@ -1660,9 +1664,9 @@ html, body, #root {
     max-height: 80vh;
     padding: 15px;
     position: fixed !important;
-    top: 50% !important;
+    top: 30% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -30%) !important;
   }
   
   .leaflet-control-container {
