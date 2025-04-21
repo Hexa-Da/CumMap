@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon, LatLng } from 'leaflet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
 import { auth, database, provider } from './firebase';
@@ -408,6 +408,8 @@ function App() {
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
   const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
+  const [lastFilteredEvents, setLastFilteredEvents] = useState<any[]>([]);
+  const filterCheckRef = useRef<number>();
   
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
@@ -1632,6 +1634,32 @@ function App() {
       }
     });
   };
+
+  // Boucle de vérification continue du filtre
+  const checkFilterLoop = useCallback(() => {
+    const currentFilteredEvents = getFilteredEvents();
+    
+    // Vérifier si les événements filtrés ont changé
+    if (JSON.stringify(currentFilteredEvents) !== JSON.stringify(lastFilteredEvents)) {
+      setLastFilteredEvents(currentFilteredEvents);
+      updateMapMarkers();
+    }
+    
+    // Continuer la boucle
+    filterCheckRef.current = requestAnimationFrame(checkFilterLoop);
+  }, [lastFilteredEvents]);
+
+  // Démarrer la boucle de vérification
+  useEffect(() => {
+    filterCheckRef.current = requestAnimationFrame(checkFilterLoop);
+    
+    // Nettoyer la boucle lors du démontage
+    return () => {
+      if (filterCheckRef.current) {
+        cancelAnimationFrame(filterCheckRef.current);
+      }
+    };
+  }, [checkFilterLoop]);
 
   // Mettre à jour les marqueurs lorsque le filtre change
   useEffect(() => {
