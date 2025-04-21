@@ -1,0 +1,96 @@
+.app-promotion-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+  z-index: 2000;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px var(--shadow-color);
+  animation: slideUp 0.3s ease-out;
+}
+
+.app-promotion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.app-promotion-text {
+  text-align: center;
+}
+
+.app-promotion-text h3 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.app-promotion-text p {
+  color: var(--text-color-light);
+  font-size: 0.9rem;
+}
+
+.app-promotion-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.app-promotion-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.app-promotion-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.app-promotion-close {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.app-promotion-close:hover {
+  background-color: var(--danger-hover);
+  transform: scale(1.1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-promotion-banner {
+    background-color: var(--bg-secondary);
+  }
+} 
