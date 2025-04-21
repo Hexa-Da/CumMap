@@ -7,14 +7,18 @@ export default defineConfig({
   base: './',
   build: {
     rollupOptions: {
-      external: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64'],
+      external: [],
       output: {
-        manualChunks: undefined
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'leaflet', 'react-leaflet'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/database']
+        }
       }
-    }
+    },
+    chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    exclude: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64']
+    exclude: []
   },
   esbuild: {
     platform: 'node'
