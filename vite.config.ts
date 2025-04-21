@@ -6,14 +6,18 @@ export default defineConfig({
   plugins: [react()],
   base: '/',
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'leaflet-vendor': ['leaflet', 'react-leaflet']
-        }
+        format: 'iife',
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    }
-  },
-  publicDir: 'public'
+    },
+    minify: 'terser',
+    sourcemap: false
+  }
 })
