@@ -11,7 +11,7 @@ import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import logo from './assets/logo.svg';
+import logo from '/logo.svg';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);

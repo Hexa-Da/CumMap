@@ -4,19 +4,29 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: '/',
+  resolve: {
+    alias: {
+      'firebase/app': 'firebase/app',
+      'firebase/auth': 'firebase/auth'
+    }
+  },
   build: {
     rollupOptions: {
-      external: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64'],
       output: {
-        manualChunks: undefined
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'leaflet-vendor': ['leaflet', 'react-leaflet']
+        }
       }
     }
   },
   optimizeDeps: {
-    exclude: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64']
+    include: ['firebase/app', 'firebase/auth']
   },
-  esbuild: {
-    platform: 'node'
+  server: {
+    headers: {
+      'Content-Type': 'application/javascript'
+    }
   }
 })
