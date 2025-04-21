@@ -1694,6 +1694,7 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     console.log('Démarrage de l\'écouteur d\'authentification...');
@@ -1728,6 +1729,30 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Écouter l'événement beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', () => {});
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('L\'utilisateur a accepté l\'installation');
+      }
+      setDeferredPrompt(null);
+    }
+    setShowDownloadModal(false);
+  };
+
   const signInWithGoogle = async () => {
     try {
       console.log('Tentative de connexion...');
@@ -1755,13 +1780,10 @@ function App() {
             <div className="download-buttons">
               <button 
                 className="download-button"
-                onClick={() => {
-                  // Lien vers l'installation PWA
-                  window.open(window.location.href, '_blank');
-                  setShowDownloadModal(false);
-                }}
+                onClick={handleInstallClick}
+                disabled={!deferredPrompt}
               >
-                Installer l'application
+                {deferredPrompt ? "Installer l'application" : "Installation non disponible"}
               </button>
               <button 
                 className="close-button"
