@@ -1,41 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/CumMap/',
+  base: './',
   build: {
-    target: 'es2020',
-    outDir: 'dist',
-    assetsDir: 'assets',
-    assetsInlineLimit: 0,
     rollupOptions: {
+      external: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64'],
       output: {
-        format: 'umd',
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM'
-        }
+        manualChunks: undefined
       }
     }
   },
   optimizeDeps: {
-    exclude: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64'],
-    include: ['react', 'react-dom', 'react/jsx-dev-runtime', 'react/jsx-runtime']
+    exclude: ['@rollup/rollup-linux-x64-gnu', '@esbuild/linux-x64']
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src')
-    }
-  },
-  server: {
-    headers: {
-      'Content-Type': 'application/javascript'
-    }
+  esbuild: {
+    platform: 'node'
   }
 })
