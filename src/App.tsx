@@ -1205,7 +1205,7 @@ function App() {
         }
       }
     });
-  };
+  }, [getFilteredEvents]);
 
   // Boucle de vérification continue du filtre
   const checkFilterLoop = useCallback(() => {
@@ -1728,7 +1728,7 @@ function App() {
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
                   >
-                    Fermé
+                    Fermer
                                 </button>
                               </div>
                 <div className="event-filters">
