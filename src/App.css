@@ -151,29 +151,25 @@ html, body, #root {
 }
 
 .app-header {
-  background-color: var(--bg-secondary);
-  color: var(--text-color);
-  padding: 1rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  box-shadow: 0 2px 4px var(--shadow-color);
-  z-index: 1000;
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  width: 100%;
 }
 
 .app-header img {
-  height: 100px;
-  width: 100px;
-  object-fit: contain;
+  height: 40px;
+  width: auto;
   margin-right: 10px;
-  padding: 2px;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   color: var(--text-color);
 }
 
