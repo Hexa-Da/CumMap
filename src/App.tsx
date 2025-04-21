@@ -5,12 +5,10 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { ref, onValue, set, push } from 'firebase/database';
 import { auth, database, provider } from './firebase';
-import React from 'react';
 import L from 'leaflet';
 import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import favicon from './assets/favicon.svg';
 
 // Vérification de l'initialisation
@@ -35,14 +33,6 @@ let UserIcon = new Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   className: 'user-location-icon' // Cette classe nous permettra de styliser l'icône
-});
-
-let HotelIcon = new Icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  className: 'hotel-icon'
 });
 
 interface BaseItem {
@@ -386,7 +376,6 @@ function App() {
   }, []);
 
   const [isAddingPlace, setIsAddingPlace] = useState(false);
-  const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
@@ -413,8 +402,6 @@ function App() {
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-
-  const [isEventsPanelOpen, setIsEventsPanelOpen] = useState(false);
 
   const mapStyles = {
     osm: {
@@ -460,25 +447,6 @@ function App() {
     Party: '🎉',
     Hotel: '🏨'
   };
-
-  const sports = [
-    'Football',
-    'Basketball',
-    'Handball',
-    'Rugby',
-    'Ultimate',
-    'Natation',
-    'Badminton',
-    'Tennis',
-    'Trail',
-    'Volleyball',
-    'Ping-pong',
-    'Boxe',
-    'Athlétisme',
-    'Pétanque',
-    'Escalade',
-    'Jeux de société'
-  ];
 
   // Fonction pour géocoder une adresse avec Nominatim
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
@@ -1198,13 +1166,6 @@ function App() {
     triggerMarkerUpdate();
   };
 
-  const handlePopupClose = () => {
-    if (!editingMatch.match && !editingMatch.venueId) {
-      setOpenPopup(null);
-      triggerMarkerUpdate();
-    }
-  };
-
   const handleLocationSuccess = (position: GeolocationPosition) => {
     const { latitude, longitude } = position.coords;
     setUserLocation([latitude, longitude]);
@@ -1265,11 +1226,6 @@ function App() {
       .catch(err => {
         console.error('Erreur lors de la copie : ', err);
       });
-  };
-
-  // Fonction pour centrer la carte sur un événement
-  const centerOnEvent = (event: any) => {
-    handleEventSelect(event);
   };
 
   // Générer les marqueurs pour la carte
