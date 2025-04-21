@@ -19,8 +19,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: []
-  },
-  esbuild: {
-    platform: 'node'
   }
 })
