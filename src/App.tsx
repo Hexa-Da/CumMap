@@ -1065,7 +1065,7 @@ function App() {
       description: string;
       address: string;
       location: [number, number];
-      type: 'match' | 'party';
+      type: 'match' | 'party' | 'venue';
       teams?: string;
       venue?: string;
       venueId?: string;
@@ -1073,8 +1073,24 @@ function App() {
       sport?: string;
     }> = [];
 
-    // Ajouter les matchs
+    // Ajouter les lieux de sport
     venues.forEach(venue => {
+      // Ajouter le lieu lui-même comme événement
+      events.push({
+        id: `venue-${venue.id}`,
+        name: venue.name,
+        date: venue.date || new Date().toISOString(),
+        description: venue.description,
+        address: venue.address || `${venue.latitude}, ${venue.longitude}`,
+        location: [venue.latitude, venue.longitude],
+        type: 'venue',
+        venue: venue.name,
+        venueId: venue.id,
+        isPassed: false,
+        sport: venue.sport
+      });
+
+      // Ajouter les matchs du lieu
       if (venue.matches && venue.matches.length > 0) {
         venue.matches.forEach(match => {
           events.push({
@@ -1124,8 +1140,8 @@ function App() {
       if (eventFilter === 'party') {
         return event.type === 'party';
       }
-      // Vérifier si le sport de l'événement correspond au filtre
-      return event.type === 'match' && event.sport === eventFilter;
+      // Inclure les lieux de sport et les matchs du sport sélectionné
+      return (event.type === 'venue' || (event.type === 'match' && event.sport === eventFilter));
     });
   };
 
@@ -1336,6 +1352,9 @@ function App() {
             matchesListDiv.appendChild(matchItemDiv);
           });
           
+          popupContent.appendChild(matchesListDiv);
+        } else {
+          matchesListDiv.innerHTML = '<p>Aucun match prévu</p>';
           popupContent.appendChild(matchesListDiv);
         }
 
