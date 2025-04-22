@@ -1581,26 +1581,43 @@ function App() {
 
     // Récupérer tous les marqueurs existants
     const allMarkers = markersRef.current;
-    const filteredEvents = getFilteredEvents();
 
     // Mettre à jour la visibilité de chaque marqueur
     allMarkers.forEach(marker => {
       const markerElement = marker.getElement();
       if (markerElement) {
-        // Trouver l'événement correspondant au marqueur
-        const event = filteredEvents.find(event => { 
-          const [lat, lng] = event.location;
+        // Trouver le lieu correspondant au marqueur
+        const venue = venues.find(v => {
           const markerLatLng = marker.getLatLng();
-          return lat === markerLatLng.lat && lng === markerLatLng.lng;
+          return v.latitude === markerLatLng.lat && v.longitude === markerLatLng.lng;
         });
 
-        // Afficher ou cacher le marqueur
-        if (event) {
-          markerElement.style.display = 'block';
-          markerElement.style.opacity = '1';
-        } else {
-          markerElement.style.display = 'none';
-          markerElement.style.opacity = '0';
+        // Trouver la soirée correspondante au marqueur
+        const party = parties.find(p => {
+          const markerLatLng = marker.getLatLng();
+          return p.latitude === markerLatLng.lat && p.longitude === markerLatLng.lng;
+        });
+
+        if (venue) {
+          // Afficher le marqueur si :
+          // 1. Le filtre est sur "all"
+          // 2. Le filtre est sur le sport du lieu
+          const shouldShow = 
+            eventFilter === 'all' || 
+            eventFilter === venue.sport;
+
+          markerElement.style.display = shouldShow ? 'block' : 'none';
+          markerElement.style.opacity = shouldShow ? '1' : '0';
+        } else if (party) {
+          // Afficher le marqueur de soirée si :
+          // 1. Le filtre est sur "all"
+          // 2. Le filtre est sur "party"
+          const shouldShow = 
+            eventFilter === 'all' || 
+            eventFilter === 'party';
+
+          markerElement.style.display = shouldShow ? 'block' : 'none';
+          markerElement.style.opacity = shouldShow ? '1' : '0';
         }
       }
     });
@@ -1611,7 +1628,7 @@ function App() {
     if (mapRef.current) {
       updateMapMarkers();
     }
-  }, [eventFilter, appAction]);
+  }, [eventFilter, venues, appAction]);
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
