@@ -2101,23 +2101,23 @@ function App() {
                     onChange={(e) => setEventFilter(e.target.value)}
                   >
                     <option value="all">Tous les événements</option>
-                    <option value="party">Soirées</option>
-                    <option value="Football">Football</option>
-                    <option value="Basketball">Basketball</option>
-                    <option value="Handball">Handball</option>
-                    <option value="Rugby">Rugby</option>
-                    <option value="Ultimate">Ultimate</option>
-                    <option value="Natation">Natation</option>
-                    <option value="Badminton">Badminton</option>
-                    <option value="Tennis">Tennis</option>
-                    <option value="Trail">Trail</option>
-                    <option value="Volleyball">Volleyball</option>
-                    <option value="Ping-pong">Ping-pong</option>
-                    <option value="Boxe">Boxe</option>
-                    <option value="Athlétisme">Athlétisme</option>
-                    <option value="Pétanque">Pétanque</option>
-                    <option value="Escalade">Escalade</option>
-                    <option value="Jeux de société">Jeux de société</option>
+                    <option value="party">Soirées 🎉</option>
+                    <option value="Football">Football ⚽</option>
+                    <option value="Basketball">Basketball 🏀</option>
+                    <option value="Handball">Handball 🤾</option>
+                    <option value="Rugby">Rugby 🏉</option>
+                    <option value="Ultimate">Ultimate 🥏</option>
+                    <option value="Natation">Natation 🏊</option>
+                    <option value="Badminton">Badminton 🏸</option>
+                    <option value="Tennis">Tennis 🎾</option>
+                    <option value="Trail">Trail 🏃</option>
+                    <option value="Volleyball">Volleyball 🏐</option>
+                    <option value="Ping-pong">Ping-pong 🏓</option>
+                    <option value="Boxe">Boxe 🥊</option>
+                    <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                    <option value="Pétanque">Pétanque 🍹</option>
+                    <option value="Escalade">Escalade 🧗‍♂️</option>
+                    <option value="Jeux de société">Jeux de société 🎲</option>
                   </select>
                             </div>
                 <div className="events-list">
@@ -2301,6 +2301,7 @@ function App() {
         isOpen={isCalendarOpen} 
         onClose={handleCalendarClose}
         venues={venues}
+        eventFilter={eventFilter}
       />
     </div>
   );
