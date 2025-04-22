@@ -10,6 +10,7 @@ import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import favicon from './assets/favicon.svg';
+import CalendarPopup from './components/CalendarPopup';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);
@@ -239,10 +240,9 @@ function App() {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
-  
-  // Suppression du mode admin basé sur l'URL
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -1726,6 +1726,14 @@ function App() {
     triggerMarkerUpdate();
   };
 
+  const handleCalendarClick = () => {
+    setIsCalendarOpen(true);
+  };
+
+  const handleCalendarClose = () => {
+    setIsCalendarOpen(false);
+  };
+
   return (
     <div className="app">
       <div className="app-header">
@@ -2051,15 +2059,21 @@ function App() {
             {activeTab === 'events' && (
               <div className="events-panel">
                 <div className="events-panel-header">
-                  <h3>Événements à venir</h3>
-                                <button 
+                  <button 
+                    className="calendar-button"
+                    onClick={handleCalendarClick}
+                    title="Voir le calendrier"
+                  >
+                    <i className="fas fa-calendar"></i> 📅 Calendrier
+                  </button>
+                  <button 
                     className="close-events-button"
                     onClick={() => setActiveTab('map')}
                     title="Fermer le panneau"
                   >
                     Fermer
-                                </button>
-                              </div>
+                  </button>
+                </div>
                 <div className="event-filters">
                   <select 
                     className="filter-select"
@@ -2263,6 +2277,11 @@ function App() {
           </div>
         </div>
       )}
+      <CalendarPopup 
+        isOpen={isCalendarOpen} 
+        onClose={handleCalendarClose}
+        venues={venues}
+      />
     </div>
   );
 }
