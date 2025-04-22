@@ -272,7 +272,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                                 }}
                                 onClick={() => handleEventClick(event)}
                               >
-                                <div className="calendar-event-time">{event.time}</div>
                                 <div className="calendar-event-title-container">
                                   <div className="calendar-event-name">{event.name}</div>
                                 </div>

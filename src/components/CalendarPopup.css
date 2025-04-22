@@ -148,13 +148,11 @@
 .calendar-popup .calendar-event .calendar-event-title-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 4px;
-  margin-top: 4px;
+
 }
 
 .calendar-popup .calendar-event .calendar-event-name {
-  font-size: 1em;
+  font-size: 0.8em;
   font-weight: bold;
   color: white;
 }
