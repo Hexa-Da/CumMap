@@ -255,23 +255,57 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     setSelectedEvent(event);
   };
 
+  const getCurrentDate = () => {
+    return new Date();
+  };
+
   const getCurrentTimePosition = () => {
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
+    const now = getCurrentDate();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
     const startHour = 8;
     const minutesFromStart = totalMinutes - (startHour * 60);
     const position = `${(minutesFromStart / 60) * 43.33}px`;
-    console.log(`Heure actuelle: ${hours}:${minutes}, Position: ${position}`);
     return position;
   };
 
   const getTodayDate = () => {
-    const today = new Date();
+    const today = getCurrentDate();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // Fonction pour vérifier si un événement est passé
+  const isEventPassed = (date: string, endTime?: string, type: 'match' | 'party' = 'match') => {
+    const now = new Date();
+    const eventDate = new Date(date);
+    
+    // Si l'événement est dans le futur, il n'est pas passé
+    if (eventDate > now) {
+      return false;
+    }
+    
+    // Si l'événement est aujourd'hui, vérifier l'heure
+    if (eventDate.toDateString() === now.toDateString()) {
+      // Si une heure de fin est spécifiée, l'utiliser
+      if (endTime) {
+        const [hours, minutes] = endTime.split(':').map(Number);
+        const end = new Date(eventDate);
+        end.setHours(hours, minutes, 0, 0);
+        return now > end;
+      }
+      
+      // Sinon, utiliser les durées par défaut
+      const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
+      const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
+      return now > end;
+    }
+    
+    // Si l'événement est dans le passé, il est passé
+    return true;
   };
 
   if (!isOpen) return null;
@@ -336,10 +370,11 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                         <div key={groupIndex} className="event-group">
                           {group.map((event, index) => {
                             const position = getEventPosition(event.time, event.endTime, event.type, index, group.length);
+                            const isPassed = isEventPassed(`${day.date}T${event.time}`, event.endTime ? `${day.date}T${event.endTime}` : undefined, event.type);
                             return (
                               <div
                                 key={`${event.time}-${index}`}
-                                className="calendar-event"
+                                className={`calendar-event ${isPassed ? 'passed' : ''}`}
                                 style={{
                                   backgroundColor: event.color,
                                   top: position.top,

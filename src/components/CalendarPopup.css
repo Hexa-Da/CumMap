@@ -271,4 +271,9 @@
   height: 10px;
   background-color: red;
   border-radius: 50%;
+}
+
+.calendar-event.passed {
+  opacity: 0.5;
+  filter: grayscale(100%);
 } 
