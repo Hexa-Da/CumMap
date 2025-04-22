@@ -42,6 +42,9 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   const [venueFilter, setVenueFilter] = useState<string>('Tous');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [showFemale, setShowFemale] = useState<boolean>(true);
+  const [showMale, setShowMale] = useState<boolean>(true);
+  const [showMixed, setShowMixed] = useState<boolean>(true);
 
   useEffect(() => {
     if (eventFilter === 'all' || eventFilter === 'party') {
@@ -120,7 +123,17 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
               const sportMatch = venue.sport === calendarEventFilter;
               const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
               
-              if (sportMatch && venueMatch) {
+              // Vérifier si le match correspond au filtre de genre
+              const isFemale = match.description?.toLowerCase().includes('féminin');
+              const isMale = match.description?.toLowerCase().includes('masculin');
+              const isMixed = match.description?.toLowerCase().includes('mixte');
+              
+              const genderMatch = (!isFemale && !isMale && !isMixed) || 
+                                (isFemale && showFemale) || 
+                                (isMale && showMale) ||
+                                (isMixed && showMixed);
+              
+              if (sportMatch && venueMatch && genderMatch) {
                 events.push({
                   type: 'match',
                   time: matchTime.split('.')[0],
@@ -308,13 +321,32 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     return true;
   };
 
+  // Fonction pour vérifier si un sport a des matchs féminins ou masculins
+  const hasGenderMatches = (sport: string): { hasFemale: boolean, hasMale: boolean, hasMixed: boolean } => {
+    let hasFemale = false;
+    let hasMale = false;
+    let hasMixed = false;
+
+    venues.forEach(venue => {
+      if (venue.sport === sport && venue.matches) {
+        venue.matches.forEach(match => {
+          if (match.description?.toLowerCase().includes('féminin')) hasFemale = true;
+          if (match.description?.toLowerCase().includes('masculin')) hasMale = true;
+          if (match.description?.toLowerCase().includes('mixte')) hasMixed = true;
+        });
+      }
+    });
+
+    return { hasFemale, hasMale, hasMixed };
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="calendar-popup-overlay" onClick={onClose}>
       <div className="calendar-popup" onClick={e => e.stopPropagation()}>
         <div className="calendar-popup-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="filter-row">
             <select 
               className="filter-select"
               value={calendarEventFilter}
@@ -345,6 +377,37 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
           </div>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
+        {calendarEventFilter !== 'Aucun' && (() => {
+          const { hasFemale, hasMale, hasMixed } = hasGenderMatches(calendarEventFilter);
+          return (hasFemale || hasMale || hasMixed) && (
+            <div className="gender-filter-row">
+              {hasFemale && (
+                <button 
+                  className={`gender-filter-button ${showFemale ? 'active' : ''}`}
+                  onClick={() => setShowFemale(!showFemale)}
+                >
+                  Féminin
+                </button>
+              )}
+              {hasMale && (
+                <button 
+                  className={`gender-filter-button ${showMale ? 'active' : ''}`}
+                  onClick={() => setShowMale(!showMale)}
+                >
+                  Masculin
+                </button>
+              )}
+              {hasMixed && (
+                <button 
+                  className={`gender-filter-button ${showMixed ? 'active' : ''}`}
+                  onClick={() => setShowMixed(!showMixed)}
+                >
+                  Mixte
+                </button>
+              )}
+            </div>
+          );
+        })()}
         <div className="calendar-grid">
           <div className="calendar-hours">
             <div className="calendar-hour-header"></div>

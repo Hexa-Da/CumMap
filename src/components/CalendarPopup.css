@@ -28,7 +28,7 @@
   align-items: center;
   margin-bottom: 20px;
   margin-top: -10px;
-  border-bottom: 1px  var(--border-color);
+  border-bottom: 1px var(--border-color);
 }
 
 .calendar-popup-header h2 {
@@ -69,6 +69,48 @@
 .calendar-hour-header {
   height: 40px;
   border-bottom: 1px var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding-right: 4px;
+  margin-right: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gender-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.gender-filter-button {
+  min-width: 80px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  padding: 0 8px;
+  transition: all 0.2s ease;
+}
+
+.gender-filter-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
 }
 
 .calendar-hour {
@@ -101,6 +143,7 @@
   font-weight: 600;
   border-radius: 4px;
   margin-bottom: 5px;
+  margin-top: 10px;
 }
 
 .calendar-events {
