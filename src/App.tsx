@@ -246,11 +246,7 @@ function App() {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('État de l\'authentification changé:', user);
       if (user) {
-        console.log('Utilisateur connecté - UID:', user.uid);
-        console.log('Email:', user.email);
-        console.log('Nom:', user.displayName);
         setUser(user);
         
         // Vérifier si l'utilisateur est admin
@@ -260,7 +256,6 @@ function App() {
           setIsAdmin(admins && admins[user.uid]);
         });
       } else {
-        console.log('Aucun utilisateur connecté');
         setUser(null);
         setIsAdmin(false);
       }
@@ -1041,18 +1036,31 @@ function App() {
   // Fonction pour vérifier si un match est passé
   const isMatchPassed = (startDate: string, endTime?: string, type: 'match' | 'party' = 'match') => {
     const now = new Date();
-    const start = new Date(startDate);
+    const eventDate = new Date(startDate);
     
-    // Si une heure de fin est spécifiée, l'utiliser
-    if (endTime) {
-      const end = new Date(endTime);
+    // Si l'événement est dans le futur, il n'est pas passé
+    if (eventDate > now) {
+      return false;
+    }
+    
+    // Si l'événement est aujourd'hui, vérifier l'heure
+    if (eventDate.toDateString() === now.toDateString()) {
+      // Si une heure de fin est spécifiée, l'utiliser
+      if (endTime) {
+        const [hours, minutes] = endTime.split(':').map(Number);
+        const end = new Date(eventDate);
+        end.setHours(hours, minutes, 0, 0);
+        return now > end;
+      }
+      
+      // Sinon, utiliser les durées par défaut
+      const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
+      const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
       return now > end;
     }
     
-    // Sinon, utiliser les durées par défaut
-    const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
-    const end = new Date(start.getTime() + (defaultDuration * 60 * 60 * 1000));
-    return now > end;
+    // Si l'événement est dans le passé, il est passé
+    return true;
   };
 
   // Fonction pour récupérer tous les événements (matchs et soirées)
@@ -1542,12 +1550,10 @@ function App() {
   useEffect(() => {
     // Forcer l'envoi d'un pageview après un court délai pour assurer le chargement complet
     setTimeout(() => {
-      console.log('[GA] Envoi du pageview à Google Analytics');
       ReactGA.send({ 
         hitType: "pageview", 
         page: window.location.pathname + window.location.search
       });
-      console.log('[GA] Pageview envoyé');
       
       // Forcer un événement pour tester la connexion
       ReactGA.event({
@@ -1559,7 +1565,6 @@ function App() {
     
     // Fonction pour enregistrer les événements personnalisés
     const trackEvent = (category: string, action: string) => {
-      console.log(`[GA] Envoi d'événement: ${category}/${action}`);
       ReactGA.event({
         category,
         action
@@ -1689,11 +1694,7 @@ function App() {
   useEffect(() => {
     console.log('Démarrage de l\'écouteur d\'authentification...');
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('État de l\'authentification changé:', user);
       if (user) {
-        console.log('Utilisateur connecté - UID:', user.uid);
-        console.log('Email:', user.email);
-        console.log('Nom:', user.displayName);
         setUser(user);
         
         // Vérifier si l'utilisateur est admin
@@ -1703,7 +1704,6 @@ function App() {
           setIsAdmin(admins && admins[user.uid]);
         });
       } else {
-        console.log('Aucun utilisateur connecté');
         setUser(null);
         setIsAdmin(false);
       }
