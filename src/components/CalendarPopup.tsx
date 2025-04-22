@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './CalendarPopup.css';
 
 interface Event {
@@ -34,12 +34,30 @@ interface CalendarPopupProps {
   isOpen: boolean;
   onClose: () => void;
   venues: Venue[];
+  eventFilter: string;
 }
 
-const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }) => {
-  const [eventFilter, setEventFilter] = useState<string>('Aucun');
+const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, eventFilter }) => {
+  const [calendarEventFilter, setCalendarEventFilter] = useState<string>('Aucun');
   const [venueFilter, setVenueFilter] = useState<string>('Tous');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (eventFilter === 'all' || eventFilter === 'party') {
+      setCalendarEventFilter('Aucun');
+    } else {
+      setCalendarEventFilter(eventFilter);
+    }
+  }, [eventFilter]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const sportOptions = [
     { value: 'Aucun', label: 'Aucun' },
@@ -72,13 +90,12 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
   ];
 
-  // Fonction pour obtenir les options de lieux en fonction du sport sélectionné
   const getVenueOptions = () => {
-    if (eventFilter === 'Aucun') {
+    if (calendarEventFilter === 'Aucun') {
       return [{ value: 'Tous', label: 'Tous les lieux' }];
     }
 
-    const filteredVenues = venues.filter(venue => venue.sport === eventFilter);
+    const filteredVenues = venues.filter(venue => venue.sport === calendarEventFilter);
     const venueOptions = [
       { value: 'Tous', label: 'Tous les lieux' },
       ...filteredVenues.map(venue => ({
@@ -93,16 +110,14 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
   const getEventsForDay = (date: string): Event[] => {
     const events: Event[] = [];
     
-    // Si le filtre n'est pas "Aucun", on ajoute les matchs
-    if (eventFilter !== 'Aucun') {
+    if (calendarEventFilter !== 'Aucun') {
       venues.forEach(venue => {
         if (venue.matches) {
           venue.matches.forEach(match => {
             const [matchDate, matchTime] = match.date.split('T');
             
             if (matchDate === date) {
-              // Vérifier les filtres
-              const sportMatch = venue.sport === eventFilter;
+              const sportMatch = venue.sport === calendarEventFilter;
               const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
               
               if (sportMatch && venueMatch) {
@@ -123,7 +138,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
       });
     }
 
-    // Ajouter les soirées (toujours affichées, quel que soit le filtre)
     const parties = [
       {
         date: '2025-04-24',
@@ -217,18 +231,15 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
       }
     }
 
-    // Pour les soirées, on force la fin à 23h si non spécifié
     if (type === 'party' && !endTime) {
       endHour = 23;
       endMinute = 0;
     }
 
-    // Calcul de la position en heures décimales (ex: 9h30 = 9.5)
     const startPosition = (startHour - 8) + (startMinute / 60);
     const endPosition = (endHour - 8) + (endMinute / 60);
     const duration = endPosition - startPosition;
 
-    // Calcul de la largeur et de la position horizontale
     const width = type === 'party' || total === 1 ? '100%' : `${100 / total}%`;
     const left = type === 'party' || total === 1 ? '0%' : `${(100 / total) * index}%`;
 
@@ -244,6 +255,25 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     setSelectedEvent(event);
   };
 
+  const getCurrentTimePosition = () => {
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startHour = 8;
+    const minutesFromStart = totalMinutes - (startHour * 60);
+    const position = `${(minutesFromStart / 60) * 43.33}px`;
+    console.log(`Heure actuelle: ${hours}:${minutes}, Position: ${position}`);
+    return position;
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -253,10 +283,10 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <select 
               className="filter-select"
-              value={eventFilter}
+              value={calendarEventFilter}
               onChange={(e) => {
-                setEventFilter(e.target.value);
-                setVenueFilter('Tous'); // Réinitialiser le filtre de lieu quand le sport change
+                setCalendarEventFilter(e.target.value);
+                setVenueFilter('Tous');
               }}
             >
               {sportOptions.map(option => (
@@ -265,7 +295,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                 </option>
               ))}
             </select>
-            {eventFilter !== 'Aucun' && (
+            {calendarEventFilter !== 'Aucun' && (
               <select 
                 className="filter-select"
                 value={venueFilter}
@@ -295,6 +325,12 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                 <div key={day.date} className="calendar-day-column">
                   <div className="calendar-day-header">{day.label}</div>
                   <div className="calendar-events">
+                    {day.date === getTodayDate() && (
+                      <div 
+                        className="current-time-indicator"
+                        style={{ top: getCurrentTimePosition() }}
+                      />
+                    )}
                     {getOverlappingEvents(events).map((group, groupIndex) => {
                       return (
                         <div key={groupIndex} className="event-group">
