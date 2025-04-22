@@ -38,6 +38,7 @@ interface CalendarPopupProps {
 
 const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }) => {
   const [eventFilter, setEventFilter] = useState<string>('Aucun');
+  const [venueFilter, setVenueFilter] = useState<string>('Tous');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const sportOptions = [
@@ -71,31 +72,56 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
   ];
 
+  // Fonction pour obtenir les options de lieux en fonction du sport sélectionné
+  const getVenueOptions = () => {
+    if (eventFilter === 'Aucun') {
+      return [{ value: 'Tous', label: 'Tous les lieux' }];
+    }
+
+    const filteredVenues = venues.filter(venue => venue.sport === eventFilter);
+    const venueOptions = [
+      { value: 'Tous', label: 'Tous les lieux' },
+      ...filteredVenues.map(venue => ({
+        value: venue.id,
+        label: venue.name
+      }))
+    ];
+
+    return venueOptions;
+  };
+
   const getEventsForDay = (date: string): Event[] => {
     const events: Event[] = [];
     
-    venues.forEach(venue => {
-      if (venue.matches) {
-        venue.matches.forEach(match => {
-          const [matchDate, matchTime] = match.date.split('T');
-          
-          if (matchDate === date) {
-            if (eventFilter !== 'Aucun' && venue.sport === eventFilter) {
-              events.push({
-                type: 'match',
-                time: matchTime.split('.')[0],
-                endTime: match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined,
-                name: match.description || match.name,
-                teams: match.teams,
-                sport: venue.sport,
-                venue: venue.name,
-                color: '#4CAF50'
-              });
+    // Si le filtre n'est pas "Aucun", on ajoute les matchs
+    if (eventFilter !== 'Aucun') {
+      venues.forEach(venue => {
+        if (venue.matches) {
+          venue.matches.forEach(match => {
+            const [matchDate, matchTime] = match.date.split('T');
+            
+            if (matchDate === date) {
+              // Vérifier les filtres
+              const sportMatch = venue.sport === eventFilter;
+              const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
+              
+              if (sportMatch && venueMatch) {
+                events.push({
+                  type: 'match',
+                  time: matchTime.split('.')[0],
+                  endTime: match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined,
+                  name: match.description || match.name,
+                  teams: match.teams,
+                  sport: venue.sport,
+                  venue: venue.name,
+                  color: '#4CAF50'
+                });
+              }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
 
     // Ajouter les soirées (toujours affichées, quel que soit le filtre)
     const parties = [
@@ -225,11 +251,13 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
       <div className="calendar-popup" onClick={e => e.stopPropagation()}>
         <div className="calendar-popup-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <h2>Calendrier</h2>
             <select 
               className="filter-select"
               value={eventFilter}
-              onChange={(e) => setEventFilter(e.target.value)}
+              onChange={(e) => {
+                setEventFilter(e.target.value);
+                setVenueFilter('Tous'); // Réinitialiser le filtre de lieu quand le sport change
+              }}
             >
               {sportOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -237,6 +265,19 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                 </option>
               ))}
             </select>
+            {eventFilter !== 'Aucun' && (
+              <select 
+                className="filter-select"
+                value={venueFilter}
+                onChange={(e) => setVenueFilter(e.target.value)}
+              >
+                {getVenueOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
