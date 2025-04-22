@@ -158,11 +158,12 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
       let placed = false;
       for (const group of groups) {
         const lastEvent = group[group.length - 1];
+        const lastStartTime = parseInt(lastEvent.time.split(':')[0]) * 60 + parseInt(lastEvent.time.split(':')[1]);
         const lastEndTime = lastEvent.endTime 
           ? parseInt(lastEvent.endTime.split(':')[0]) * 60 + parseInt(lastEvent.endTime.split(':')[1])
-          : parseInt(lastEvent.time.split(':')[0]) * 60 + parseInt(lastEvent.time.split(':')[1]) + 60;
+          : lastStartTime + 60;
 
-        if (startTime >= lastEndTime) {
+        if (startTime < lastEndTime && endTime > lastStartTime) {
           group.push(event);
           placed = true;
           break;
@@ -177,7 +178,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     return groups;
   };
 
-  const getEventPosition = (time: string, endTime: string | undefined, type: 'match' | 'party') => {
+  const getEventPosition = (time: string, endTime: string | undefined, type: 'match' | 'party', index: number, total: number) => {
     const [startHour, startMinute] = time.split(':').map(Number);
     let endHour = startHour + 1;
     let endMinute = 0;
@@ -201,11 +202,15 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     const endPosition = (endHour - 8) + (endMinute / 60);
     const duration = endPosition - startPosition;
 
+    // Calcul de la largeur et de la position horizontale
+    const width = type === 'party' || total === 1 ? '100%' : `${100 / total}%`;
+    const left = type === 'party' || total === 1 ? '0%' : `${(100 / total) * index}%`;
+
     return {
       top: `${startPosition * 43.33}px`,
       height: `${duration * 43.33}px`,
-      width: type === 'party' ? '100%' : undefined,
-      left: '0%'
+      width,
+      left
     };
   };
 
@@ -253,7 +258,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                       return (
                         <div key={groupIndex} className="event-group">
                           {group.map((event, index) => {
-                            const position = getEventPosition(event.time, event.endTime, event.type);
+                            const position = getEventPosition(event.time, event.endTime, event.type, index, group.length);
                             return (
                               <div
                                 key={`${event.time}-${index}`}
@@ -262,8 +267,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                                   backgroundColor: event.color,
                                   top: position.top,
                                   height: position.height,
-                                  width: '100%',
-                                  left: '0%'
+                                  width: position.width,
+                                  left: position.left
                                 }}
                                 onClick={() => handleEventClick(event)}
                               >
