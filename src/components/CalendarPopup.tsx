@@ -38,6 +38,7 @@ interface CalendarPopupProps {
 
 const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }) => {
   const [eventFilter, setEventFilter] = useState<string>('Aucun');
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const sportOptions = [
     { value: 'Aucun', label: 'Aucun' },
@@ -177,11 +178,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
   };
 
   const getEventPosition = (time: string, endTime: string | undefined, type: 'match' | 'party') => {
-    if(type != 'party'){
-      console.log('Input time:', time);
-      console.log('Input endTime:', endTime);
-    }
-    
     const [startHour, startMinute] = time.split(':').map(Number);
     let endHour = startHour + 1;
     let endMinute = 0;
@@ -199,9 +195,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
       endHour = 23;
       endMinute = 0;
     }
-    if(type != 'party'){
-      console.log('Calculated times:', startHour, startMinute, endHour, endMinute);
-    }
 
     // Calcul de la position en heures décimales (ex: 9h30 = 9.5)
     const startPosition = (startHour - 8) + (startMinute / 60);
@@ -211,8 +204,13 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
     return {
       top: `${startPosition * 43.33}px`,
       height: `${duration * 43.33}px`,
-      width: type === 'party' ? '100%' : undefined
+      width: type === 'party' ? '100%' : undefined,
+      left: '0%'
     };
+  };
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
   };
 
   if (!isOpen) return null;
@@ -247,13 +245,11 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
           <div className="calendar-days">
             {days.map(day => {
               const events = getEventsForDay(day.date);
-              const matches = events.filter(event => event.type === 'match');
               return (
                 <div key={day.date} className="calendar-day-column">
                   <div className="calendar-day-header">{day.label}</div>
                   <div className="calendar-events">
                     {getOverlappingEvents(events).map((group, groupIndex) => {
-                      const matchesInGroup = group.filter(event => event.type === 'match');
                       return (
                         <div key={groupIndex} className="event-group">
                           {group.map((event, index) => {
@@ -265,15 +261,16 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
                                 style={{
                                   backgroundColor: event.color,
                                   top: position.top,
-                                  height: ((parseInt(event.endTime?.split(':')[0] || '0') * 60 + parseInt(event.endTime?.split(':')[1] || '0') - (parseInt(event.time.split(':')[0]) * 60 + parseInt(event.time.split(':')[1]))) * 43.33 / 60) + 'px',
+                                  height: position.height,
                                   width: '100%',
                                   left: '0%'
                                 }}
+                                onClick={() => handleEventClick(event)}
                               >
-                                <div className="event-time">{event.time}</div>
-                                <div className="event-venue">{event.venue}</div>
-                                <div className="event-name">{event.name}</div>
-                                {event.type === 'match' && event.description && <div className="event-description">{event.description}</div>}
+                                <div className="calendar-event-time">{event.time}</div>
+                                <div className="calendar-event-title-container">
+                                  <div className="calendar-event-name">{event.name}</div>
+                                </div>
                               </div>
                             );
                           })}
@@ -286,6 +283,16 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues }
             })}
           </div>
         </div>
+        {selectedEvent && (
+          <div className="match-event-details">
+            <h3>{selectedEvent.name}</h3>
+            <p>Horaire: {selectedEvent.time} - {selectedEvent.endTime}</p>
+            {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
+            {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
+            {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
+            <button onClick={() => setSelectedEvent(null)}>Fermer</button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1241,9 +1241,10 @@ html, body, #root {
 
 .event-description {
   color: #ebc803;
-  font-weight: bold;
-  margin: 5px 0;
-  margin-bottom: 15px;
+  font-weight: 100;
+  margin: 8px 0;
+  font-size: 0.9em;
+  line-height: 1.4;
 }
 
 .event-venue {
@@ -1554,6 +1555,7 @@ html, body, #root {
   color: #ebc803;;
   font-weight: bold;
   margin: 5px 0;
+  font-size: 1rem;
 }
 
 .event-address {
