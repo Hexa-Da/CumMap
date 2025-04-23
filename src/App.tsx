@@ -66,11 +66,16 @@ interface Hotel extends BaseItem {
   type: 'hotel';
 }
 
+interface Restaurant extends BaseItem {
+  type: 'restaurant';
+  mealType: string; // 'midi' ou 'soir'
+}
+
 interface Party extends BaseItem {
   type: 'party';
 }
 
-type Place = Venue | Hotel | Party;
+type Place = Venue | Hotel | Party | Restaurant;
 
 // Interface pour les actions d'historique
 interface HistoryAction {
@@ -302,6 +307,65 @@ function App() {
     }
   ]);
 
+  const [restaurants] = useState<Restaurant[]>([
+    {
+      id: '1',
+      name: "Restaurant Universitaire Châtelet",
+      position: [48.841762, 2.348505],
+      description: "Repas du soir",
+      address: "10 Rue Jean Calvin, 75005 Paris",
+      type: 'restaurant',
+      date: '',
+      latitude: 48.841762,
+      longitude: 2.348505,
+      emoji: '🍽️',
+      sport: 'Restaurant',
+      mealType: 'soir'
+    },
+    {
+      id: '2',
+      name: "Restaurant Universitaire Bullier",
+      position: [48.840057, 2.337497],
+      description: "Repas du soir",
+      address: "39 Avenue Georges Bernanos, 75005 Paris",
+      type: 'restaurant',
+      date: '',
+      latitude: 48.840057,
+      longitude: 2.337497,
+      emoji: '🍽️',
+      sport: 'Restaurant',
+      mealType: 'soir'
+    },
+    {
+      id: '3',
+      name: "Cité Internationale Universitaire de Paris",
+      position: [48.819303, 2.337373],
+      description: "Repas du midi",
+      address: "17 Boulevard Jourdan, 75014 Paris",
+      type: 'restaurant',
+      date: '',
+      latitude: 48.819303,
+      longitude: 2.337373,
+      emoji: '🍽️',
+      sport: 'Restaurant',
+      mealType: 'midi'
+    },
+    {
+      id: '4',
+      name: "Halle Georges Carpentier",
+      position: [48.820122, 2.367752],
+      description: "Repas du midi",
+      address: "81 Bd Masséna, 75013 Paris",
+      type: 'restaurant',
+      date: '',
+      latitude: 48.820122,
+      longitude: 2.367752,
+      emoji: '🍽️',
+      sport: 'Restaurant',
+      mealType: 'midi'
+    }
+  ]);
+
   const [parties] = useState<Party[]>([
     {
       id: '1',
@@ -440,7 +504,8 @@ function App() {
     Other: '🎯',
     Pompom: '🎀',
     Party: '🎉',
-    Hotel: '🏨'
+    Hotel: '🏨',
+    Restaurant: '🍽️'
   };
 
   // Fonction pour géocoder une adresse avec Nominatim
@@ -1456,6 +1521,63 @@ function App() {
         }
       });
 
+      // Ajouter les marqueurs pour les restaurants
+      restaurants.forEach(restaurant => {
+        const marker = L.marker([restaurant.latitude, restaurant.longitude], {
+          icon: L.divIcon({
+            className: 'custom-marker restaurant-marker',
+            html: `<div style="background-color:rgb(204, 33, 27); color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🍽️</span>
+                   </div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+          })
+        });
+
+        // Créer le contenu du popup pour le restaurant
+        const popupContent = document.createElement('div');
+        popupContent.className = 'venue-popup';
+        
+        // Contenu de base du restaurant
+        popupContent.innerHTML = `
+          <h3>${restaurant.name}</h3>
+          <p>${restaurant.description}</p>
+          <p class="venue-address">${restaurant.address}</p>
+        `;
+        
+        // Boutons d'actions
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'popup-buttons';
+        
+        // Bouton Google Maps
+        const mapsButton = document.createElement('button');
+        mapsButton.className = 'maps-button';
+        mapsButton.textContent = 'Ouvrir dans Google Maps';
+        mapsButton.addEventListener('click', () => {
+          openInGoogleMaps(restaurant);
+        });
+        buttonsContainer.appendChild(mapsButton);
+        
+        // Bouton Copier l'adresse
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.textContent = 'Copier l\'adresse';
+        copyButton.addEventListener('click', () => {
+          copyToClipboard(restaurant.address || `${restaurant.latitude},${restaurant.longitude}`);
+        });
+        buttonsContainer.appendChild(copyButton);
+        
+        popupContent.appendChild(buttonsContainer);
+
+        marker.bindPopup(popupContent);
+        
+        if (mapRef.current) {
+          marker.addTo(mapRef.current);
+          markersRef.current.push(marker);
+        }
+      });
+
       // Ajouter les marqueurs pour les soirées
       parties.forEach(party => {
         const marker = L.marker([party.latitude, party.longitude], {
@@ -1513,7 +1635,7 @@ function App() {
         }
       });
     }
-  }, [venues, hotels, parties, isEditing, isAdmin]);
+  }, [venues, hotels, parties, restaurants, isEditing, isAdmin]);
 
   // Fonction pour commencer l'édition d'un match
   const startEditingMatch = (venueId: string, match: Match | null) => {
