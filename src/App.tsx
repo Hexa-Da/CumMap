@@ -1725,6 +1725,18 @@ function App() {
           return p.latitude === markerLatLng.lat && p.longitude === markerLatLng.lng;
         });
 
+        // Trouver l'hôtel correspondant au marqueur
+        const hotel = hotels.find(h => {
+          const markerLatLng = marker.getLatLng();
+          return h.latitude === markerLatLng.lat && h.longitude === markerLatLng.lng;
+        });
+
+        // Trouver le restaurant correspondant au marqueur
+        const restaurant = restaurants.find(r => {
+          const markerLatLng = marker.getLatLng();
+          return r.latitude === markerLatLng.lat && r.longitude === markerLatLng.lng;
+        });
+
         if (venue) {
           // Afficher le marqueur si :
           // 1. Le filtre est sur "all"
@@ -1742,6 +1754,12 @@ function App() {
           const shouldShow = 
             eventFilter === 'all' || 
             eventFilter === 'party';
+
+          markerElement.style.display = shouldShow ? 'block' : 'none';
+          markerElement.style.opacity = shouldShow ? '1' : '0';
+        } else if (hotel || restaurant) {
+          // Afficher les hôtels et restaurants uniquement si le filtre est sur "all"
+          const shouldShow = eventFilter === 'all';
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
