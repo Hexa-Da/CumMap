@@ -495,7 +495,7 @@ function App() {
     'Ping-pong': '🏓',
     Ultimate: '🥏',
     Natation: '🏊',
-    Trail: '🏃',
+    Cross: '🏃',
     Boxe: '🥊',
     Athlétisme: '🏃‍♂️',
     Pétanque: '🍹',
@@ -551,7 +551,7 @@ function App() {
       'Natation': '🏊',
       'Badminton': '🏸',
       'Tennis': '🎾',
-      'Trail': '🏃',
+      'Cross': '🏃',
       'Volleyball': '🏐',
       'Ping-pong': '🏓',
       'Boxe': '🥊',
@@ -2086,7 +2086,7 @@ function App() {
                       <option value="Ping-pong">Ping-pong 🏓</option>
                       <option value="Ultimate">Ultimate 🥏</option>
                       <option value="Natation">Natation 🏊</option>
-                      <option value="Trail">Trail 🏃</option>
+                      <option value="Cross">Cross 🏃</option>
                       <option value="Boxe">Boxe 🥊</option>
                       <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
                       <option value="Pétanque">Pétanque 🍹</option>
@@ -2232,7 +2232,7 @@ function App() {
                     <option value="Natation">Natation 🏊</option>
                     <option value="Badminton">Badminton 🏸</option>
                     <option value="Tennis">Tennis 🎾</option>
-                    <option value="Trail">Trail 🏃</option>
+                    <option value="Cross">Cross 🏃</option>
                     <option value="Volleyball">Volleyball 🏐</option>
                     <option value="Ping-pong">Ping-pong 🏓</option>
                     <option value="Boxe">Boxe 🥊</option>
