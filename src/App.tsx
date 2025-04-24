@@ -1112,16 +1112,23 @@ function App() {
     if (eventDate.toDateString() === now.toDateString()) {
       // Si une heure de fin est spécifiée, l'utiliser
       if (endTime) {
-        const [hours, minutes] = endTime.split(':').map(Number);
+        const [hours, minutes] = endTime.split('T')[1].split(':').map(Number);
         const end = new Date(eventDate);
         end.setHours(hours, minutes, 0, 0);
         return now > end;
       }
       
-      // Sinon, utiliser les durées par défaut
-      const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
-      const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
-      return now > end;
+      // Sinon, utiliser l'heure de début + 10 minutes pour les matchs très tôt le matin (avant 7h)
+      // ou la durée par défaut pour les autres cas
+      const startHour = eventDate.getHours();
+      if (startHour < 7) {
+        const end = new Date(eventDate.getTime() + (10 * 60 * 1000)); // 10 minutes après le début
+        return now > end;
+      } else {
+        const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
+        const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
+        return now > end;
+      }
     }
     
     // Si l'événement est dans le passé, il est passé

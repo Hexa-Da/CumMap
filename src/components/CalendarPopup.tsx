@@ -276,6 +276,12 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     const now = getCurrentDate();
     const hours = now.getHours();
     const minutes = now.getMinutes();
+    
+    // Ne pas afficher l'indicateur si l'heure est en dehors de la plage 8h-23h
+    if (hours < 8 || hours >= 23) {
+      return '';
+    }
+    
     const totalMinutes = hours * 60 + minutes;
     const startHour = 8;
     const minutesFromStart = totalMinutes - (startHour * 60);
@@ -422,7 +428,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                 <div key={day.date} className="calendar-day-column">
                   <div className="calendar-day-header">{day.label}</div>
                   <div className="calendar-events">
-                    {day.date === getTodayDate() && (
+                    {day.date === getTodayDate() && getCurrentTimePosition() !== '' && (
                       <div 
                         className="current-time-indicator"
                         style={{ top: getCurrentTimePosition() }}
