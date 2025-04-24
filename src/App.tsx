@@ -2292,7 +2292,9 @@ function App() {
                         <span className="event-type-badge">
                           {event.type === 'match' 
                             ? `${getSportIcon(event.sport || '')} ${event.sport}`
-                            : '🎉 Soirée'}
+                            : event.sport === 'Defile'
+                              ? '🎺 Défilé'
+                              : '🎉 Soirée'}
                         </span>
                         <span className="event-date">{formatDateTime(event.date)}</span>
                       </div>
