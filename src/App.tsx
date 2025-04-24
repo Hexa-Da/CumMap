@@ -289,7 +289,7 @@ function App() {
       date: '',
       latitude: 48.6819,
       longitude: 2.1694,
-      emoji: '🏨',
+      emoji: '🏢',
       sport: 'Hotel'
     },
     {
@@ -302,7 +302,7 @@ function App() {
       date: '',
       latitude: 48.7486,
       longitude: 2.3522,
-      emoji: '🏨',
+      emoji: '🏢',
       sport: 'Hotel'
     }
   ]);
@@ -383,13 +383,13 @@ function App() {
     {
       id: '2',
       name: "Bridge Club",
-      position: [48.8655, 2.3144],
+      position: [48.864579, 2.313845],
       description: "Soirée du 25 au 26 avril 2025, 21h-3h",
       address: "3, Port des Champs-Élysées, 75008 Paris",
       type: 'party',
       date: '2025-04-25T21:00:00',
-      latitude: 48.8655,
-      longitude: 2.3144,
+      latitude: 48.864579,
+      longitude: 2.313845,
       emoji: '🎉',
       sport: 'Party'
     },
@@ -405,6 +405,19 @@ function App() {
       longitude: 2.2883,
       emoji: '🎉',
       sport: 'Party'
+    },
+    {
+      id: '4',
+      name: "Jardin du Luxembourg",
+      position: [48.846928, 2.337202],
+      description: "Rendez vous 12h puis départ du Défilé à 13h",
+      address: "75006 Paris",
+      type: 'party',
+      date: '2025-04-24T12:00:00',
+      latitude: 48.846928,
+      longitude: 2.337202,
+      emoji: '🎺',
+      sport: 'Defile'
     }
   ]);
 
@@ -503,8 +516,9 @@ function App() {
     'Jeux de société': '🎲',
     Other: '🎯',
     Pompom: '🎀',
+    Defile: '🎺',
     Party: '🎉',
-    Hotel: '🏨',
+    Hotel: '🏢',
     Restaurant: '🍽️'
   };
 
@@ -1477,7 +1491,7 @@ function App() {
           icon: L.divIcon({
             className: 'custom-marker hotel-marker',
             html: `<div style="background-color: #1976D2; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏨</span>
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🏢</span>
                    </div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 15],
@@ -1591,7 +1605,7 @@ function App() {
           icon: L.divIcon({
             className: 'custom-marker party-marker',
             html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : '🎉'}</span>
+                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : party.sport === 'Defile' ? '🎺' : '🎉'}</span>
                    </div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 15],
