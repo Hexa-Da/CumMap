@@ -295,13 +295,13 @@ function App() {
     {
       id: '2',
       name: "F1 Orly-Rungis",
-      position: [48.7486, 2.3522],
+      position: [48.755812, 2.349089],
       description: "Hôtel F1 Orly-Rungis",
       address: "7 Rue du Pont des Halles, 94150 Rungis",
       type: 'hotel',
       date: '',
-      latitude: 48.7486,
-      longitude: 2.3522,
+      latitude: 48.755812,
+      longitude: 2.349089,
       emoji: '🏢',
       sport: 'Hotel'
     }
