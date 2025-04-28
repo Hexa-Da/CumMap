@@ -1234,6 +1234,13 @@ html, body, #root {
   margin-bottom: 0.5rem;
 }
 
+.event-item:not(.passed):first-of-type {
+  border: 2px solid var(--primary-color);
+  background-color: rgba(52, 152, 219, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow-color);
+}
+
 .event-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--shadow-color);
@@ -1368,13 +1375,12 @@ html, body, #root {
 
 /* Repositionner le panneau d'événements à gauche */
 .events-panel {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 300px;
+  width: 100%;
   height: 100%;
   background-color: var(--bg-color);
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -1390,6 +1396,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .events-panel-header h3 {
@@ -1410,9 +1417,9 @@ html, body, #root {
 
 .close-events-button {
   position: absolute;
-  top: 20px;
+  top: 10px;
   right: 10px;
-  background-color: #ff4444;
+  background-color: var(--danger-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -1423,24 +1430,35 @@ html, body, #root {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px var(--shadow-color);
   font-weight: bold;
   font-size: 14px;
+  z-index: 1001;
 }
 
 .close-events-button:hover {
-  background-color: #ff0000;
-  transform: scale(1.05);
+  background-color: var(--bg-secondary);
+  color: var(--primary-color);
 }
 
 .close-events-button svg {
   display: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .close-events-button:hover {
-    background-color: var(--bg-secondary);
-    color: var(--primary-color);
+@media (max-width: 768px) {
+  .events-panel {
+    width: 100%;
+    height: 100%;
+  }
+
+  .events-toggle-button {
+    top: 10px;
+    left: 10px;
+  }
+  
+  .close-events-button {
+    top: 10px;
+    right: 10px;
   }
 }
 
@@ -1844,7 +1862,7 @@ html, body, #root {
 
 .calendar-button {
   position: absolute;
-  top: 20px;
+  top: 10px;
   left: 10px;
   padding: 8px 16px;
   background-color: #4CAF50;
@@ -1860,6 +1878,7 @@ html, body, #root {
   height: 32px;
   width: 140px;
   justify-content: center;
+  z-index: 995;
 }
 
 .calendar-button:hover {
