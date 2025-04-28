@@ -181,46 +181,49 @@ function LocationMarker() {
 
   if (error) {
     return (
-      <div className="error-message">
-        {error}
-        <div className="retry-container" onClick={() => {
-          setError(null);
-          // Réessayer la géolocalisation
-          if (map) {
-            const options = {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 0
-            };
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                const { latitude, longitude } = pos.coords;
-                const newPosition = new LatLng(latitude, longitude);
-                setPosition(newPosition);
-                map.flyTo(newPosition, 16);
-              },
-              (err) => {
-                console.error('Erreur de géolocalisation:', err);
-                let errorMessage = "Erreur de géolocalisation";
-                switch (err.code) {
-                  case err.PERMISSION_DENIED:
-                    errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
-                    break;
-                  case err.POSITION_UNAVAILABLE:
-                    errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
-                    break;
-                  case err.TIMEOUT:
-                    errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
-                    break;
-                }
-                setError(errorMessage);
-              },
-              options
-            );
-          }
-        }}>
-          <div className="retry-icon"></div>
-          <span>Réessayer</span>
+      <div className="location-error">
+        <p>{error}</p>
+        <div className="location-error-buttons">
+          <button className="retry-button" onClick={() => {
+            setError(null);
+            if (map) {
+              const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+              };
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  const newPosition = new LatLng(latitude, longitude);
+                  setPosition(newPosition);
+                  map.flyTo(newPosition, 16);
+                },
+                (err) => {
+                  console.error('Erreur de géolocalisation:', err);
+                  let errorMessage = "Erreur de géolocalisation";
+                  switch (err.code) {
+                    case err.PERMISSION_DENIED:
+                      errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
+                      break;
+                    case err.POSITION_UNAVAILABLE:
+                      errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
+                      break;
+                    case err.TIMEOUT:
+                      errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+                      break;
+                  }
+                  setError(errorMessage);
+                },
+                options
+              );
+            }
+          }}>
+            Réessayer
+          </button>
+          <button className="dont-ask-again-button" onClick={() => setError(null)}>
+            Ne plus demander
+          </button>
         </div>
       </div>
     );
@@ -248,6 +251,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(true);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -460,7 +464,7 @@ function App() {
     description: ''
   });
   const [openPopup, setOpenPopup] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | false>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapStyle, setMapStyle] = useState('osm');
@@ -1263,51 +1267,40 @@ function App() {
   const handleLocationSuccess = (position: GeolocationPosition) => {
     const { latitude, longitude } = position.coords;
     setUserLocation([latitude, longitude]);
-    setLocationError(false);
+    setLocationError(null);
     setLocationLoading(false);
   };
 
   const handleLocationError = (error: GeolocationPositionError) => {
-    console.error('Erreur de géolocalisation:', error);
-    
-    // Afficher un message d'erreur plus spécifique
-    let errorMessage = "Impossible d'accéder à votre position. ";
+    let errorMessage = "Impossible d'obtenir votre position. ";
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        errorMessage += "Veuillez autoriser l'accès à la géolocalisation dans les paramètres de votre navigateur.";
+        errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
         break;
       case error.POSITION_UNAVAILABLE:
-        errorMessage += "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
+        errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
         break;
       case error.TIMEOUT:
-        errorMessage += "La demande a expiré. Veuillez réessayer.";
+        errorMessage = "La demande de géolocalisation a expiré. Veuillez réessayer.";
         break;
       default:
-        errorMessage += "Une erreur inattendue s'est produite.";
+        errorMessage = "Une erreur inattendue s'est produite.";
     }
     setLocationError(errorMessage);
-    setLocationLoading(false);
+    setShowLocationPrompt(true);
+  };
+
+  const handleDontAskAgain = () => {
+    setShowLocationPrompt(false);
+    setLocationError(null);
   };
 
   const retryLocation = () => {
-    // Tracker la demande de géolocalisation
-    ReactGA.event({
-      category: 'location',
-      action: 'retry_location'
-    });
-    
-    setLocationError(false);
-    setLocationLoading(true);
-    
-    // Réessayer avec des options optimisées
+    setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       handleLocationSuccess,
       handleLocationError,
-      { 
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+      { enableHighAccuracy: true }
     );
   };
 
@@ -2172,15 +2165,20 @@ function App() {
         </div>
       </div>
       <main className="app-main">
-        {locationError ? (
+        {locationError && showLocationPrompt && (
           <div className="location-error">
             <p>{locationError}</p>
-            <div className="retry-container" onClick={retryLocation}>
-              <div className="retry-icon"></div>
-              <span>Réessayer</span>
+            <div className="location-error-buttons">
+              <button className="retry-button" onClick={retryLocation}>
+                Réessayer
+              </button>
+              <button className="dont-ask-again-button" onClick={handleDontAskAgain}>
+                Ne plus demander
+              </button>
             </div>
           </div>
-        ) : locationLoading ? (
+        )}
+        {locationLoading ? (
           <div className="loading">Chargement de la carte...</div>
         ) : (
           <div className="map-container">
