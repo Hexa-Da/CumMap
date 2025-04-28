@@ -134,15 +134,18 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                                 (isMixed && showMixed);
               
               if (sportMatch && venueMatch && genderMatch) {
+                const eventEndTime = match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined;
+                const isPassed = isEventPassed(match.date, eventEndTime, 'match');
+                
                 events.push({
                   type: 'match',
                   time: matchTime.split('.')[0],
-                  endTime: match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined,
+                  endTime: eventEndTime,
                   name: match.description || match.name,
                   teams: match.teams,
                   sport: venue.sport,
                   venue: venue.name,
-                  color: '#4CAF50'
+                  color: isPassed ? '#808080' : '#4CAF50' // Gris si passé, vert sinon
                 });
               }
             }
@@ -269,6 +272,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   };
 
   const getCurrentDate = () => {
+    // Simulation de la date du 25/04 à 16h
     return new Date();
   };
 
@@ -300,7 +304,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   // Fonction pour vérifier si un événement est passé
   const isEventPassed = (date: string, endTime?: string, type: 'match' | 'party' = 'match') => {
     const now = new Date();
-    const eventDate = new Date(date);
+    const [eventDateStr, eventTimeStr] = date.split('T');
+    const eventDate = new Date(eventDateStr);
     
     // Si l'événement est dans le futur, il n'est pas passé
     if (eventDate > now) {
@@ -309,17 +314,26 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     
     // Si l'événement est aujourd'hui, vérifier l'heure
     if (eventDate.toDateString() === now.toDateString()) {
+      const [startHours, startMinutes] = eventTimeStr.split(':').map(Number);
+      const start = new Date(eventDate);
+      start.setHours(startHours, startMinutes, 0, 0);
+      
+      // Si l'événement n'a pas encore commencé, il n'est pas passé
+      if (start > now) {
+        return false;
+      }
+      
       // Si une heure de fin est spécifiée, l'utiliser
       if (endTime) {
-        const [hours, minutes] = endTime.split(':').map(Number);
+        const [endHours, endMinutes] = endTime.split(':').map(Number);
         const end = new Date(eventDate);
-        end.setHours(hours, minutes, 0, 0);
+        end.setHours(endHours, endMinutes, 0, 0);
         return now > end;
       }
       
       // Sinon, utiliser les durées par défaut
       const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
-      const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
+      const end = new Date(start.getTime() + (defaultDuration * 60 * 60 * 1000));
       return now > end;
     }
     
