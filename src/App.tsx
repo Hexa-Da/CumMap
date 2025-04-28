@@ -113,38 +113,40 @@ function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null);
   const [error, setError] = useState<string | null>(null);
   const map = useMap();
+  const lastErrorTime = useRef<number>(0);
 
   useEffect(() => {
     if (map) {
-      // Vérifier si la géolocalisation est supportée
       if (!navigator.geolocation) {
         setError("La géolocalisation n'est pas supportée par votre navigateur");
         return;
       }
-
-      // Configurer les options de géolocalisation
       const options = {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0
       };
-
-      // Demander la position
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
           const newPosition = new LatLng(latitude, longitude);
           setPosition(newPosition);
           map.flyTo(newPosition, 16);
-          setError(null); // Réinitialiser l'erreur en cas de succès
+          setError(null);
         },
         (err) => {
-          console.error('Erreur de géolocalisation:', err);
+          if (err.code === err.PERMISSION_DENIED) {
+            // Ne pas afficher d'erreur si refus explicite
+            return;
+          }
+          const now = Date.now();
+          if (now - lastErrorTime.current < 3000) {
+            // Moins de 3s depuis la dernière erreur, ne pas réafficher
+            return;
+          }
+          lastErrorTime.current = now;
           let errorMessage = "Erreur de géolocalisation";
           switch (err.code) {
-            case err.PERMISSION_DENIED:
-              errorMessage = "L'accès à la géolocalisation a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
-              break;
             case err.POSITION_UNAVAILABLE:
               errorMessage = "La position n'est pas disponible. Vérifiez que la géolocalisation est activée sur votre appareil.";
               break;
@@ -156,23 +158,18 @@ function LocationMarker() {
         },
         options
       );
-
-      // Surveiller la position
       const watchId = navigator.geolocation.watchPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
           const newPosition = new LatLng(latitude, longitude);
           setPosition(newPosition);
-          setError(null); // Réinitialiser l'erreur en cas de succès
+          setError(null);
         },
         (err) => {
-          console.error('Erreur de suivi de position:', err);
-          // Ne pas afficher d'erreur pour le watchPosition pour éviter les messages répétés
+          // Ne pas afficher d'erreur pour le watchPosition
         },
         options
       );
-
-      // Nettoyer le watcher lors du démontage
       return () => {
         navigator.geolocation.clearWatch(watchId);
       };
@@ -221,8 +218,8 @@ function LocationMarker() {
           }}>
             Réessayer
           </button>
-          <button className="dont-ask-again-button" onClick={() => setError(null)}>
-            Ne plus demander
+          <button className="retry-button" onClick={() => setError(null)}>
+            Annuler
           </button>
         </div>
       </div>
@@ -2172,8 +2169,8 @@ function App() {
               <button className="retry-button" onClick={retryLocation}>
                 Réessayer
               </button>
-              <button className="dont-ask-again-button" onClick={handleDontAskAgain}>
-                Ne plus demander
+              <button className="retry-button" onClick={handleDontAskAgain}>
+                Annuler
               </button>
             </div>
           </div>

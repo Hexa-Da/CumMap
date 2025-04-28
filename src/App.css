@@ -841,73 +841,41 @@ html, body, #root {
 
 .location-error {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: var(--bg-secondary);
-  padding: 1.5rem;
+  bottom: 20px;
+  left: 20px;
+  background-color: var(--danger-color);
+  color: white;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 8px var(--shadow-color);
-  z-index: 1000;
-  max-width: 90%;
-  width: 300px;
-}
-
-.location-error p {
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  text-align: left;
+  box-shadow: 0 2px 6px var(--shadow-color);
+  z-index: 2000;
+  font-size: 0.75rem;
+  min-width: 180px;
+  max-width: 250px;
 }
 
 .location-error-buttons {
+  margin-top: 0.3rem;
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
+  gap: 0.3rem;
+  justify-content: flex-start;
 }
 
 .retry-button {
-  padding: 0.5rem 1rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 4px;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
+  background: white;
+  color: var(--danger-color);
+  transition: background 0.2s, color 0.2s;
 }
 
 .retry-button:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.dont-ask-again-button {
-  padding: 0.5rem 1rem;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.dont-ask-again-button:hover {
-  background-color: var(--bg-secondary);
-  transform: translateY(-1px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .dont-ask-again-button {
-    background-color: var(--bg-secondary);
-    color: var(--text-color);
-    border-color: var(--border-color);
-  }
-  
-  .dont-ask-again-button:hover {
-    background-color: var(--bg-color);
-  }
+  background: var(--danger-color);
+  color: white;
 }
 
 .retry-icon {
