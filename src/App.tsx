@@ -1115,39 +1115,32 @@ function App() {
 
   // Fonction pour vérifier si un match est passé
   const isMatchPassed = (startDate: string, endTime?: string, type: 'match' | 'party' = 'match') => {
+    // Simulation de la date du 25/04 à 16h
     const now = new Date();
-    const eventDate = new Date(startDate);
+    const start = new Date(startDate);
     
     // Si l'événement est dans le futur, il n'est pas passé
-    if (eventDate > now) {
+    if (start > now) {
       return false;
     }
     
-    // Si l'événement est aujourd'hui, vérifier l'heure
-    if (eventDate.toDateString() === now.toDateString()) {
-      // Si une heure de fin est spécifiée, l'utiliser
-      if (endTime) {
-        const [hours, minutes] = endTime.split('T')[1].split(':').map(Number);
-        const end = new Date(eventDate);
-        end.setHours(hours, minutes, 0, 0);
-        return now > end;
-      }
-      
-      // Sinon, utiliser l'heure de début + 10 minutes pour les matchs très tôt le matin (avant 7h)
-      // ou la durée par défaut pour les autres cas
-      const startHour = eventDate.getHours();
-      if (startHour < 7) {
-        const end = new Date(eventDate.getTime() + (10 * 60 * 1000)); // 10 minutes après le début
-        return now > end;
-      } else {
-        const defaultDuration = type === 'party' ? 6 : 2; // 6h pour les soirées, 2h pour les matchs
-        const end = new Date(eventDate.getTime() + (defaultDuration * 60 * 60 * 1000));
-        return now > end;
-      }
+    // Si une heure de fin est spécifiée, l'utiliser
+    if (endTime) {
+      const end = new Date(endTime);
+      return end < now;
     }
     
-    // Si l'événement est dans le passé, il est passé
-    return true;
+    // Pour les soirées sans heure de fin, on considère qu'elles se terminent à 23h
+    if (type === 'party') {
+      const end = new Date(startDate);
+      end.setHours(23, 0, 0, 0);
+      return end < now;
+    }
+    
+    // Pour les matchs sans heure de fin, on considère qu'ils durent 1h
+    const end = new Date(startDate);
+    end.setHours(end.getHours() + 1);
+    return end < now;
   };
 
   // Fonction pour récupérer tous les événements (matchs et soirées)
@@ -1894,7 +1887,15 @@ function App() {
   // Fonction pour gérer le changement d'onglet
   const handleTabChange = (tab: 'map' | 'events') => {
     setActiveTab(tab);
-    triggerMarkerUpdate();
+    if (tab === 'events') {
+      // Attendre que le DOM soit mis à jour
+      setTimeout(() => {
+        const firstNonPassedEvent = document.querySelector('.event-item:not(.passed)');
+        if (firstNonPassedEvent) {
+          firstNonPassedEvent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
   };
 
   const handleCalendarClick = () => {
