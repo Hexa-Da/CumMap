@@ -11,6 +11,7 @@ interface Event {
   color: string;
   sport?: string;
   venue?: string;
+  result?: string;
 }
 
 interface Venue {
@@ -28,6 +29,7 @@ interface Match {
   endTime?: string;
   teams: string;
   description?: string;
+  result?: string;
 }
 
 interface CalendarPopupProps {
@@ -41,7 +43,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   const [calendarEventFilter, setCalendarEventFilter] = useState<string>('Aucun');
   const [venueFilter, setVenueFilter] = useState<string>('Tous');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showFemale, setShowFemale] = useState<boolean>(true);
   const [showMale, setShowMale] = useState<boolean>(true);
   const [showMixed, setShowMixed] = useState<boolean>(true);
@@ -53,14 +54,6 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
       setCalendarEventFilter(eventFilter);
     }
   }, [eventFilter]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const sportOptions = [
     { value: 'Aucun', label: 'Aucun' },
@@ -145,7 +138,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                   teams: match.teams,
                   sport: venue.sport,
                   venue: venue.name,
-                  color: isPassed ? '#808080' : '#4CAF50' // Gris si passé, vert sinon
+                  color: isPassed ? '#808080' : '#4CAF50', // Gris si passé, vert sinon
+                  result: match.result
                 });
               }
             }
@@ -489,6 +483,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
             {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
             {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
+            {selectedEvent.result && <p className="match-result"><strong>Résultat:</strong> {selectedEvent.result}</p>}
             <button onClick={() => setSelectedEvent(null)}>Fermer</button>
           </div>
         )}

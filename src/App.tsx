@@ -55,10 +55,21 @@ interface Venue extends BaseItem {
 }
 
 interface Match extends BaseItem {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  position: [number, number];
+  date: string;
+  emoji: string;
+  sport: string;
   type: 'match';
   teams: string;
   time: string;
-  endTime?: string; // Rendre endTime optionnel
+  endTime?: string;
+  result?: string;
   venueId: string;
 }
 
@@ -410,13 +421,13 @@ function App() {
     {
       id: '4',
       name: "Jardin du Luxembourg",
-      position: [48.846928, 2.337202],
+      position: [48.846451, 2.344851],
       description: "Rendez vous 12h puis départ du Défilé à 13h",
       address: "75006 Paris",
       type: 'party',
       date: '2025-04-24T12:00:00',
-      latitude: 48.846928,
-      longitude: 2.337202,
+      latitude: 48.846451,
+      longitude: 2.344851,
       emoji: '🎺',
       sport: 'Defile'
     }
@@ -455,10 +466,11 @@ function App() {
   const [selectedSport, setSelectedSport] = useState('Football');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [editingMatch, setEditingMatch] = useState<{venueId: string | null, match: Match | null}>({ venueId: null, match: null });
-  const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string, endTime?: string}>({
+  const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string, endTime?: string, result?: string}>({
     date: '',
     teams: '',
-    description: ''
+    description: '',
+    result: ''
   });
   const [openPopup, setOpenPopup] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -873,7 +885,8 @@ function App() {
       teams: newMatch.teams,
       sport: venue.sport,
       time: new Date(newMatch.date).toTimeString().split(' ')[0],
-      endTime: newMatch.endTime || '', // Rendre endTime optionnel
+      endTime: newMatch.endTime || '',
+      result: newMatch.result || '',
       venueId: venue.id,
       emoji: venue.emoji
     };
@@ -906,7 +919,8 @@ function App() {
         date: '',
         teams: '',
         description: '',
-        endTime: ''
+        endTime: '',
+        result: ''
       });
       setEditingMatch({ venueId: null, match: null });
       setOpenPopup(venueId);
@@ -1159,6 +1173,7 @@ function App() {
       venueId?: string;
       isPassed: boolean;
       sport?: string;
+      result?: string;
     }> = [];
 
     // Ajouter les matchs
@@ -1178,7 +1193,8 @@ function App() {
             venue: venue.name,
             venueId: venue.id,
             isPassed: isMatchPassed(match.date, match.endTime, 'match'),
-            sport: venue.sport
+            sport: venue.sport,
+            result: match.result
           });
         });
       }
@@ -1382,6 +1398,7 @@ function App() {
               <p class="match-date">${formatDateTime(match.date, match.endTime)}</p>
               <p class="match-teams">${match.teams}</p>
               <p class="match-description">${match.description}</p>
+              ${match.result ? `<p class="match-result"><strong>Résultat:</strong> ${match.result}</p>` : ''}
             `;
             
             // Boutons d'édition en mode édition - toujours visibles
@@ -1658,10 +1675,11 @@ function App() {
         date: match.date,
         teams: match.teams,
         description: match.description,
-        endTime: match.endTime
+        endTime: match.endTime,
+        result: match.result
       });
     } else {
-      setNewMatch({ date: '', teams: '', description: '' });
+      setNewMatch({ date: '', teams: '', description: '', endTime: '', result: '' });
     }
     triggerMarkerUpdate();
   };
@@ -2301,6 +2319,7 @@ function App() {
                         <>
                           <p className="event-description">{event.description}</p>
                           <p className="event-venue">{event.venue}</p>
+                          {event.result && <p className="event-result">Résultat: {event.result}</p>}
                         </>
                       )}
                       {event.type === 'party' && (
@@ -2417,6 +2436,24 @@ function App() {
                   className="form-input"
                 />
               </div>
+              <div className="form-group">
+                <label htmlFor="match-result">Résultat</label>
+                <input
+                  id="match-result"
+                  type="text"
+                  value={editingMatch.match ? editingMatch.match.result : (newMatch.result || '')}
+                  onChange={(e) => {
+                    if (editingMatch.match) {
+                      const updatedMatch = { ...editingMatch.match, result: e.target.value };
+                      setEditingMatch({ ...editingMatch, match: updatedMatch });
+                    } else {
+                      setNewMatch({ ...newMatch, result: e.target.value });
+                    }
+                  }}
+                  placeholder="Ex: 2-1"
+                  className="form-input"
+                />
+              </div>
               <div className="form-actions">
                 <button 
                   className="add-button"
@@ -2429,7 +2466,8 @@ function App() {
                           date: editingMatch.match.date,
                           endTime: editingMatch.match.endTime || '',
                           teams: editingMatch.match.teams,
-                          description: editingMatch.match.description
+                          description: editingMatch.match.description,
+                          result: editingMatch.match.result
                         }
                       );
                       finishEditingMatch();
