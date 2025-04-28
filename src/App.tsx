@@ -1927,11 +1927,19 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
           {!isEditing && (
             <select 
               className="map-style-selector"
               value={mapStyle}
+              style={{
+                padding: '4px',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
               onChange={(e) => {
                 ReactGA.event({
                   category: 'map',
@@ -1952,7 +1960,7 @@ function App() {
             onClick={toggleFullscreen}
             title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
             style={{
-              padding: '4px',
+              padding: '2px',
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -1982,7 +1990,7 @@ function App() {
             }}
             title={user ? "Se déconnecter" : "Se connecter"}
             style={{
-              padding: '4px',
+              padding: '2px',
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -2276,7 +2284,7 @@ function App() {
                       setNewMatch({ ...newMatch, teams: e.target.value });
                     }
                   }}
-                  placeholder="Ex: France vs Brésil"
+                  placeholder="Ex: Nancy vs Alès"
                   className="form-input"
                 />
               </div>
@@ -2294,7 +2302,7 @@ function App() {
                       setNewMatch({ ...newMatch, description: e.target.value });
                     }
                   }}
-                  placeholder="Ex: Match de qualification"
+                  placeholder="Ex: Phase de poules M"
                   className="form-input"
                 />
               </div>
@@ -2356,6 +2364,112 @@ function App() {
           </div>
         </div>
       )}
+      
+      {/* Formulaire d'édition de lieu */}
+      {isAddingPlace && (
+        <div className="form-overlay">
+          <div className="edit-form venue-edit-form">
+            <div className="edit-form-header">
+              <h3>{editingVenue.id ? 'Modifier le lieu' : 'Ajouter un lieu'}</h3>
+            </div>
+            <div className="edit-form-content">
+              <div className="form-group">
+                <label htmlFor="venue-name">Nom du lieu</label>
+                <input
+                  id="venue-name"
+                  type="text"
+                  value={newVenueName}
+                  onChange={(e) => setNewVenueName(e.target.value)}
+                  placeholder="Ex: Gymnase Raymond Poincaré"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="venue-description">Description</label>
+                <input
+                  id="venue-description"
+                  type="text"
+                  value={newVenueDescription}
+                  onChange={(e) => setNewVenueDescription(e.target.value)}
+                  placeholder="Ex: Pour rentrer il faut..."
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="venue-address">Adresse</label>
+                <input
+                  id="venue-address"
+                  type="text"
+                  value={newVenueAddress}
+                  onChange={(e) => setNewVenueAddress(e.target.value)}
+                  placeholder="Ex: 56 Rue Raymond Poincaré, 54000 Nancy"
+                  className="form-input"
+                />
+                <button
+                  className="place-marker-button"
+                  onClick={() => {
+                    setIsPlacingMarker(true);
+                    setIsAddingPlace(false);
+                  }}
+                >
+                  Placer sur la carte
+                </button>
+              </div>
+              <div className="form-group">
+                <label htmlFor="venue-sport">Sport</label>
+                <select
+                  id="venue-sport"
+                  value={selectedSport}
+                  onChange={(e) => {
+                    setSelectedSport(e.target.value);
+                    setSelectedEmoji(sportEmojis[e.target.value as keyof typeof sportEmojis] || '⚽');
+                  }}
+                  className="form-input"
+                >
+                  <option value="Football">Football ⚽</option>
+                  <option value="Basketball">Basketball 🏀</option>
+                  <option value="Handball">Handball 🤾</option>
+                  <option value="Rugby">Rugby 🏉</option>
+                  <option value="Ultimate">Ultimate 🥏</option>
+                  <option value="Natation">Natation 🏊</option>
+                  <option value="Badminton">Badminton 🏸</option>
+                  <option value="Tennis">Tennis 🎾</option>
+                  <option value="Cross">Cross 🏃</option>
+                  <option value="Volleyball">Volleyball 🏐</option>
+                  <option value="Ping-pong">Ping-pong 🏓</option>
+                  <option value="Boxe">Boxe 🥊</option>
+                  <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                  <option value="Pétanque">Pétanque 🍹</option>
+                  <option value="Escalade">Escalade 🧗‍♂️</option>
+                  <option value="Jeux de société">Jeux de société 🎲</option>
+                </select>
+              </div>
+              <div className="form-actions">
+                <button
+                  className="add-button"
+                  onClick={() => {
+                    if (editingVenue.id) {
+                      handleUpdateVenue();
+                    } else {
+                      handleAddVenue();
+                    }
+                  }}
+                  disabled={!newVenueName || !newVenueDescription || (!newVenueAddress && !tempMarker)}
+                >
+                  {editingVenue.id ? 'Mettre à jour' : 'Ajouter'}
+                </button>
+                <button
+                  className="cancel-button"
+                  onClick={cancelEditingVenue}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <CalendarPopup 
         isOpen={isCalendarOpen} 
         onClose={handleCalendarClose}
