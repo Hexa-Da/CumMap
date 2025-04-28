@@ -1876,7 +1876,7 @@ html, body, #root {
   gap: 8px;
   transition: background-color 0.3s;
   height: 32px;
-  width: 140px;
+  width: 130px;
   justify-content: center;
   z-index: 995;
 }
