@@ -247,7 +247,6 @@ html, body, #root {
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
-  margin-left: 0.5rem;
 }
 
 .add-place-button:hover {

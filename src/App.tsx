@@ -293,27 +293,14 @@ function App() {
   const [hotels] = useState<Hotel[]>([
     {
       id: '1',
-      name: "F1 Les Ulis",
-      position: [48.6819, 2.1694],
-      description: "Hôtel F1 Les Ulis - Courtaboeuf",
-      address: "Zi Courtaboeuf, Rue Rio Solado N°2, 91940 Les Ulis",
+      name: "Ibis Budget",
+      position: [48.638751, 6.183532],
+      description: "Hôtel Ibis Budget Houdemont",
+      address: "Za Frocourt, 6 All. de la Genelière, 54180 Houdemont",
       type: 'hotel',
       date: '',
-      latitude: 48.6819,
-      longitude: 2.1694,
-      emoji: '🏢',
-      sport: 'Hotel'
-    },
-    {
-      id: '2',
-      name: "F1 Orly-Rungis",
-      position: [48.755812, 2.349089],
-      description: "Hôtel F1 Orly-Rungis",
-      address: "7 Rue du Pont des Halles, 94150 Rungis",
-      type: 'hotel',
-      date: '',
-      latitude: 48.755812,
-      longitude: 2.349089,
+      latitude: 48.638751,
+      longitude: 6.183532,
       emoji: '🏢',
       sport: 'Hotel'
     }
@@ -322,56 +309,28 @@ function App() {
   const [restaurants] = useState<Restaurant[]>([
     {
       id: '1',
-      name: "Restaurant Universitaire Châtelet",
-      position: [48.841762, 2.348505],
+      name: "Crous ARTEM",
+      position: [48.673570, 6.169268],
       description: "Repas du soir",
-      address: "10 Rue Jean Calvin, 75005 Paris",
+      address: "Rue Michel Dinet, 54000 Nancy",
       type: 'restaurant',
       date: '',
-      latitude: 48.841762,
-      longitude: 2.348505,
+      latitude: 48.673570,
+      longitude: 6.169268,
       emoji: '🍽️',
       sport: 'Restaurant',
       mealType: 'soir'
     },
     {
       id: '2',
-      name: "Restaurant Universitaire Bullier",
-      position: [48.840057, 2.337497],
-      description: "Repas du soir",
-      address: "39 Avenue Georges Bernanos, 75005 Paris",
-      type: 'restaurant',
-      date: '',
-      latitude: 48.840057,
-      longitude: 2.337497,
-      emoji: '🍽️',
-      sport: 'Restaurant',
-      mealType: 'soir'
-    },
-    {
-      id: '3',
-      name: "Cité Internationale Universitaire de Paris",
-      position: [48.819303, 2.337373],
+      name: "Parc Saint-Marie",
+      position: [48.680449, 6.170722],
       description: "Repas du midi",
-      address: "17 Boulevard Jourdan, 75014 Paris",
+      address: "1 Av. Boffrand, 54000 Nancy",
       type: 'restaurant',
       date: '',
-      latitude: 48.819303,
-      longitude: 2.337373,
-      emoji: '🍽️',
-      sport: 'Restaurant',
-      mealType: 'midi'
-    },
-    {
-      id: '4',
-      name: "Halle Georges Carpentier",
-      position: [48.820122, 2.367752],
-      description: "Repas du midi",
-      address: "81 Bd Masséna, 75013 Paris",
-      type: 'restaurant',
-      date: '',
-      latitude: 48.820122,
-      longitude: 2.367752,
+      latitude: 48.680449,
+      longitude: 6.170722,
       emoji: '🍽️',
       sport: 'Restaurant',
       mealType: 'midi'
@@ -381,55 +340,42 @@ function App() {
   const [parties] = useState<Party[]>([
     {
       id: '1',
-      name: "La Palmeraie",
-      position: [48.8392, 2.2756],
-      description: "Soirée Pompoms du 24 au 25 avril 2025, 21h-3h",
-      address: "20, rue du Colonel Pierre Avia, 75015 Paris",
+      name: "Place Stanislas",
+      position: [48.693524, 6.183270],
+      description: "Rendez vous 12h puis départ du Défilé à 13h",
+      address: "Pl. Stanislas, 54000 Nancy",
       type: 'party',
-      date: '2025-04-24T21:00:00',
-      latitude: 48.8392,
-      longitude: 2.2756,
-      emoji: '🎉',
-      sport: 'Pompom'
+      date: '2025-04-16T12:00:00',
+      latitude: 48.693524,
+      longitude: 6.183270,
+      emoji: '🎺',
+      sport: 'Defile'
     },
     {
       id: '2',
-      name: "Bridge Club",
-      position: [48.864579, 2.313845],
-      description: "Soirée du 25 au 26 avril 2025, 21h-3h",
-      address: "3, Port des Champs-Élysées, 75008 Paris",
+      name: "Centre Prouvé",
+      position: [48.687858, 6.176977],
+      description: "Soirée Pompoms du 16 avril, 21h-3h",
+      address: "1 Pl. de la République, 54000 Nancy",
       type: 'party',
-      date: '2025-04-25T21:00:00',
-      latitude: 48.864579,
-      longitude: 2.313845,
-      emoji: '🎉',
-      sport: 'Party'
+      date: '2025-04-16T21:00:00',
+      latitude: 48.687858,
+      longitude: 6.176977,
+      emoji: '🎀',
+      sport: 'Pompom'
     },
     {
       id: '3',
-      name: "Terminal 7",
-      position: [48.8323, 2.2883],
-      description: "Soirée du 26 au 27 avril 2025, 22h-4h",
-      address: "1, Place de la Porte de Versailles Pavillon 7 - Etage 7.4, 75015 Paris",
+      name: "Parc des Expositions",
+      position: [48.663272, 6.190715],
+      description: "Soirée du 17 avril, 22h-4h",
+      address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
       type: 'party',
-      date: '2025-04-26T22:00:00',
-      latitude: 48.8323,
-      longitude: 2.2883,
+      date: '2025-04-17T22:00:00',
+      latitude: 48.663272,
+      longitude: 6.190715,
       emoji: '🎉',
       sport: 'Party'
-    },
-    {
-      id: '4',
-      name: "Pantheon",
-      position: [48.846451, 2.344851],
-      description: "Rendez vous 12h puis départ du Défilé à 13h",
-      address: "75006 Paris",
-      type: 'party',
-      date: '2025-04-24T12:00:00',
-      latitude: 48.846451,
-      longitude: 2.344851,
-      emoji: '🎺',
-      sport: 'Defile'
     }
   ]);
 
@@ -2025,7 +1971,7 @@ function App() {
                   triggerMarkerUpdate();
                 }}
               >
-                {isEditing ? 'Terminer l\'édition' : 'Mode édition'}
+                {isEditing ? 'Fermer' : 'Mode édition'}
               </button>
               {isEditing && (
                 <button 
