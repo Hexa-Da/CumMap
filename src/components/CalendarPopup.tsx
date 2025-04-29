@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CalendarPopup.css';
-import { Venue, Match } from '../types';
+import { Venue } from '../types';
 
 interface Event {
   type: 'match' | 'party';
