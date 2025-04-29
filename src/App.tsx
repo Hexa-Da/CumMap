@@ -9,7 +9,7 @@ import L from 'leaflet';
 import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
-import favicon from './assets/favicon.svg';
+/* import favicon from './assets/favicon.svg'; */
 import CalendarPopup from './components/CalendarPopup';
 
 // Vérification de l'initialisation
@@ -176,7 +176,7 @@ function LocationMarker() {
           setPosition(newPosition);
           setError(null);
         },
-        (err) => {
+        () => {
           // Ne pas afficher d'erreur pour le watchPosition
         },
         options
@@ -1887,34 +1887,7 @@ function App() {
     <div className="app">
       <div className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-          {!isEditing && (
-            <select 
-              className="map-style-selector"
-              value={mapStyle}
-              style={{
-                padding: '4px',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onChange={(e) => {
-                ReactGA.event({
-                  category: 'map',
-                  action: 'change_map_style',
-                  label: e.target.value
-                });
-                handleMapStyleChange(e.target.value);
-              }}
-            >
-              <option value="osm">OpenStreetMap</option>
-              <option value="cyclosm">CyclOSM</option>
-              <option value="humanitarian">Humanitarian</option>
-              <option value="osmfr">OSM France</option>
-            </select>
-          )}
-          <button 
+        <button 
             className={`fullscreen-button ${isFullscreen ? 'active' : ''}`}
             onClick={toggleFullscreen}
             title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
@@ -1938,29 +1911,33 @@ function App() {
               </svg>
             )}
           </button>
-          <button 
-            className="admin-button"
-            onClick={() => {
-              if (!user) {
-                signInWithGoogle();
-              } else {
-                auth.signOut();
-              }
-            }}
-            title={user ? "Se déconnecter" : "Se connecter"}
-            style={{
-              padding: '2px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px'
-            }}
-          >
-            {!user ? "🔒" : (isAdmin ? "🔓" : "🔒")}
-          </button>
+          {!isEditing && (
+            <select 
+              className="map-style-selector"
+              value={mapStyle}
+              style={{
+                padding: '2px',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onChange={(e) => {
+                ReactGA.event({
+                  category: 'map',
+                  action: 'change_map_style',
+                  label: e.target.value
+                });
+                handleMapStyleChange(e.target.value);
+              }}
+            >
+              <option value="osm">OpenStreetMap</option>
+              <option value="cyclosm">CyclOSM</option>
+              <option value="humanitarian">Humanitarian</option>
+              <option value="osmfr">OSM France</option>
+            </select>
+          )}
         </div>
         <div className="controls">
           {isAdmin && (
@@ -1984,7 +1961,7 @@ function App() {
                   triggerMarkerUpdate();
                 }}
               >
-                {isEditing ? 'Fermer' : 'Mode édition'}
+                {isEditing ? "Terminer l'édition" : 'Mode édition'}
               </button>
               {isEditing && (
                 <button 
@@ -2008,6 +1985,29 @@ function App() {
             </>
           )}
         </div>
+         <button 
+            className="admin-button"
+            onClick={() => {
+              if (!user) {
+                signInWithGoogle();
+              } else {
+                auth.signOut();
+              }
+            }}
+            title={user ? "Se déconnecter" : "Se connecter"}
+            style={{
+              padding: '2px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px'
+            }}
+          >
+            {!user ? "🔒" : (isAdmin ? "🔓" : "🔒")}
+          </button>
       </div>
       <main className="app-main">
         {locationError && showLocationPrompt && (
