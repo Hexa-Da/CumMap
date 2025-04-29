@@ -345,7 +345,7 @@ function App() {
       description: "Rendez vous 12h puis départ du Défilé à 13h",
       address: "Pl. Stanislas, 54000 Nancy",
       type: 'party',
-      date: '2025-04-16T12:00:00',
+      date: '2026-04-16T12:00:00',
       latitude: 48.693524,
       longitude: 6.183270,
       emoji: '🎺',
@@ -358,7 +358,7 @@ function App() {
       description: "Soirée Pompoms du 16 avril, 21h-3h",
       address: "1 Pl. de la République, 54000 Nancy",
       type: 'party',
-      date: '2025-04-16T21:00:00',
+      date: '2026-04-16T21:00:00',
       latitude: 48.687858,
       longitude: 6.176977,
       emoji: '🎀',
@@ -371,9 +371,22 @@ function App() {
       description: "Soirée du 17 avril, 22h-4h",
       address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
       type: 'party',
-      date: '2025-04-17T22:00:00',
+      date: '2026-04-17T22:00:00',
       latitude: 48.663272,
       longitude: 6.190715,
+      emoji: '🎉',
+      sport: 'Party'
+    },
+    {
+      id: '4',
+      name: "Zénith",
+      position: [48.710237, 6.139252],
+      description: "Soirée du 18 avril, 20h-4h",
+      address: "Rue du Zénith, 54320 Maxéville",
+      type: 'party',
+      date: '2026-04-18T20:00:00',
+      latitude: 48.710237,
+      longitude: 6.139252,
       emoji: '🎉',
       sport: 'Party'
     }
@@ -1493,7 +1506,7 @@ function App() {
         const marker = L.marker([restaurant.latitude, restaurant.longitude], {
           icon: L.divIcon({
             className: 'custom-marker restaurant-marker',
-            html: `<div style="background-color:rgb(204, 33, 27); color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+            html: `<div style="background-color:rgb(255, 31, 31); color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
                      <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">🍽️</span>
                    </div>`,
             iconSize: [30, 30],
@@ -2015,7 +2028,7 @@ function App() {
         ) : (
           <div className="map-container">
         <MapContainer
-          center={[48.8566, 2.3522]}
+          center={[48.686881, 6.1880492]}
           zoom={12}
               style={{ height: '100%', width: '100%' }}
               ref={(map) => { mapRef.current = map || null; }}
@@ -2092,7 +2105,7 @@ function App() {
                     onChange={(e) => setEventFilter(e.target.value)}
                   >
                     <option value="all">Tous les événements</option>
-                    <option value="party">Soirées 🎉</option>
+                    <option value="party">Soirées et Défilés ⭐</option>
                     <option value="Football">Football ⚽</option>
                     <option value="Basketball">Basketball 🏀</option>
                     <option value="Handball">Handball 🤾</option>
@@ -2124,7 +2137,9 @@ function App() {
                             ? `${getSportIcon(event.sport || '')} ${event.sport}`
                             : event.sport === 'Defile'
                               ? '🎺 Défilé'
-                              : '🎉 Soirée'}
+                              : event.sport === 'Pompom'
+                                ? '🎀 Pompom'
+                                : '🎉 Soirée'}
                         </span>
                         <span className="event-date">{formatDateTime(event.date)}</span>
                       </div>
