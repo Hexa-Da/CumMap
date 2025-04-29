@@ -9,8 +9,8 @@ import L from 'leaflet';
 import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
 import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
-/* import favicon from './assets/favicon.svg'; */
 import CalendarPopup from './components/CalendarPopup';
+import { Venue, Match } from './types';
 
 // Vérification de l'initialisation
 console.log('Firebase Auth:', auth);
@@ -47,30 +47,6 @@ interface BaseItem {
   date: string;
   emoji: string;
   sport: string;
-}
-
-interface Venue extends BaseItem {
-  type: 'venue';
-  matches: Match[];
-}
-
-interface Match extends BaseItem {
-  id: string;
-  name: string;
-  description: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  position: [number, number];
-  date: string;
-  emoji: string;
-  sport: string;
-  type: 'match';
-  teams: string;
-  time: string;
-  endTime?: string;
-  result?: string;
-  venueId: string;
 }
 
 interface Hotel extends BaseItem {
@@ -441,6 +417,7 @@ function App() {
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
   const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
+  const [delegationFilter, setDelegationFilter] = useState<string>('all'); // Nouvel état pour le filtre de délégation
   const [appAction, setAppAction] = useState<number>(0); // Nouvel état pour suivre les actions
   
   // État pour l'historique des actions et l'index actuel
@@ -1181,14 +1158,18 @@ function App() {
   // Fonction pour filtrer les événements
   const getFilteredEvents = () => {
     const allEvents = getAllEvents();
-    if (eventFilter === 'all') return allEvents;
     
     return allEvents.filter(event => {
-      if (eventFilter === 'party') {
-        return event.type === 'party';
-      }
-      // Vérifier si le sport de l'événement correspond au filtre
-      return event.type === 'match' && event.sport === eventFilter;
+      // Filtre par type d'événement
+      const typeMatch = eventFilter === 'all' || 
+        (eventFilter === 'party' && event.type === 'party') ||
+        (event.type === 'match' && event.sport === eventFilter);
+
+      // Filtre par délégation
+      const delegationMatch = delegationFilter === 'all' || 
+        (event.teams && event.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
+
+      return typeMatch && delegationMatch;
     });
   };
 
@@ -1883,6 +1864,46 @@ function App() {
     setIsCalendarOpen(false);
   };
 
+  const handleViewOnMap = (venue: Venue) => {
+    // Fermer le calendrier et l'onglet événements
+    setIsCalendarOpen(false);
+    setActiveTab('map');
+    
+    // Centrer la carte sur le lieu
+    if (mapRef.current) {
+      mapRef.current.flyTo([venue.latitude, venue.longitude], 18, {
+        duration: 2.5
+      });
+      
+      // Trouver et ouvrir le marqueur correspondant
+      const marker = markersRef.current.find(m => 
+        m.getLatLng().lat === venue.latitude && m.getLatLng().lng === venue.longitude
+      );
+      if (marker) {
+        setTimeout(() => {
+          marker.openPopup();
+        }, 2500);
+      }
+    }
+  };
+
+  // Fonction pour obtenir toutes les délégations uniques
+  const getAllDelegations = () => {
+    const delegations = new Set<string>();
+    venues.forEach(venue => {
+      if (venue.matches) {
+        venue.matches.forEach(match => {
+          const teams = match.teams.split(/vs|VS|contre|CONTRE|,/).map(team => team.trim());
+          teams.forEach(team => {
+            // Exclure les "..." et les chaînes vides
+            if (team && team !== "..." && team !== "…") delegations.add(team);
+          });
+        });
+      }
+    });
+    return Array.from(delegations).sort();
+  };
+
   return (
     <div className="app">
       <div className="app-header">
@@ -2102,10 +2123,18 @@ function App() {
                   <select 
                     className="filter-select"
                     value={eventFilter}
-                    onChange={(e) => setEventFilter(e.target.value)}
+                    onChange={(e) => {
+                      ReactGA.event({
+                        category: 'filter',
+                        action: 'change_event_filter',
+                        label: e.target.value
+                      });
+                      setEventFilter(e.target.value);
+                      triggerMarkerUpdate();
+                    }}
                   >
                     <option value="all">Tous les événements</option>
-                    <option value="party">Soirées et Défilés ⭐</option>
+                    <option value="party">Soirées et Défilé ⭐</option>
                     <option value="Football">Football ⚽</option>
                     <option value="Basketball">Basketball 🏀</option>
                     <option value="Handball">Handball 🤾</option>
@@ -2123,7 +2152,28 @@ function App() {
                     <option value="Escalade">Escalade 🧗‍♂️</option>
                     <option value="Jeux de société">Jeux de société 🎲</option>
                   </select>
-                            </div>
+
+                  <select
+                    className="filter-select"
+                    value={delegationFilter}
+                    onChange={(e) => {
+                      ReactGA.event({
+                        category: 'filter',
+                        action: 'change_delegation_filter',
+                        label: e.target.value
+                      });
+                      setDelegationFilter(e.target.value);
+                      triggerMarkerUpdate();
+                    }}
+                  >
+                    <option value="all">Toutes les délégations</option>
+                    {getAllDelegations().map(delegation => (
+                      <option key={delegation} value={delegation}>
+                        {delegation}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
@@ -2436,6 +2486,7 @@ function App() {
         onClose={handleCalendarClose}
         venues={venues}
         eventFilter={eventFilter}
+        onViewOnMap={handleViewOnMap}
       />
     </div>
   );

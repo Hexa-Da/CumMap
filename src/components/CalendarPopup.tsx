@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CalendarPopup.css';
+import { Venue, Match } from '../types';
 
 interface Event {
   type: 'match' | 'party';
@@ -14,33 +15,17 @@ interface Event {
   result?: string;
 }
 
-interface Venue {
-  id: string;
-  name: string;
-  matches: Match[];
-  sport?: string;
-}
-
-interface Match {
-  id: string;
-  name: string;
-  date: string;
-  time: string;
-  endTime?: string;
-  teams: string;
-  description?: string;
-  result?: string;
-}
-
 interface CalendarPopupProps {
   isOpen: boolean;
   onClose: () => void;
   venues: Venue[];
   eventFilter: string;
+  onViewOnMap: (venue: Venue) => void;
 }
 
-const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, eventFilter }) => {
+const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, eventFilter, onViewOnMap }) => {
   const [calendarEventFilter, setCalendarEventFilter] = useState<string>('Aucun');
+  const [delegationFilter, setDelegationFilter] = useState<string>('all');
   const [venueFilter, setVenueFilter] = useState<string>('Tous');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showFemale, setShowFemale] = useState<boolean>(true);
@@ -56,6 +41,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   }, [eventFilter]);
 
   const sportOptions = [
+    { value: 'Tous', label: 'Tous les événements' },
     { value: 'Aucun', label: 'Aucun' },
     { value: 'Party', label: 'Soirée et Défilé ⭐' },
     { value: 'Football', label: 'Football ⚽' },
@@ -92,6 +78,18 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
       return [{ value: 'Tous', label: 'Tous les lieux' }];
     }
 
+    // Pour les soirées et défilés, retourner les lieux fixes
+    if (calendarEventFilter === 'Party') {
+      return [
+        { value: 'Tous', label: 'Tous les lieux' },
+        { value: 'place-stanislas', label: 'Place Stanislas' },
+        { value: 'centre-prouve', label: 'Centre Prouvé' },
+        { value: 'parc-expo', label: 'Parc des Expositions' },
+        { value: 'zenith', label: 'Zénith' }
+      ];
+    }
+
+    // Pour les sports, filtrer les lieux par sport
     const filteredVenues = venues.filter(venue => venue.sport === calendarEventFilter);
     const venueOptions = [
       { value: 'Tous', label: 'Tous les lieux' },
@@ -104,102 +102,131 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     return venueOptions;
   };
 
+  // Fonction pour obtenir toutes les délégations uniques
+  const getAllDelegations = () => {
+    const delegations = new Set<string>();
+    venues.forEach(venue => {
+      if (venue.matches) {
+        venue.matches.forEach(match => {
+          const teams = match.teams.split(/vs|VS|contre|CONTRE|,/).map(team => team.trim());
+          teams.forEach(team => {
+            // Exclure les "..." et les chaînes vides
+            if (team && team !== "..." && team !== "…") delegations.add(team);
+          });
+        });
+      }
+    });
+    return Array.from(delegations).sort();
+  };
+
   const getEventsForDay = (date: string): Event[] => {
     const events: Event[] = [];
     
     if (calendarEventFilter !== 'Aucun') {
-      venues.forEach(venue => {
-        if (venue.matches) {
-          venue.matches.forEach(match => {
-            const [matchDate, matchTime] = match.date.split('T');
-            
-            if (matchDate === date) {
-              const sportMatch = venue.sport === calendarEventFilter;
-              const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
+      // Pour les matchs sportifs
+      if (calendarEventFilter === 'Tous' || calendarEventFilter !== 'Party') {
+        venues.forEach(venue => {
+          if (venue.matches) {
+            venue.matches.forEach(match => {
+              const [matchDate, matchTime] = match.date.split('T');
               
-              // Vérifier si le match correspond au filtre de genre
-              const isFemale = match.description?.toLowerCase().includes('féminin');
-              const isMale = match.description?.toLowerCase().includes('masculin');
-              const isMixed = match.description?.toLowerCase().includes('mixte');
-              
-              const genderMatch = (!isFemale && !isMale && !isMixed) || 
-                                (isFemale && showFemale) || 
-                                (isMale && showMale) ||
-                                (isMixed && showMixed);
-              
-              if (sportMatch && venueMatch && genderMatch) {
-                const eventEndTime = match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined;
-                const isPassed = isEventPassed(match.date, eventEndTime, 'match');
+              if (matchDate === date) {
+                const sportMatch = calendarEventFilter === 'Tous' || venue.sport === calendarEventFilter;
+                const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
                 
-                events.push({
-                  type: 'match',
-                  time: matchTime.split('.')[0],
-                  endTime: eventEndTime,
-                  name: match.description || match.name,
-                  teams: match.teams,
-                  sport: venue.sport,
-                  venue: venue.name,
-                  color: isPassed ? '#808080' : '#4CAF50', // Gris si passé, vert sinon
-                  result: match.result
-                });
+                // Vérifier si le match correspond au filtre de genre
+                const isFemale = match.description?.toLowerCase().includes('féminin');
+                const isMale = match.description?.toLowerCase().includes('masculin');
+                const isMixed = match.description?.toLowerCase().includes('mixte');
+                
+                const genderMatch = (!isFemale && !isMale && !isMixed) || 
+                                  (isFemale && showFemale) || 
+                                  (isMale && showMale) ||
+                                  (isMixed && showMixed);
+
+                // Filtre par délégation
+                const delegationMatch = delegationFilter === 'all' || 
+                  (match.teams && match.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
+                
+                if (sportMatch && venueMatch && genderMatch && delegationMatch) {
+                  const eventEndTime = match.endTime ? match.endTime.split('T')[1].split('.')[0] : undefined;
+                  const isPassed = isEventPassed(match.date, eventEndTime, 'match');
+                  
+                  events.push({
+                    type: 'match',
+                    time: matchTime.split('.')[0],
+                    endTime: eventEndTime,
+                    name: match.description || match.name,
+                    teams: match.teams,
+                    sport: venue.sport,
+                    venue: venue.name,
+                    color: isPassed ? '#808080' : '#4CAF50',
+                    result: match.result
+                  });
+                }
               }
-            }
-          });
-        }
-      });
-    }
+            });
+          }
+        });
+      } else {
+        // Pour les soirées et défilés
+        const parties = [
+          {
+            id: 'place-stanislas',
+            date: '2026-04-16',
+            time: '13:00',
+            endTime: '17:00',
+            name: 'Place Stanislas',
+            description: 'Défilé',
+            color: '#FF9800',
+            type: 'Party'
+          },
+          {
+            id: 'centre-prouve',
+            date: '2026-04-16',
+            time: '21:00',
+            endTime: '23:00',
+            name: 'Centre Prouvé',
+            description: 'Show Pompoms',
+            color: '#FF9800',
+            type: 'Party'
+          },
+          {
+            id: 'parc-expo',
+            date: '2026-04-17',
+            time: '22:00',
+            endTime: '23:00',
+            name: 'Parc des Expositions',
+            description: 'Soirée',
+            color: '#FF9800',
+            type: 'Party'
+          },
+          {
+            id: 'zenith',
+            date: '2026-04-18',
+            time: '20:00',
+            endTime: '23:00',
+            name: 'Zénith',
+            description: 'Soirée',
+            color: '#FF9800',
+            type: 'Party'
+          }
+        ];
 
-    const parties = [
-      {
-        date: '2026-04-16',
-        time: '13:00',
-        endTime: '17:00',
-        name: 'Place Stanislas',
-        description: 'Défilé',
-        color: '#FF9800',
-        type: 'Party'
-      },
-      {
-        date: '2026-04-16',
-        time: '21:00',
-        endTime: '23:00',
-        name: 'Centre Prouvé',
-        description: 'Show Pompoms',
-        color: '#FF9800',
-        type: 'Party'
-      },
-      {
-        date: '2026-04-17',
-        time: '22:00',
-        endTime: '23:00',
-        name: 'Parc des Expositions',
-        description: 'Soirée',
-        color: '#FF9800',
-        type: 'Party'
-      },
-      {
-        date: '2026-04-18',
-        time: '20:00',
-        endTime: '23:00',
-        name: 'Zénith',
-        description: 'Soirée',
-        color: '#FF9800',
-        type: 'Party'
-      }
-    ];
-
-    parties.forEach(party => {
-      if (party.date === date && (calendarEventFilter === party.type)) {
-        events.push({
-          type: 'party',
-          time: party.time,
-          endTime: party.endTime,
-          name: party.name,
-          description: party.description,
-          color: party.color
+        parties.forEach(party => {
+          if (party.date === date && (venueFilter === 'Tous' || party.id === venueFilter)) {
+            events.push({
+              type: 'party',
+              time: party.time,
+              endTime: party.endTime,
+              name: party.name,
+              description: party.description,
+              color: party.color
+            });
+          }
         });
       }
-    });
+    }
 
     return events;
   };
@@ -373,6 +400,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     <div className="calendar-popup-overlay" onClick={onClose}>
       <div className="calendar-popup" onClick={e => e.stopPropagation()}>
         <div className="calendar-popup-header">
+          <button className="close-button" onClick={onClose}>×</button>
           <div className="filter-row">
             <select 
               className="filter-select"
@@ -388,6 +416,22 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                 </option>
               ))}
             </select>
+
+            <select
+              className="filter-select"
+              value={delegationFilter}
+              onChange={(e) => setDelegationFilter(e.target.value)}
+            >
+              <option value="all">Toutes les délégations</option>
+              {getAllDelegations().map(delegation => (
+                <option key={delegation} value={delegation}>
+                  {delegation}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-row">
             {calendarEventFilter !== 'Aucun' && (
               <select 
                 className="filter-select"
@@ -401,40 +445,40 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                 ))}
               </select>
             )}
+
+            {calendarEventFilter !== 'Aucun' && calendarEventFilter !== 'Party' && (() => {
+              const { hasFemale, hasMale, hasMixed } = hasGenderMatches(calendarEventFilter);
+              return (hasFemale || hasMale || hasMixed) && (
+                <div className="gender-filter-row">
+                  {hasFemale && (
+                    <button 
+                      className={`gender-filter-button ${showFemale ? 'active' : ''}`}
+                      onClick={() => setShowFemale(!showFemale)}
+                    >
+                      Féminin
+                    </button>
+                  )}
+                  {hasMale && (
+                    <button 
+                      className={`gender-filter-button ${showMale ? 'active' : ''}`}
+                      onClick={() => setShowMale(!showMale)}
+                    >
+                      Masculin
+                    </button>
+                  )}
+                  {hasMixed && (
+                    <button 
+                      className={`gender-filter-button ${showMixed ? 'active' : ''}`}
+                      onClick={() => setShowMixed(!showMixed)}
+                    >
+                      Mixte
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
-          <button className="close-button" onClick={onClose}>×</button>
         </div>
-        {calendarEventFilter !== 'Aucun' && (() => {
-          const { hasFemale, hasMale, hasMixed } = hasGenderMatches(calendarEventFilter);
-          return (hasFemale || hasMale || hasMixed) && (
-            <div className="gender-filter-row">
-              {hasFemale && (
-                <button 
-                  className={`gender-filter-button ${showFemale ? 'active' : ''}`}
-                  onClick={() => setShowFemale(!showFemale)}
-                >
-                  Féminin
-                </button>
-              )}
-              {hasMale && (
-                <button 
-                  className={`gender-filter-button ${showMale ? 'active' : ''}`}
-                  onClick={() => setShowMale(!showMale)}
-                >
-                  Masculin
-                </button>
-              )}
-              {hasMixed && (
-                <button 
-                  className={`gender-filter-button ${showMixed ? 'active' : ''}`}
-                  onClick={() => setShowMixed(!showMixed)}
-                >
-                  Mixte
-                </button>
-              )}
-            </div>
-          );
-        })()}
         <div className="calendar-grid">
           <div className="calendar-hours">
             <div className="calendar-hour-header"></div>
@@ -493,11 +537,21 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
           <div className="match-event-details">
             <h3>{selectedEvent.name}</h3>
             <p>Horaire: {selectedEvent.time} - {selectedEvent.endTime}</p>
+            {selectedEvent.sport && <p>Sport: {selectedEvent.sport}</p>}
             {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
             {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
             {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
             {selectedEvent.result && <p className="match-result"><strong>Résultat:</strong> {selectedEvent.result}</p>}
-            <button onClick={() => setSelectedEvent(null)}>Fermer</button>
+            <div className="match-event-buttons">
+              <button onClick={() => {
+                const venue = venues.find(v => v.name === selectedEvent.venue);
+                if (venue) {
+                  onViewOnMap(venue);
+                }
+                setSelectedEvent(null);
+              }}>Voir sur la carte</button>
+              <button onClick={() => setSelectedEvent(null)}>Fermer</button>
+            </div>
           </div>
         )}
       </div>
