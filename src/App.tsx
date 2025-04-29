@@ -1904,6 +1904,39 @@ function App() {
     return Array.from(delegations).sort();
   };
 
+  const scrollToFirstNonPassedEvent = () => {
+    const eventsList = document.querySelector('.events-list');
+    if (eventsList) {
+      const firstNonPassedEvent = eventsList.querySelector('.event-item:not(.passed)');
+      if (firstNonPassedEvent) {
+        firstNonPassedEvent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  // Update the filter change handlers to include the scroll
+  const handleEventFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    ReactGA.event({
+      category: 'filter',
+      action: 'change_event_filter',
+      label: e.target.value
+    });
+    setEventFilter(e.target.value);
+    triggerMarkerUpdate();
+    setTimeout(scrollToFirstNonPassedEvent, 100); // Small delay to ensure the list is updated
+  };
+
+  const handleDelegationFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    ReactGA.event({
+      category: 'filter',
+      action: 'change_delegation_filter',
+      label: e.target.value
+    });
+    setDelegationFilter(e.target.value);
+    triggerMarkerUpdate();
+    setTimeout(scrollToFirstNonPassedEvent, 100); // Small delay to ensure the list is updated
+  };
+
   return (
     <div className="app">
       <div className="app-header">
@@ -2123,15 +2156,7 @@ function App() {
                   <select 
                     className="filter-select"
                     value={eventFilter}
-                    onChange={(e) => {
-                      ReactGA.event({
-                        category: 'filter',
-                        action: 'change_event_filter',
-                        label: e.target.value
-                      });
-                      setEventFilter(e.target.value);
-                      triggerMarkerUpdate();
-                    }}
+                    onChange={handleEventFilterChange}
                   >
                     <option value="all">Tous les événements</option>
                     <option value="party">Soirées et Défilé ⭐</option>
@@ -2156,15 +2181,7 @@ function App() {
                   <select
                     className="filter-select"
                     value={delegationFilter}
-                    onChange={(e) => {
-                      ReactGA.event({
-                        category: 'filter',
-                        action: 'change_delegation_filter',
-                        label: e.target.value
-                      });
-                      setDelegationFilter(e.target.value);
-                      triggerMarkerUpdate();
-                    }}
+                    onChange={handleDelegationFilterChange}
                   >
                     <option value="all">Toutes les délégations</option>
                     {getAllDelegations().map(delegation => (
