@@ -41,8 +41,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   }, [eventFilter]);
 
   const sportOptions = [
-    { value: 'Tous', label: 'Tous les événements' },
     { value: 'Aucun', label: 'Aucun' },
+    { value: 'Tous', label: 'Tous les événements' },
     { value: 'Party', label: 'Soirée et Défilé ⭐' },
     { value: 'Football', label: 'Football ⚽' },
     { value: 'Basketball', label: 'Basketball 🏀' },
