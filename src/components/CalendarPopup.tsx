@@ -57,6 +57,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
 
   const sportOptions = [
     { value: 'Aucun', label: 'Aucun' },
+    { value: 'Party', label: 'Soirée et Défilé ⭐' },
     { value: 'Football', label: 'Football ⚽' },
     { value: 'Basketball', label: 'Basketball 🏀' },
     { value: 'Handball', label: 'Handball 🤾' },
@@ -76,9 +77,9 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   ];
 
   const days = [
-    { date: '2025-04-24', label: 'Jeudi' },
-    { date: '2025-04-25', label: 'Vendredi' },
-    { date: '2025-04-26', label: 'Samedi' }
+    { date: '2026-04-16', label: 'Jeudi' },
+    { date: '2026-04-17', label: 'Vendredi' },
+    { date: '2026-04-18', label: 'Samedi' }
   ];
 
   const hours = [
@@ -150,33 +151,45 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
 
     const parties = [
       {
-        date: '2025-04-24',
-        time: '21:00',
-        endTime: '23:00',
-        name: 'La Palmeraie',
-        description: 'Soirée Pompoms',
-        color: '#FF9800'
+        date: '2026-04-16',
+        time: '13:00',
+        endTime: '17:00',
+        name: 'Place Stanislas',
+        description: 'Défilé',
+        color: '#FF9800',
+        type: 'Party'
       },
       {
-        date: '2025-04-25',
+        date: '2026-04-16',
         time: '21:00',
         endTime: '23:00',
-        name: 'Bridge Club',
-        description: 'Soirée',
-        color: '#FF9800'
+        name: 'Centre Prouvé',
+        description: 'Show Pompoms',
+        color: '#FF9800',
+        type: 'Party'
       },
       {
-        date: '2025-04-26',
+        date: '2026-04-17',
         time: '22:00',
         endTime: '23:00',
-        name: 'Terminal 7',
+        name: 'Parc des Expositions',
         description: 'Soirée',
-        color: '#FF9800'
+        color: '#FF9800',
+        type: 'Party'
+      },
+      {
+        date: '2026-04-18',
+        time: '20:00',
+        endTime: '23:00',
+        name: 'Zénith',
+        description: 'Soirée',
+        color: '#FF9800',
+        type: 'Party'
       }
     ];
 
     parties.forEach(party => {
-      if (party.date === date) {
+      if (party.date === date && (calendarEventFilter === party.type)) {
         events.push({
           type: 'party',
           time: party.time,

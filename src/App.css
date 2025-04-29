@@ -1233,21 +1233,9 @@ html, body, #root {
   margin-bottom: 0.5rem;
 }
 
-.event-item:not(.passed):first-of-type {
-  border: 2px solid var(--primary-color);
-  background-color: rgba(52, 152, 219, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow-color);
-}
-
 .event-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--shadow-color);
-}
-
-.event-item.selected {
-  border: 2px solid var(--primary-color);
-  background-color: rgba(52, 152, 219, 0.1);
 }
 
 .event-item.passed {
@@ -1560,11 +1548,6 @@ html, body, #root {
 .event-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--shadow-color);
-}
-
-.event-item.selected {
-  border: 2px solid var(--primary-color);
-  background-color: rgba(52, 152, 219, 0.1);
 }
 
 .event-item.passed {
