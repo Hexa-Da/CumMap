@@ -416,9 +416,14 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
-  const [eventFilter, setEventFilter] = useState<string>('all'); // Nouvel état pour le filtre
-  const [delegationFilter, setDelegationFilter] = useState<string>('all'); // Nouvel état pour le filtre de délégation
-  const [appAction, setAppAction] = useState<number>(0); // Nouvel état pour suivre les actions
+  const [eventFilter, setEventFilter] = useState<string>('all');
+  const [delegationFilter, setDelegationFilter] = useState<string>('all');
+  const [venueFilter, setVenueFilter] = useState<string>('Tous');
+  const [showFemale, setShowFemale] = useState<boolean>(true);
+  const [showMale, setShowMale] = useState<boolean>(true);
+  const [showMixed, setShowMixed] = useState<boolean>(true);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [appAction, setAppAction] = useState<number>(0);
   
   // État pour l'historique des actions et l'index actuel
   const [history, setHistory] = useState<HistoryAction[]>([]);
@@ -1169,7 +1174,22 @@ function App() {
       const delegationMatch = delegationFilter === 'all' || 
         (event.teams && event.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
 
-      return typeMatch && delegationMatch;
+      // Filtre par lieu
+      const venueMatch = venueFilter === 'Tous' || 
+        (event.venueId === venueFilter) ||
+        (event.type === 'party' && event.id.includes(venueFilter));
+
+      // Filtre par genre
+      const isFemale = event.description?.toLowerCase().includes('féminin');
+      const isMale = event.description?.toLowerCase().includes('masculin');
+      const isMixed = event.description?.toLowerCase().includes('mixte');
+      
+      const genderMatch = (!isFemale && !isMale && !isMixed) || 
+        (isFemale && showFemale) || 
+        (isMale && showMale) ||
+        (isMixed && showMixed);
+
+      return typeMatch && delegationMatch && venueMatch && genderMatch;
     });
   };
 
@@ -1338,7 +1358,7 @@ function App() {
               <p class="match-date">${formatDateTime(match.date, match.endTime)}</p>
               <p class="match-teams">${match.teams}</p>
               <p class="match-description">${match.description}</p>
-              ${match.result ? `<p class="match-result"><strong>Résultat:</strong> ${match.result}</p>` : ''}
+              ${match.result ? `<p class="match-result"><strong>Résultat :</strong> ${match.result}</p>` : ''}
             `;
             
             // Boutons d'édition en mode édition - toujours visibles
@@ -1937,6 +1957,77 @@ function App() {
     setTimeout(scrollToFirstNonPassedEvent, 100); // Small delay to ensure the list is updated
   };
 
+  const getVenueOptions = () => {
+    if (eventFilter === 'all') {
+      return [{ value: 'Tous', label: 'Tous les lieux' }];
+    }
+
+    // Pour les soirées et défilés, retourner les lieux fixes
+    if (eventFilter === 'party') {
+      return [
+        { value: 'Tous', label: 'Tous les lieux' },
+        { value: 'place-stanislas', label: 'Place Stanislas' },
+        { value: 'centre-prouve', label: 'Centre Prouvé' },
+        { value: 'parc-expo', label: 'Parc des Expositions' },
+        { value: 'zenith', label: 'Zénith' }
+      ];
+    }
+
+    // Pour les sports, filtrer les lieux par sport
+    const filteredVenues = venues.filter(venue => venue.sport === eventFilter);
+    const venueOptions = [
+      { value: 'Tous', label: 'Tous les lieux' },
+      ...filteredVenues.map(venue => ({
+        value: venue.id,
+        label: venue.name
+      }))
+    ];
+
+    return venueOptions;
+  };
+
+  const hasGenderMatches = (sport: string): { hasFemale: boolean, hasMale: boolean, hasMixed: boolean } => {
+    let hasFemale = false;
+    let hasMale = false;
+    let hasMixed = false;
+
+    venues.forEach(venue => {
+      if (venue.sport === sport && venue.matches) {
+        venue.matches.forEach(match => {
+          if (match.description?.toLowerCase().includes('féminin')) hasFemale = true;
+          if (match.description?.toLowerCase().includes('masculin')) hasMale = true;
+          if (match.description?.toLowerCase().includes('mixte')) hasMixed = true;
+        });
+      }
+    });
+
+    return { hasFemale, hasMale, hasMixed };
+  };
+
+  const handleVenueFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    ReactGA.event({
+      category: 'filter',
+      action: 'change_venue_filter',
+      label: e.target.value
+    });
+    setVenueFilter(e.target.value);
+    triggerMarkerUpdate();
+    setTimeout(scrollToFirstNonPassedEvent, 100);
+  };
+
+  const handleGenderFilterChange = (gender: 'female' | 'male' | 'mixed') => {
+    ReactGA.event({
+      category: 'filter',
+      action: 'change_gender_filter',
+      label: gender
+    });
+    if (gender === 'female') setShowFemale(!showFemale);
+    if (gender === 'male') setShowMale(!showMale);
+    if (gender === 'mixed') setShowMixed(!showMixed);
+    triggerMarkerUpdate();
+    setTimeout(scrollToFirstNonPassedEvent, 100);
+  };
+
   return (
     <div className="app">
       <div className="app-header">
@@ -2153,43 +2244,117 @@ function App() {
                   </button>
                 </div>
                 <div className="event-filters">
-                  <select 
-                    className="filter-select"
-                    value={eventFilter}
-                    onChange={handleEventFilterChange}
-                  >
-                    <option value="all">Tous les événements</option>
-                    <option value="party">Soirées et Défilé ⭐</option>
-                    <option value="Football">Football ⚽</option>
-                    <option value="Basketball">Basketball 🏀</option>
-                    <option value="Handball">Handball 🤾</option>
-                    <option value="Rugby">Rugby 🏉</option>
-                    <option value="Ultimate">Ultimate 🥏</option>
-                    <option value="Natation">Natation 🏊</option>
-                    <option value="Badminton">Badminton 🏸</option>
-                    <option value="Tennis">Tennis 🎾</option>
-                    <option value="Cross">Cross 🏃</option>
-                    <option value="Volleyball">Volleyball 🏐</option>
-                    <option value="Ping-pong">Ping-pong 🏓</option>
-                    <option value="Boxe">Boxe 🥊</option>
-                    <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
-                    <option value="Pétanque">Pétanque 🍹</option>
-                    <option value="Escalade">Escalade 🧗‍♂️</option>
-                    <option value="Jeux de société">Jeux de société 🎲</option>
-                  </select>
+                  <div className="filter-buttons-row">
+                    <button 
+                      className="filter-toggle-button"
+                      onClick={() => setShowFilters(!showFilters)}
+                    >
+                      {showFilters ? 'Masquer les filtres' : 'Filtrer'}
+                    </button>
+                    {showFilters && (
+                      <button 
+                        className="filter-reset-button"
+                        onClick={() => {
+                          setEventFilter('all');
+                          setDelegationFilter('all');
+                          setVenueFilter('Tous');
+                          setShowFemale(true);
+                          setShowMale(true);
+                          setShowMixed(true);
+                        }}
+                      >
+                        Réinitialiser
+                      </button>
+                    )}
+                  </div>
+                  {showFilters && (
+                    <>
+                      <select 
+                        className="filter-select"
+                        value={eventFilter}
+                        onChange={handleEventFilterChange}
+                      >
+                        <option value="all">Tous les événements</option>
+                        <option value="party">Soirées et Défilé ⭐</option>
+                        <option value="Football">Football ⚽</option>
+                        <option value="Basketball">Basketball 🏀</option>
+                        <option value="Handball">Handball 🤾</option>
+                        <option value="Rugby">Rugby 🏉</option>
+                        <option value="Ultimate">Ultimate 🥏</option>
+                        <option value="Natation">Natation 🏊</option>
+                        <option value="Badminton">Badminton 🏸</option>
+                        <option value="Tennis">Tennis 🎾</option>
+                        <option value="Cross">Cross 🏃</option>
+                        <option value="Volleyball">Volleyball 🏐</option>
+                        <option value="Ping-pong">Ping-pong 🏓</option>
+                        <option value="Boxe">Boxe 🥊</option>
+                        <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                        <option value="Pétanque">Pétanque 🍹</option>
+                        <option value="Escalade">Escalade 🧗‍♂️</option>
+                        <option value="Jeux de société">Jeux de société 🎲</option>
+                      </select>
 
-                  <select
-                    className="filter-select"
-                    value={delegationFilter}
-                    onChange={handleDelegationFilterChange}
-                  >
-                    <option value="all">Toutes les délégations</option>
-                    {getAllDelegations().map(delegation => (
-                      <option key={delegation} value={delegation}>
-                        {delegation}
-                      </option>
-                    ))}
-                  </select>
+                      <select
+                        className="filter-select"
+                        value={delegationFilter}
+                        onChange={handleDelegationFilterChange}
+                      >
+                        <option value="all">Toutes les délégations</option>
+                        {getAllDelegations().map(delegation => (
+                          <option key={delegation} value={delegation}>
+                            {delegation}
+                          </option>
+                        ))}
+                      </select>
+
+                      {eventFilter !== 'all' && (
+                        <select 
+                          className="filter-select"
+                          value={venueFilter}
+                          onChange={handleVenueFilterChange}
+                        >
+                          {getVenueOptions().map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      {eventFilter !== 'all' && eventFilter !== 'party' && (() => {
+                        const { hasFemale, hasMale, hasMixed } = hasGenderMatches(eventFilter);
+                        if (!hasFemale && !hasMale && !hasMixed) return null;
+                        return (
+                          <div className="gender-filter-row">
+                            {hasFemale && (
+                              <button 
+                                className={`gender-filter-button ${showFemale ? 'active' : ''}`}
+                                onClick={() => handleGenderFilterChange('female')}
+                              >
+                                Féminin
+                              </button>
+                            )}
+                            {hasMale && (
+                              <button 
+                                className={`gender-filter-button ${showMale ? 'active' : ''}`}
+                                onClick={() => handleGenderFilterChange('male')}
+                              >
+                                Masculin
+                              </button>
+                            )}
+                            {hasMixed && (
+                              <button 
+                                className={`gender-filter-button ${showMixed ? 'active' : ''}`}
+                                onClick={() => handleGenderFilterChange('mixed')}
+                              >
+                                Mixte
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </>
+                  )}
                 </div>
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
@@ -2217,7 +2382,7 @@ function App() {
                         <>
                           <p className="event-description">{event.description}</p>
                           <p className="event-venue">{event.venue}</p>
-                          {event.result && <p className="event-result">Résultat: {event.result}</p>}
+                          {event.result && <p className="event-result">Résultat : {event.result}</p>}
                         </>
                       )}
                       {event.type === 'party' && (

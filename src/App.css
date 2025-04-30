@@ -1376,7 +1376,7 @@ html, body, #root {
 }
 
 .events-panel-header {
-  padding: 1.6rem;
+  padding: 1.4rem;
   background-color: var(--bg-color);
   position: sticky;
   z-index: 2;
@@ -1401,7 +1401,118 @@ html, body, #root {
   top: 2px;
   z-index: 2;
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+}
+
+.filter-buttons-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-toggle-button,
+.filter-reset-button {
+  flex: 1;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle-button {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.filter-toggle-button:hover {
+  background-color: var(--warning-hover);
+  transform: translateY(-1px);
+}
+
+.filter-reset-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.filter-reset-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.filter-toggle-button:active,
+.filter-reset-button:active {
+  transform: translateY(0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-toggle-button {
+    background-color: var(--warning-color);
+  }
+  
+  .filter-toggle-button:hover {
+    background-color: var(--warning-hover);
+  }
+
+  .filter-reset-button {
+    background-color: var(--primary-color);
+  }
+  
+  .filter-reset-button:hover {
+    background-color: var(--primary-hover);
+  }
+}
+
+.gender-filter-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.gender-filter-button {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gender-filter-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.gender-filter-button:hover {
+  border-color: var(--primary-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .gender-filter-button {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-color);
+  }
+  
+  .gender-filter-button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+  
+  .gender-filter-button:hover {
+    border-color: var(--primary-color);
+  }
 }
 
 .close-events-button {
@@ -1414,7 +1525,7 @@ html, body, #root {
   border: none;
   border-radius: 4px;
   width: 80px;
-  height: 32px;
+  height: 24px;
   gap: 2px;
   display: flex;
   align-items: center;
@@ -1862,7 +1973,7 @@ html, body, #root {
   align-items: center;
   gap: 2px;
   transition: background-color 0.3s;
-  height: 32px;
+  height: 24px;
   width: 140px;
   justify-content: center;
   z-index: 995;
