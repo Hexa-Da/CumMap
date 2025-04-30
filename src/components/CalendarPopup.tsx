@@ -541,7 +541,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
             {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
             {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
-            {selectedEvent.result && <p className="match-result"><strong>Résultat:</strong> {selectedEvent.result}</p>}
+            {selectedEvent.result && <p className="match-result"><strong>Résultat :</strong> {selectedEvent.result}</p>}
             <div className="match-event-buttons">
               <button onClick={() => {
                 const venue = venues.find(v => v.name === selectedEvent.venue);
