@@ -168,8 +168,10 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             });
           }
         });
-      } else {
-        // Pour les soirées et défilés
+      }
+
+      // Pour les soirées et défilés
+      if (calendarEventFilter === 'Tous' || calendarEventFilter === 'Party') {
         const parties = [
           {
             id: 'place-stanislas',
@@ -179,7 +181,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Place Stanislas',
             description: 'Défilé',
             color: '#FF9800',
-            type: 'Party'
+            type: 'Party',
+            venue: 'Pl. Stanislas, 54000 Nancy'
           },
           {
             id: 'centre-prouve',
@@ -189,7 +192,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Centre Prouvé',
             description: 'Show Pompoms',
             color: '#FF9800',
-            type: 'Party'
+            type: 'Party',
+            venue: '1 Pl. de la République, 54000 Nancy'
           },
           {
             id: 'parc-expo',
@@ -199,7 +203,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Parc des Expositions',
             description: 'Soirée',
             color: '#FF9800',
-            type: 'Party'
+            type: 'Party',
+            venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
           },
           {
             id: 'zenith',
@@ -209,7 +214,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Zénith',
             description: 'Soirée',
             color: '#FF9800',
-            type: 'Party'
+            type: 'Party',
+            venue: 'Rue du Zénith, 54320 Maxéville'
           }
         ];
 
@@ -221,6 +227,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
               endTime: party.endTime,
               name: party.name,
               description: party.description,
+              venue: party.venue,
               color: party.color
             });
           }
@@ -281,7 +288,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
       }
     }
 
-    if (type === 'party' && !endTime) {
+    if (!endTime) {
       endHour = 23;
       endMinute = 0;
     }
@@ -290,8 +297,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     const endPosition = (endHour - 8) + (endMinute / 60);
     const duration = endPosition - startPosition;
 
-    const width = type === 'party' || total === 1 ? '100%' : `${100 / total}%`;
-    const left = type === 'party' || total === 1 ? '0%' : `${(100 / total) * index}%`;
+    const width = total === 1 ? '100%' : `${100 / total}%`;
+    const left = total === 1 ? '0%' : `${(100 / total) * index}%`;
 
     return {
       top: `${startPosition * 43.33}px`,
@@ -537,19 +544,97 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
           <div className="match-event-details">
             <h3>{selectedEvent.name}</h3>
             <p>Horaire: {selectedEvent.time} - {selectedEvent.endTime}</p>
-            {selectedEvent.sport && <p>Sport: {selectedEvent.sport}</p>}
-            {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
-            {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
-            {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
-            {selectedEvent.result && <p className="match-result"><strong>Résultat :</strong> {selectedEvent.result}</p>}
+            {selectedEvent.type === 'match' ? (
+              <>
+                {selectedEvent.sport && <p>Sport: {selectedEvent.sport}</p>}
+                {selectedEvent.venue && <p>Lieu: {selectedEvent.venue}</p>}
+                {selectedEvent.teams && <p>Équipes: {selectedEvent.teams}</p>}
+                {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
+                {selectedEvent.result && <p className="match-result"><strong>Résultat :</strong> {selectedEvent.result}</p>}
+              </>
+            ) : (
+              <>
+                {selectedEvent.description && <p>Description: {selectedEvent.description}</p>}
+                {selectedEvent.venue && <p>Adresse: {selectedEvent.venue}</p>}
+              </>
+            )}
             <div className="match-event-buttons">
               <button onClick={() => {
-                const venue = venues.find(v => v.name === selectedEvent.venue);
-                if (venue) {
-                  onViewOnMap(venue);
+                if (selectedEvent.type === 'match') {
+                  const venue = venues.find(v => v.name === selectedEvent.venue);
+                  if (venue) {
+                    onViewOnMap(venue);
+                    setSelectedEvent(null)
+                  }
+                } else if (selectedEvent.type === 'party') {
+                  const partyVenues: { [key: string]: Venue } = {
+                    'Place Stanislas': {
+                      id: 'place-stanislas',
+                      name: 'Place Stanislas',
+                      description: 'Place Stanislas',
+                      address: 'Pl. Stanislas, 54000 Nancy',
+                      latitude: 48.693524,
+                      longitude: 6.183270,
+                      position: [48.693524, 6.183270],
+                      sport: 'Defile',
+                      date: '',
+                      emoji: '🎺',
+                      matches: [],
+                      type: 'venue'
+                    },
+                    'Centre Prouvé': {
+                      id: 'centre-prouve',
+                      name: 'Centre Prouvé',
+                      description: 'Centre Prouvé',
+                      address: '1 Pl. de la République, 54000 Nancy',
+                      latitude: 48.687858,
+                      longitude: 6.176977,
+                      position: [48.687858, 6.176977],
+                      sport: 'Pompom',
+                      date: '',
+                      emoji: '🎀',
+                      matches: [],
+                      type: 'venue'
+                    },
+                    'Parc des Expositions': {
+                      id: 'parc-expo',
+                      name: 'Parc des Expositions',
+                      description: 'Parc des Expositions',
+                      address: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy',
+                      latitude: 48.663272,
+                      longitude: 6.190715,
+                      position: [48.663272, 6.190715],
+                      sport: 'Party',
+                      date: '',
+                      emoji: '🎉',
+                      matches: [],
+                      type: 'venue'
+                    },
+                    'Zénith': {
+                      id: 'zenith',
+                      name: 'Zénith',
+                      description: 'Zénith',
+                      address: 'Rue du Zénith, 54320 Maxéville',
+                      latitude: 48.710237,
+                      longitude: 6.139252,
+                      position: [48.710237, 6.139252],
+                      sport: 'Party',
+                      date: '',
+                      emoji: '🎉',
+                      matches: [],
+                      type: 'venue'
+                    }
+                  };
+
+                  const venue = partyVenues[selectedEvent.name];
+                  if (venue) {
+                    onViewOnMap(venue);
+                    setSelectedEvent(null)
+                  }
                 }
-                setSelectedEvent(null);
-              }}>Voir sur la carte</button>
+              }}>
+                Voir sur la carte
+              </button>
               <button onClick={() => setSelectedEvent(null)}>Fermer</button>
             </div>
           </div>

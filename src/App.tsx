@@ -1167,11 +1167,14 @@ function App() {
     return allEvents.filter(event => {
       // Filtre par type d'événement
       const typeMatch = eventFilter === 'all' || 
-        (eventFilter === 'party' && event.type === 'party') ||
-        (event.type === 'match' && event.sport === eventFilter);
+        (eventFilter === 'none' ? false :
+          (eventFilter === 'party' && event.type === 'party') ||
+          (event.type === 'match' && event.sport === eventFilter));
 
       // Filtre par délégation
-      const delegationMatch = delegationFilter === 'all' || 
+      // Les soirées et défilés sont toujours affichés, quelle que soit la délégation
+      const delegationMatch = event.type === 'party' || 
+        delegationFilter === 'all' || 
         (event.teams && event.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
 
       // Filtre par lieu
@@ -2274,6 +2277,7 @@ function App() {
                         value={eventFilter}
                         onChange={handleEventFilterChange}
                       >
+                        <option value="none">Aucun</option>
                         <option value="all">Tous les événements</option>
                         <option value="party">Soirées et Défilé ⭐</option>
                         <option value="Football">Football ⚽</option>
