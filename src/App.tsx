@@ -1800,7 +1800,7 @@ function App() {
     if (mapRef.current) {
       updateMapMarkers();
     }
-  }, [eventFilter, venues, appAction]);
+  }, [eventFilter, venueFilter, delegationFilter, showFemale, showMale, showMixed, venues, appAction]);
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
