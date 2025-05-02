@@ -228,6 +228,13 @@ function MapEvents({ onMapClick }: { onMapClick: (e: { latlng: { lat: number; ln
   return null;
 }
 
+interface Message {
+  content: string;
+  sender: string;
+  timestamp: number;
+  isAdmin: boolean;
+}
+
 function App() {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -236,6 +243,16 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      content: "Bienvenue sur le chat !",
+      sender: "Organisation",
+      timestamp: Date.now(),
+      isAdmin: true
+    }
+  ]);
+  const [showAddMessage, setShowAddMessage] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -412,7 +429,7 @@ function App() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapStyle, setMapStyle] = useState('osm');
-  const [activeTab, setActiveTab] = useState<'map' | 'events'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'events' | 'chat'>('map');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
@@ -2213,29 +2230,53 @@ function App() {
             </>
           )}
         </div>
-         <button 
-            className="admin-button"
-            onClick={() => {
-              if (!user) {
-                signInWithGoogle();
-              } else {
-                auth.signOut();
-              }
-            }}
-            title={user ? "Se déconnecter" : "Se connecter"}
-            style={{
-              padding: '2px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px'
-            }}
-          >
-            {!user ? "🔒" : (isAdmin ? "🔓" : "🔒")}
-          </button>
+        <button
+          className="chat-button"
+          onClick={() => {
+            ReactGA.event({
+              category: 'navigation',
+              action: 'change_tab',
+              label: activeTab === 'map' ? 'chat' : 'map'
+            });
+            setActiveTab(activeTab === 'map' ? 'chat' : 'map');
+          }}
+          title="Messages de l'orga"
+          style={{
+            padding: '2px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px'
+          }}
+        >
+          💬
+        </button>
+        <button 
+          className="admin-button"
+          onClick={() => {
+            if (!user) {
+              signInWithGoogle();
+            } else {
+              auth.signOut();
+            }
+          }}
+          title={user ? "Se déconnecter" : "Se connecter"}
+          style={{
+            padding: '2px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px'
+          }}
+        >
+          {!user ? "🔒" : (isAdmin ? "🔓" : "🔒")}
+        </button>
       </div>
       <main className="app-main">
         {locationError && showLocationPrompt && (
@@ -2391,7 +2432,7 @@ function App() {
                         ))}
                       </select>
 
-                      {eventFilter !== 'all' && (
+                      {eventFilter !== 'none' && eventFilter !== 'all' && (
                         <select 
                           className="filter-select"
                           value={venueFilter}
@@ -2494,6 +2535,75 @@ function App() {
                         >
                           Copier l'adresse
                         </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {activeTab === 'chat' && (
+              <div className="chat-panel">
+                <div className="chat-panel-header">
+                  <h3>Messages de l'orga</h3>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {isAdmin && (
+                      <button
+                        className="add-message-button"
+                        onClick={() => setShowAddMessage((v) => !v)}
+                      >
+                        {showAddMessage ? 'Annuler' : 'Ajouter'}
+                      </button>
+                    )}
+                    <button 
+                      className="close-chat-button"
+                      onClick={() => setActiveTab('map')}
+                      title="Fermer le panneau"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </div>
+                {showAddMessage && (
+                  <form
+                    className="add-message-form"
+                    style={{ display: 'flex', gap: '8px', padding: '1rem', alignItems: 'center', background: 'var(--bg-secondary)' }}
+                    onSubmit={e => {
+                      e.preventDefault();
+                      if (newMessage.trim()) {
+                        setMessages([
+                          ...messages,
+                          {
+                            content: newMessage,
+                            sender: user?.displayName || 'Admin',
+                            timestamp: Date.now(),
+                            isAdmin: true
+                          }
+                        ]);
+                        setNewMessage('');
+                        setShowAddMessage(false);
+                      }
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={e => setNewMessage(e.target.value)}
+                      placeholder="Votre message..."
+                      style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                      autoFocus
+                    />
+                    <button type="submit" className="add-message-button">Envoyer</button>
+                  </form>
+                )}
+                <div className="chat-container">
+                  {messages.map((message, index) => (
+                    <div key={index} className={`chat-message ${message.isAdmin ? 'admin' : ''}`}>
+                      <div className="chat-message-header">
+                        <span>{message.isAdmin ? 'Organisation' : message.sender}</span>
+                        <span>{new Date(message.timestamp).toLocaleString()}</span>
+                      </div>
+                      <div className="chat-message-content">
+                        {message.content}
                       </div>
                     </div>
                   ))}
