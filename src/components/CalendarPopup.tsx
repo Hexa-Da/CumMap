@@ -232,16 +232,21 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
         ];
 
         parties.forEach(party => {
-          if (party.date === date && (venueFilter === 'Tous' || party.id === venueFilter)) {
-            events.push({
-              type: 'party',
-              time: party.time,
-              endTime: party.endTime,
-              name: party.name,
-              description: party.description,
-              venue: party.venue,
-              color: party.color
-            });
+          if (party.date === date) {
+            // Vérifier si le filtre de lieu correspond
+            const venueMatch = venueFilter === 'Tous' || party.id === venueFilter;
+            
+            if (venueMatch) {
+              events.push({
+                type: 'party',
+                time: party.time,
+                endTime: party.endTime,
+                name: party.name,
+                description: party.description,
+                venue: party.venue,
+                color: party.color
+              });
+            }
           }
         });
       }
@@ -424,7 +429,11 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             <select 
               className="filter-select"
               value={eventFilter}
-              onChange={(e) => onEventFilterChange(e.target.value)}
+              onChange={(e) => {
+                onEventFilterChange(e.target.value);
+                // Réinitialiser le filtre de lieu quand le type d'événement change
+                onVenueFilterChange('Tous');
+              }}
             >
               {sportOptions.map(option => (
                 <option key={option.value} value={option.value}>

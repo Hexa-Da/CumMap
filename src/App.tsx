@@ -1178,9 +1178,33 @@ function App() {
         (event.teams && event.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
 
       // Filtre par lieu
-      const venueMatch = venueFilter === 'Tous' || 
-        (event.venueId === venueFilter) ||
-        (event.type === 'party' && event.id.includes(venueFilter));
+      let venueMatch = true;
+      if (venueFilter !== 'Tous') {
+        if (event.type === 'party') {
+          // Pour les soirées et défilés, utiliser les identifiants spécifiques
+          let partyId = '';
+          switch (event.name) {
+            case 'Place Stanislas':
+              partyId = 'place-stanislas';
+              break;
+            case 'Centre Prouvé':
+              partyId = 'centre-prouve';
+              break;
+            case 'Parc des Expositions':
+              partyId = 'parc-expo';
+              break;
+            case 'Zénith':
+              partyId = 'zenith';
+              break;
+            default:
+              partyId = event.name.toLowerCase().replace(/\s+/g, '-');
+          }
+          venueMatch = partyId === venueFilter;
+        } else {
+          // Pour les matchs, utiliser l'ID du lieu
+          venueMatch = event.venueId === venueFilter;
+        }
+      }
 
       // Filtre par genre
       const isFemale = event.description?.toLowerCase().includes('féminin');
@@ -1724,21 +1748,39 @@ function App() {
 
         if (venue) {
           // Afficher le marqueur si :
-          // 1. Le filtre est sur "all"
-          // 2. Le filtre est sur le sport du lieu
+          // 1. Le filtre est sur "all" ou correspond au sport
+          // 2. Le filtre de lieu est sur "Tous" ou correspond au lieu
           const shouldShow = 
-            eventFilter === 'all' || 
-            eventFilter === venue.sport;
+            (eventFilter === 'all' || eventFilter === venue.sport) &&
+            (venueFilter === 'Tous' || venue.id === venueFilter);
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
         } else if (party) {
           // Afficher le marqueur de soirée si :
-          // 1. Le filtre est sur "all"
-          // 2. Le filtre est sur "party"
+          // 1. Le filtre est sur "all" ou "party"
+          // 2. Le filtre de lieu correspond
+          let partyId = '';
+          switch (party.name) {
+            case 'Place Stanislas':
+              partyId = 'place-stanislas';
+              break;
+            case 'Centre Prouvé':
+              partyId = 'centre-prouve';
+              break;
+            case 'Parc des Expositions':
+              partyId = 'parc-expo';
+              break;
+            case 'Zénith':
+              partyId = 'zenith';
+              break;
+            default:
+              partyId = party.name.toLowerCase().replace(/\s+/g, '-');
+          }
+
           const shouldShow = 
-            eventFilter === 'all' || 
-            eventFilter === 'party';
+            (eventFilter === 'all' || eventFilter === 'party') &&
+            (venueFilter === 'Tous' || partyId === venueFilter);
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
@@ -1945,8 +1987,10 @@ function App() {
       label: e.target.value
     });
     setEventFilter(e.target.value);
+    // Réinitialiser le filtre de lieu quand le type d'événement change
+    setVenueFilter('Tous');
     triggerMarkerUpdate();
-    setTimeout(scrollToFirstNonPassedEvent, 100); // Small delay to ensure the list is updated
+    setTimeout(scrollToFirstNonPassedEvent, 100);
   };
 
   const handleDelegationFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
