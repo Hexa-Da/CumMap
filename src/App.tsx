@@ -253,6 +253,7 @@ function App() {
   ]);
   const [showAddMessage, setShowAddMessage] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [showEmergency, setShowEmergency] = useState(false);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -2206,7 +2207,7 @@ function App() {
                   triggerMarkerUpdate();
                 }}
               >
-                {isEditing ? "Terminer l'édition" : 'Mode édition'}
+                {isEditing ? "Terminer" : 'Éditer'}
               </button>
               {isEditing && (
                 <button 
@@ -2224,7 +2225,7 @@ function App() {
                     setSelectedSport('Football');
                   }}
                 >
-                  Ajouter un lieu
+                  Ajouter
                 </button>
               )}
             </>
@@ -2242,7 +2243,7 @@ function App() {
           }}
           title="Messages de l'orga"
           style={{
-            padding: '2px',
+            padding: '0px',
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
@@ -2253,6 +2254,24 @@ function App() {
           }}
         >
           💬
+        </button>
+        <button
+          className="emergency-button"
+          onClick={() => setShowEmergency(true)}
+          title="Contacts d'urgence"
+          style={{
+            padding: '0px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            color: '#e74c3c'
+          }}
+        >
+          🚨
         </button>
         <button 
           className="admin-button"
@@ -2265,7 +2284,7 @@ function App() {
           }}
           title={user ? "Se déconnecter" : "Se connecter"}
           style={{
-            padding: '2px',
+            padding: '0px',
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
@@ -2877,6 +2896,21 @@ function App() {
           if (gender === 'mixed') setShowMixed(!showMixed);
         }}
       />
+      {showEmergency && (
+        <div className="emergency-popup" onClick={() => setShowEmergency(false)}>
+          <div className="emergency-popup-content" onClick={e => e.stopPropagation()}>
+            <h3>Contacts d'urgence</h3>
+            <ul style={{ textAlign: 'left', margin: '1rem 0' }}>
+              <li><strong>SAMU :</strong> 15</li>
+              <li><strong>Police :</strong> 17</li>
+              <li><strong>Pompier :</strong> 18</li>
+              <li><strong>Numéro européen :</strong> 112</li>
+              <li><strong>Urgence sourds/malentendants :</strong> 114 (SMS)</li>
+            </ul>
+            <button className="close-emergency-button" onClick={() => setShowEmergency(false)}>Fermer</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
