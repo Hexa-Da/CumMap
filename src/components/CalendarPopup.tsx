@@ -21,29 +21,39 @@ interface CalendarPopupProps {
   venues: Venue[];
   eventFilter: string;
   onViewOnMap: (venue: Venue) => void;
+  delegationFilter: string;
+  venueFilter: string;
+  showFemale: boolean;
+  showMale: boolean;
+  showMixed: boolean;
+  onEventFilterChange: (value: string) => void;
+  onDelegationFilterChange: (value: string) => void;
+  onVenueFilterChange: (value: string) => void;
+  onGenderFilterChange: (gender: 'female' | 'male' | 'mixed') => void;
 }
 
-const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, eventFilter, onViewOnMap }) => {
-  const [calendarEventFilter, setCalendarEventFilter] = useState<string>('Aucun');
-  const [delegationFilter, setDelegationFilter] = useState<string>('all');
-  const [venueFilter, setVenueFilter] = useState<string>('Tous');
+const CalendarPopup: React.FC<CalendarPopupProps> = ({ 
+  isOpen, 
+  onClose, 
+  venues, 
+  eventFilter, 
+  onViewOnMap,
+  delegationFilter,
+  venueFilter,
+  showFemale,
+  showMale,
+  showMixed,
+  onEventFilterChange,
+  onDelegationFilterChange,
+  onVenueFilterChange,
+  onGenderFilterChange
+}) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [showFemale, setShowFemale] = useState<boolean>(true);
-  const [showMale, setShowMale] = useState<boolean>(true);
-  const [showMixed, setShowMixed] = useState<boolean>(true);
-
-  useEffect(() => {
-    if (eventFilter === 'all' || eventFilter === 'party') {
-      setCalendarEventFilter('Aucun');
-    } else {
-      setCalendarEventFilter(eventFilter);
-    }
-  }, [eventFilter]);
 
   const sportOptions = [
-    { value: 'Aucun', label: 'Aucun' },
-    { value: 'Tous', label: 'Tous les événements' },
-    { value: 'Party', label: 'Soirée et Défilé ⭐' },
+    { value: 'none', label: 'Aucun' },
+    { value: 'all', label: 'Tous les événements' },
+    { value: 'party', label: 'Soirée et Défilé ⭐' },
     { value: 'Football', label: 'Football ⚽' },
     { value: 'Basketball', label: 'Basketball 🏀' },
     { value: 'Handball', label: 'Handball 🤾' },
@@ -74,12 +84,12 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   ];
 
   const getVenueOptions = () => {
-    if (calendarEventFilter === 'Aucun') {
+    if (eventFilter === 'none') {
       return [{ value: 'Tous', label: 'Tous les lieux' }];
     }
 
     // Pour les soirées et défilés, retourner les lieux fixes
-    if (calendarEventFilter === 'Party') {
+    if (eventFilter === 'party') {
       return [
         { value: 'Tous', label: 'Tous les lieux' },
         { value: 'place-stanislas', label: 'Place Stanislas' },
@@ -90,7 +100,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     }
 
     // Pour les sports, filtrer les lieux par sport
-    const filteredVenues = venues.filter(venue => venue.sport === calendarEventFilter);
+    const filteredVenues = venues.filter(venue => venue.sport === eventFilter);
     const venueOptions = [
       { value: 'Tous', label: 'Tous les lieux' },
       ...filteredVenues.map(venue => ({
@@ -122,16 +132,18 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
   const getEventsForDay = (date: string): Event[] => {
     const events: Event[] = [];
     
-    if (calendarEventFilter !== 'Aucun') {
+    if (eventFilter !== 'none') {
       // Pour les matchs sportifs
-      if (calendarEventFilter === 'Tous' || calendarEventFilter !== 'Party') {
+      if (eventFilter === 'all' || eventFilter !== 'party') {
         venues.forEach(venue => {
           if (venue.matches) {
             venue.matches.forEach(match => {
               const [matchDate, matchTime] = match.date.split('T');
               
               if (matchDate === date) {
-                const sportMatch = calendarEventFilter === 'Tous' || venue.sport === calendarEventFilter;
+                // Vérifier si le match correspond au filtre de sport
+                const sportMatch = eventFilter === 'all' || venue.sport === eventFilter;
+                // Vérifier si le match correspond au filtre de lieu
                 const venueMatch = venueFilter === 'Tous' || venue.id === venueFilter;
                 
                 // Vérifier si le match correspond au filtre de genre
@@ -171,7 +183,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
       }
 
       // Pour les soirées et défilés
-      if (calendarEventFilter === 'Tous' || calendarEventFilter === 'Party') {
+      if (eventFilter === 'all' || eventFilter === 'party') {
         const parties = [
           {
             id: 'place-stanislas',
@@ -181,7 +193,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Place Stanislas',
             description: 'Défilé',
             color: '#FF9800',
-            type: 'Party',
+            type: 'party',
             venue: 'Pl. Stanislas, 54000 Nancy'
           },
           {
@@ -192,7 +204,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Centre Prouvé',
             description: 'Show Pompoms',
             color: '#FF9800',
-            type: 'Party',
+            type: 'party',
             venue: '1 Pl. de la République, 54000 Nancy'
           },
           {
@@ -203,7 +215,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Parc des Expositions',
             description: 'Soirée',
             color: '#FF9800',
-            type: 'Party',
+            type: 'party',
             venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
           },
           {
@@ -214,7 +226,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             name: 'Zénith',
             description: 'Soirée',
             color: '#FF9800',
-            type: 'Party',
+            type: 'party',
             venue: 'Rue du Zénith, 54320 Maxéville'
           }
         ];
@@ -275,7 +287,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
     return groups;
   };
 
-  const getEventPosition = (time: string, endTime: string | undefined, type: 'match' | 'party', index: number, total: number) => {
+  const getEventPosition = (time: string, endTime: string | undefined, index: number, total: number) => {
     const [startHour, startMinute] = time.split(':').map(Number);
     let endHour = startHour + 1;
     let endMinute = 0;
@@ -411,11 +423,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
           <div className="filter-row">
             <select 
               className="filter-select"
-              value={calendarEventFilter}
-              onChange={(e) => {
-                setCalendarEventFilter(e.target.value);
-                setVenueFilter('Tous');
-              }}
+              value={eventFilter}
+              onChange={(e) => onEventFilterChange(e.target.value)}
             >
               {sportOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -427,7 +436,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
             <select
               className="filter-select"
               value={delegationFilter}
-              onChange={(e) => setDelegationFilter(e.target.value)}
+              onChange={(e) => onDelegationFilterChange(e.target.value)}
             >
               <option value="all">Toutes les délégations</option>
               {getAllDelegations().map(delegation => (
@@ -439,11 +448,11 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
           </div>
 
           <div className="filter-row">
-            {calendarEventFilter !== 'Aucun' && (
+            {eventFilter !== 'none' && (
               <select 
                 className="filter-select"
                 value={venueFilter}
-                onChange={(e) => setVenueFilter(e.target.value)}
+                onChange={(e) => onVenueFilterChange(e.target.value)}
               >
                 {getVenueOptions().map(option => (
                   <option key={option.value} value={option.value}>
@@ -453,14 +462,14 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
               </select>
             )}
 
-            {calendarEventFilter !== 'Aucun' && calendarEventFilter !== 'Party' && (() => {
-              const { hasFemale, hasMale, hasMixed } = hasGenderMatches(calendarEventFilter);
+            {eventFilter !== 'none' && eventFilter !== 'party' && (() => {
+              const { hasFemale, hasMale, hasMixed } = hasGenderMatches(eventFilter);
               return (hasFemale || hasMale || hasMixed) && (
                 <div className="gender-filter-row">
                   {hasFemale && (
                     <button 
                       className={`gender-filter-button ${showFemale ? 'active' : ''}`}
-                      onClick={() => setShowFemale(!showFemale)}
+                      onClick={() => onGenderFilterChange('female')}
                     >
                       Féminin
                     </button>
@@ -468,7 +477,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                   {hasMale && (
                     <button 
                       className={`gender-filter-button ${showMale ? 'active' : ''}`}
-                      onClick={() => setShowMale(!showMale)}
+                      onClick={() => onGenderFilterChange('male')}
                     >
                       Masculin
                     </button>
@@ -476,7 +485,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                   {hasMixed && (
                     <button 
                       className={`gender-filter-button ${showMixed ? 'active' : ''}`}
-                      onClick={() => setShowMixed(!showMixed)}
+                      onClick={() => onGenderFilterChange('mixed')}
                     >
                       Mixte
                     </button>
@@ -510,7 +519,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({ isOpen, onClose, venues, 
                       return (
                         <div key={groupIndex} className="event-group">
                           {group.map((event, index) => {
-                            const position = getEventPosition(event.time, event.endTime, event.type, index, group.length);
+                            const position = getEventPosition(event.time, event.endTime, index, group.length);
                             const isPassed = isEventPassed(`${day.date}T${event.time}`, event.endTime ? `${day.date}T${event.endTime}` : undefined, event.type);
                             return (
                               <div

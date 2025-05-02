@@ -2673,6 +2673,19 @@ function App() {
         venues={venues}
         eventFilter={eventFilter}
         onViewOnMap={handleViewOnMap}
+        delegationFilter={delegationFilter}
+        venueFilter={venueFilter}
+        showFemale={showFemale}
+        showMale={showMale}
+        showMixed={showMixed}
+        onEventFilterChange={setEventFilter}
+        onDelegationFilterChange={setDelegationFilter}
+        onVenueFilterChange={setVenueFilter}
+        onGenderFilterChange={(gender) => {
+          if (gender === 'female') setShowFemale(!showFemale);
+          if (gender === 'male') setShowMale(!showMale);
+          if (gender === 'mixed') setShowMixed(!showMixed);
+        }}
       />
     </div>
   );
