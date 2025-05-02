@@ -1255,6 +1255,17 @@ function App() {
   const handlePopupOpen = (venueId: string) => {
     setOpenPopup(venueId);
     triggerMarkerUpdate();
+    
+    // Attendre que le popup soit ouvert et le DOM mis à jour
+    setTimeout(() => {
+      const popup = document.querySelector('.leaflet-popup-content');
+      if (popup) {
+        const firstNonPassedMatch = popup.querySelector('.match-item:not(.match-passed)');
+        if (firstNonPassedMatch) {
+          firstNonPassedMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 100);
   };
 
   const handleLocationSuccess = (position: GeolocationPosition) => {
@@ -1378,6 +1389,30 @@ function App() {
           // Trier les matchs par date
           const sortedMatches = [...venue.matches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           
+          // Créer un conteneur pour la liste des matchs avec défilement
+          const matchesScrollContainer = document.createElement('div');
+          matchesScrollContainer.className = 'matches-scroll-container';
+          matchesScrollContainer.style.maxHeight = '200px';
+          matchesScrollContainer.style.overflowY = 'auto';
+          
+          // Ajouter les styles pour les matchs passés
+          const style = document.createElement('style');
+          style.textContent = `
+            .match-passed {
+              background-color:rgba(255, 255, 255, 0.05);
+            }
+            .match-passed p {
+              opacity: 0.3;
+              color: var(--text-color);
+            }
+            .match-passed .match-result {
+              opacity: 0.3;
+              font-weight: bold;
+              color: var(--text-color);
+            }
+          `;
+          document.head.appendChild(style);
+          
           sortedMatches.forEach(match => {
             const matchItemDiv = document.createElement('div');
             matchItemDiv.className = `match-item ${isMatchPassed(match.date, match.endTime) ? 'match-passed' : ''}`;
@@ -1414,9 +1449,10 @@ function App() {
               matchItemDiv.appendChild(matchActionsDiv);
             }
             
-            matchesListDiv.appendChild(matchItemDiv);
+            matchesScrollContainer.appendChild(matchItemDiv);
           });
           
+          matchesListDiv.appendChild(matchesScrollContainer);
           popupContent.appendChild(matchesListDiv);
         } else {
           matchesListDiv.innerHTML = '<p>Aucun match prévu</p>';

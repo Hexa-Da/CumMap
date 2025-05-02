@@ -575,7 +575,6 @@ html, body, #root {
 .matches-list {
   margin-top: 1rem;
   margin-bottom: 1rem;
-  border-top: 1px solid var(--border-color);
   padding-top: 0.5rem;
   max-height: 300px; /* Hauteur maximale avant le scroll */
   overflow-y: auto; /* Ajoute le scroll vertical si nécessaire */
@@ -583,27 +582,27 @@ html, body, #root {
 
 /* Style personnalisé pour la scrollbar */
 .matches-list::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 .matches-list::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-  border-radius: 4px;
+  background: transparent;
+  border-radius: 2px;
 }
 
 .matches-list::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 4px;
+  background: transparent;
+  border-radius: 2px;
 }
 
 .matches-list::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-hover);
+  background: transparent;
 }
 
 /* Style pour Firefox */
 .matches-list {
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-color) var(--bg-secondary);
+  scrollbar-width: 4px;
+  scrollbar-color: var(--primary-color) transparent;
 }
 
 .matches-list h4 {
