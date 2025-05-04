@@ -247,6 +247,7 @@ function App() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null); // index du message en cours d'édition
   const [editingMessageValue, setEditingMessageValue] = useState(''); // valeur temporaire pour l'édition
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -291,9 +292,9 @@ function App() {
     });
   };
 
-  // Modification d'un message dans Firebase
-  const handleEditMessage = (id: string, newContent: string) => {
-    update(ref(database, `chatMessages/${id}`), { content: newContent });
+  // Modification d'un message dans Firebase (texte et nom)
+  const handleEditMessage = (id: string, newContent: string, newSender: string) => {
+    update(ref(database, `chatMessages/${id}`), { content: newContent, sender: newSender || 'Organisation' });
   };
 
   // Suppression d'un message dans Firebase
@@ -2617,10 +2618,17 @@ function App() {
                     onSubmit={e => {
                       e.preventDefault();
                       if (newMessage.trim()) {
-                        handleAddMessage(newMessage, newMessageSender || 'Organisation');
+                        if (editingMessageId) {
+                          // Si on édite un message existant
+                          handleEditMessage(editingMessageId, newMessage, newMessageSender || 'Organisation');
+                        } else {
+                          // Sinon, on ajoute un nouveau message
+                          handleAddMessage(newMessage, newMessageSender || 'Organisation');
+                        }
                         setNewMessage('');
                         setNewMessageSender('Organisation');
                         setShowAddMessage(false);
+                        setEditingMessageId(null);
                       }
                     }}
                   >
@@ -2664,7 +2672,7 @@ function App() {
                             onSubmit={e => {
                               e.preventDefault();
                               if (message.id) {
-                                handleEditMessage(message.id, editingMessageValue);
+                                handleEditMessage(message.id, editingMessageValue, newMessageSender || 'Organisation');
                               }
                               setEditingMessageIndex(null);
                               setEditingMessageValue('');
@@ -2691,8 +2699,11 @@ function App() {
                             className="edit-message-button"
                             title="Modifier"
                             onClick={() => {
-                              setEditingMessageIndex(index);
-                              setEditingMessageValue(message.content);
+                              // Ouvre le formulaire d'ajout en haut, pré-rempli
+                              setShowAddMessage(true);
+                              setNewMessage(message.content);
+                              setNewMessageSender(message.sender || 'Organisation');
+                              setEditingMessageId(message.id || null);
                             }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3498db', fontSize: 16 }}
                           >
