@@ -457,7 +457,7 @@ function App() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapStyle, setMapStyle] = useState('osm');
-  const [activeTab, setActiveTab] = useState<'map' | 'events' | 'chat'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'events' | 'chat' | 'planning'>('map');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [editingVenue, setEditingVenue] = useState<{ id: string | null, venue: Venue | null }>({ id: null, venue: null });
   const [selectedEmoji, setSelectedEmoji] = useState('⚽');
@@ -2402,8 +2402,18 @@ function App() {
                     className="calendar-button"
                     onClick={handleCalendarClick}
                     title="Voir le calendrier"
+                    style={{ width: 100 }}
                   >
-                    <i className="fas fa-calendar"></i>📅 Calendrier
+                    <i className="fas fa-calendar"></i>Calendrier
+                  </button>
+                  {/* AJOUTER bouton Planning */}
+                  <button
+                    className="planning-button"
+                    style={{ left: 120, width: 100 }}
+                    onClick={() => setActiveTab('planning')}
+                    title="Voir les plannings (bus, tournois, etc.)"
+                  >
+                    <i className="fas fa-table"></i>Planning
                   </button>
                   <button 
                     className="close-events-button"
@@ -2584,6 +2594,44 @@ function App() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+            {/* AJOUTER panneau Planning */}
+            {activeTab === 'planning' && (
+              <div className="planning-panel">
+                <div className="planning-panel-header">
+                  <h3>Plannings</h3>
+                  <button 
+                    className="close-planning-button"
+                    onClick={() => setActiveTab('events')}
+                    title="Retour aux événements"
+                  >
+                    Retour
+                  </button>
+                </div>
+                <div style={{ padding: '2rem', textAlign: 'left', maxWidth: 600, margin: '0 auto' }}>
+                  <p>Retrouvez ici les plannings utiles&nbsp;:</p>
+                  <ul style={{ lineHeight: '2' }}>
+                    <li>
+                      <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">
+                        🚌 Planning des bus (PDF)
+                      </a>
+                    </li>
+                    <li>
+                      <a href="/plannings/planning-tournois.xlsx" target="_blank" rel="noopener noreferrer">
+                        🏆 Planning des tournois (Excel)
+                      </a>
+                    </li>
+                    <li>
+                      <a href="/plannings/planning-soirees.pdf" target="_blank" rel="noopener noreferrer">
+                        🎉 Planning des soirées (PDF)
+                      </a>
+                    </li>
+                  </ul>
+                  <p style={{ fontSize: '0.9em', color: 'var(--text-color-light)' }}>
+                    (Tu peux modifier ces liens dans le code, ou ajouter d'autres fichiers plus tard)
+                  </p>
                 </div>
               </div>
             )}
