@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { Icon, LatLng } from 'leaflet';
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
-import { ref, onValue, set, push } from 'firebase/database';
+import { ref, onValue, set, push, remove, update } from 'firebase/database';
 import { auth, database, provider } from './firebase';
 import L from 'leaflet';
 import ReactGA from 'react-ga4';
@@ -11,10 +11,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import CalendarPopup from './components/CalendarPopup';
 import { Venue, Match } from './types';
-
-// Vérification de l'initialisation
-console.log('Firebase Auth:', auth);
-console.log('Google Provider:', provider);
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -229,6 +225,7 @@ function MapEvents({ onMapClick }: { onMapClick: (e: { latlng: { lat: number; ln
 }
 
 interface Message {
+  id?: string; // id Firebase
   content: string;
   sender: string;
   timestamp: number;
@@ -243,17 +240,13 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      content: "Bienvenue sur le chat !",
-      sender: "Organisation",
-      timestamp: Date.now(),
-      isAdmin: true
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]); // messages du chat, lus depuis Firebase
   const [showAddMessage, setShowAddMessage] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [newMessageSender, setNewMessageSender] = useState('Organisation'); // nom personnalisé pour l'envoi
   const [showEmergency, setShowEmergency] = useState(false);
+  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null); // index du message en cours d'édition
+  const [editingMessageValue, setEditingMessageValue] = useState(''); // valeur temporaire pour l'édition
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -274,6 +267,39 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Lecture en temps réel des messages depuis Firebase
+  useEffect(() => {
+    const messagesRef = ref(database, 'chatMessages');
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      // Transforme l'objet en tableau [{id, ...}]
+      const messagesArray = Object.entries(data).map(([id, value]) => ({ id, ...(value as any) }));
+      setMessages(messagesArray);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Ajout d'un message dans Firebase (avec nom personnalisé)
+  const handleAddMessage = (msg: string, sender: string) => {
+    const newMsgRef = push(ref(database, 'chatMessages'));
+    set(newMsgRef, {
+      content: msg,
+      sender: sender || 'Organisation',
+      timestamp: Date.now(),
+      isAdmin: true
+    });
+  };
+
+  // Modification d'un message dans Firebase
+  const handleEditMessage = (id: string, newContent: string) => {
+    update(ref(database, `chatMessages/${id}`), { content: newContent });
+  };
+
+  // Suppression d'un message dans Firebase
+  const handleDeleteMessage = (id: string) => {
+    remove(ref(database, `chatMessages/${id}`));
+  };
 
   // Fonction pour vérifier les droits d'administration avant d'exécuter une action
   const checkAdminRights = () => {
@@ -2569,6 +2595,7 @@ function App() {
                       <button
                         className="add-message-button"
                         onClick={() => setShowAddMessage((v) => !v)}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 20, width: 70 }}
                       >
                         {showAddMessage ? 'Annuler' : 'Ajouter'}
                       </button>
@@ -2577,6 +2604,7 @@ function App() {
                       className="close-chat-button"
                       onClick={() => setActiveTab('map')}
                       title="Fermer le panneau"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 20, width: 70 }}
                     >
                       Fermer
                     </button>
@@ -2589,41 +2617,101 @@ function App() {
                     onSubmit={e => {
                       e.preventDefault();
                       if (newMessage.trim()) {
-                        setMessages([
-                          ...messages,
-                          {
-                            content: newMessage,
-                            sender: user?.displayName || 'Admin',
-                            timestamp: Date.now(),
-                            isAdmin: true
-                          }
-                        ]);
+                        handleAddMessage(newMessage, newMessageSender || 'Organisation');
                         setNewMessage('');
+                        setNewMessageSender('Organisation');
                         setShowAddMessage(false);
                       }
                     }}
                   >
+                    {/* Champ pour le nom de l'expéditeur (admin uniquement) */}
+                    {isAdmin && (
+                      <input
+                        type="text"
+                        value={newMessageSender}
+                        onChange={e => setNewMessageSender(e.target.value)}
+                        placeholder="Nom (ex: Organisation, Prénom...)"
+                        style={{ width: 100, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                      />
+                    )}
                     <input
                       type="text"
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       placeholder="Votre message..."
-                      style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                      style={{ flex: 1, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
                       autoFocus
                     />
-                    <button type="submit" className="add-message-button">Envoyer</button>
+                    <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      ➡️
+                    </button>
                   </form>
                 )}
                 <div className="chat-container">
                   {messages.map((message, index) => (
-                    <div key={index} className={`chat-message ${message.isAdmin ? 'admin' : ''}`}>
-                      <div className="chat-message-header">
-                        <span>{message.isAdmin ? 'Organisation' : message.sender}</span>
+                    <div key={message.id || index} className={`chat-message ${message.isAdmin ? 'admin' : ''}`} style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                      {/* Header du message : affiche le nom de l'expéditeur */}
+                      <div className="chat-message-header" style={{ justifyContent: 'space-between' }}>
+                        <span>{message.sender || 'Organisation'}</span>
                         <span>{new Date(message.timestamp).toLocaleString()}</span>
                       </div>
-                      <div className="chat-message-content">
-                        {message.content}
+                      {/* Contenu du message */}
+                      <div className="chat-message-content" style={{ paddingBottom: isAdmin ? 28 : 0, textAlign: 'left' }}>
+                        {/* Si ce message est en cours d'édition, affiche un input */}
+                        {isAdmin && editingMessageIndex === index ? (
+                          <form
+                            style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
+                            onSubmit={e => {
+                              e.preventDefault();
+                              if (message.id) {
+                                handleEditMessage(message.id, editingMessageValue);
+                              }
+                              setEditingMessageIndex(null);
+                              setEditingMessageValue('');
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={editingMessageValue}
+                              onChange={e => setEditingMessageValue(e.target.value)}
+                              style={{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                              autoFocus
+                            />
+                            <button type="submit" className="add-message-button">Valider</button>
+                            <button type="button" className="close-chat-button" onClick={() => { setEditingMessageIndex(null); setEditingMessageValue(''); }}>Annuler</button>
+                          </form>
+                        ) : (
+                          <>{message.content}</>
+                        )}
                       </div>
+                      {/* Boutons admin en bas à droite */}
+                      {isAdmin && editingMessageIndex !== index && (
+                        <div style={{ position: 'absolute', right: 0, bottom: 6, display: 'flex', gap: 0 }}>
+                          <button
+                            className="edit-message-button"
+                            title="Modifier"
+                            onClick={() => {
+                              setEditingMessageIndex(index);
+                              setEditingMessageValue(message.content);
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3498db', fontSize: 16 }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="delete-message-button"
+                            title="Supprimer"
+                            onClick={() => {
+                              if (window.confirm('Supprimer ce message ?') && message.id) {
+                                handleDeleteMessage(message.id);
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e74c3c', fontSize: 16 }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
