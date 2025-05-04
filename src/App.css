@@ -2032,7 +2032,7 @@ html, body, #root {
   justify-content: space-between;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
-  color: var(--text-color-light);
+  color: var(--text-color);
 }
 
 .chat-message-content {
@@ -2042,6 +2042,7 @@ html, body, #root {
   word-break: break-word;
   white-space: pre-line;
   padding: 0.2rem 0.1rem;
+  color: var(--text-color);
 }
 
 .chat-message.admin {
@@ -2192,36 +2193,4 @@ html, body, #root {
 
 .close-emergency-button:hover {
   background: var(--danger-hover);
-}
-
-/* Support du mode sombre pour le chat */
-@media (prefers-color-scheme: dark) {
-  .chat-panel {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-  }
-  .chat-panel-header {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    border-bottom: 1px solid var(--border-color);
-  }
-  .add-message-form {
-    background: var(--bg-secondary);
-    color: var(--text-color);
-  }
-  .chat-message {
-    background-color: var(--bg-secondary);
-    color: var(--text-color);
-  }
-  .chat-message-content {
-    background: none;
-    color: var(--text-color);
-  }
-  .chat-message.admin {
-    background-color: var(--secondary-color);
-    color: white;
-  }
-  .chat-message.admin .chat-message-header {
-    color: rgba(255,255,255,0.8);
-  }
 }
