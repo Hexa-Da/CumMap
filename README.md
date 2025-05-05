@@ -1,6 +1,6 @@
 # CumMap
 
-CumMap est une application web interactive développée pour le Cartel Paris 2025, un événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
+CumMap est une application web interactive développée pour le Cartel NAncy 2026, un événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
 
 ## 🎯 Objectif du projet
 
@@ -20,9 +20,18 @@ Vous pouvez y découvrir toutes les fonctionnalités de l'application, notamment
 
 ### Gestion des événements
 - 📅 Affichage chronologique des événements
-- 🏷️ Filtrage par type d'événement (sportif, soirée, etc.)
+- 🏷️ Filtrage avancé par type d'événement (sportif, soirée, etc.), délégation, lieu, et genre (Féminin, Masculin, Mixte)
+- 🎛️ Boutons "Filtrer" et "Réinitialiser" pour un contrôle rapide des filtres
 - 📋 Liste détaillée avec informations complètes
 - ⭐ Système de favoris pour marquer les événements importants
+- 🗂️ Onglet "Planning" pour consulter les plannings PDF/Excel (bus, tournois, soirées)
+- 📆 Calendrier interactif avec header harmonisé, filtres contextuels, et affichage compact des filtres
+- 🔄 Synchronisation des filtres entre l'onglet événements et le calendrier
+- ⏩ Auto-scroll automatique vers le prochain événement à venir
+
+### Fonctionnalités sociales et sécurité
+- 💬 Chat d'organisation intégré (messages admins, édition/suppression, responsive, couleurs adaptées, nom personnalisable)
+- 🚨 Popup contacts d'urgence accessible en un clic depuis le header
 
 ### Fonctionnalités administratives
 - 🔒 Authentification Google via Firebase
@@ -30,6 +39,12 @@ Vous pouvez y découvrir toutes les fonctionnalités de l'application, notamment
 - ✏️ Mode édition pour ajouter/modifier/supprimer des lieux
 - 📝 Gestion des matchs avec dates et descriptions
 - ↩️ Système d'annulation/rétablissement des actions
+- 🗨️ Gestion des messages d'organisation (ajout, édition, suppression de messages dans le chat)
+
+### UI/UX et accessibilité
+- 📱 Interface responsive adaptée mobile et desktop
+- 🦾 Accessibilité renforcée (contrastes, navigation clavier, textes lisibles en mode sombre et clair)
+- 🎯 Boutons et éléments interactifs accessibles et bien espacés
 
 ## 💻 Technologies utilisées
 
