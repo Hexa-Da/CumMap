@@ -1394,9 +1394,6 @@ html, body, #root {
   padding: 0.5rem;
   background-color: var(--bg-color);
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 2px;
-  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1405,7 +1402,6 @@ html, body, #root {
 .filter-buttons-row {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .filter-toggle-button,
@@ -1469,12 +1465,10 @@ html, body, #root {
 .gender-filter-row {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  flex: 1.03;
 }
 
 .gender-filter-button {
-  flex: 1;
-  padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background-color: var(--bg-color);

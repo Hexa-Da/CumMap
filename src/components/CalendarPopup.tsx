@@ -49,6 +49,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   onGenderFilterChange
 }) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showFiltersCalendar, setShowFiltersCalendar] = useState(false);
 
   const sportOptions = [
     { value: 'none', label: 'Aucun' },
@@ -424,57 +425,91 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
     <div className="calendar-popup-overlay" onClick={onClose}>
       <div className="calendar-popup" onClick={e => e.stopPropagation()}>
         <div className="calendar-popup-header">
-          <button className="close-button" onClick={onClose}>×</button>
-          <div className="filter-row">
-            <select 
-              className="filter-select"
-              value={eventFilter}
-              onChange={(e) => {
-                onEventFilterChange(e.target.value);
-                // Réinitialiser le filtre de lieu quand le type d'événement change
+          <h3>Calendrier</h3>
+          <button 
+            className="close-button"
+            onClick={onClose}
+            title="Retour aux événements"
+          >
+            Retour
+          </button>
+        </div>
+        <div className="calendar-filter-buttons-row" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0.5rem 0rem 0.5rem' }}>
+          <button 
+            className="filter-toggle-button"
+            onClick={() => setShowFiltersCalendar(v => !v)}
+          >
+            {showFiltersCalendar ? 'Masquer les filtres' : 'Filtrer'}
+          </button>
+          {showFiltersCalendar && (
+            <button 
+              className="filter-reset-button"
+              onClick={() => {
+                onEventFilterChange('all');
+                onDelegationFilterChange('all');
                 onVenueFilterChange('Tous');
+                onGenderFilterChange('female');
+                onGenderFilterChange('male');
+                onGenderFilterChange('mixed');
               }}
             >
-              {sportOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="filter-select"
-              value={delegationFilter}
-              onChange={(e) => onDelegationFilterChange(e.target.value)}
-            >
-              <option value="all">Toutes les délégations</option>
-              {getAllDelegations().map(delegation => (
-                <option key={delegation} value={delegation}>
-                  {delegation}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-row">
-            {eventFilter !== 'none' && (
+              Réinitialiser
+            </button>
+          )}
+        </div>
+        {showFiltersCalendar && (
+          <>
+            <div className="filter-row">
               <select 
                 className="filter-select"
-                value={venueFilter}
-                onChange={(e) => onVenueFilterChange(e.target.value)}
+                value={eventFilter}
+                onChange={(e) => {
+                  onEventFilterChange(e.target.value);
+                  // Réinitialiser le filtre de lieu quand le type d'événement change
+                  onVenueFilterChange('Tous');
+                }}
               >
-                {getVenueOptions().map(option => (
+                {sportOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-            )}
 
+              <select
+                className="filter-select"
+                value={delegationFilter}
+                onChange={(e) => onDelegationFilterChange(e.target.value)}
+              >
+                <option value="all">Toutes les délégations</option>
+                {getAllDelegations().map(delegation => (
+                  <option key={delegation} value={delegation}>
+                    {delegation}
+                  </option>
+                ))}
+              </select>
+
+              {/* Filtre des lieux sur la même ligne */}
+              {eventFilter !== 'none' && eventFilter !== 'all' && (
+                <select 
+                  className="filter-select"
+                  value={venueFilter}
+                  onChange={(e) => onVenueFilterChange(e.target.value)}
+                >
+                  {getVenueOptions().map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Ligne séparée pour les boutons de genre */}
             {eventFilter !== 'none' && eventFilter !== 'party' && (() => {
               const { hasFemale, hasMale, hasMixed } = hasGenderMatches(eventFilter);
               return (hasFemale || hasMale || hasMixed) && (
-                <div className="gender-filter-row">
+                <div className="filter-row gender-filter-row">
                   {hasFemale && (
                     <button 
                       className={`gender-filter-button ${showFemale ? 'active' : ''}`}
@@ -502,8 +537,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                 </div>
               );
             })()}
-          </div>
-        </div>
+          </>
+        )}
         <div className="calendar-grid">
           <div className="calendar-hours">
             <div className="calendar-hour-header"></div>
