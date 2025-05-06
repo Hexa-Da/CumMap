@@ -193,7 +193,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             endTime: '17:00',
             name: 'Place Stanislas',
             description: 'Défilé',
-            color: '#FF9800',
+            color: '#673AB7',
             type: 'party',
             venue: 'Pl. Stanislas, 54000 Nancy'
           },
@@ -204,7 +204,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             endTime: '23:00',
             name: 'Centre Prouvé',
             description: 'Show Pompoms',
-            color: '#FF9800',
+            color: '#673AB7',
             type: 'party',
             venue: '1 Pl. de la République, 54000 Nancy'
           },
@@ -215,7 +215,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             endTime: '23:00',
             name: 'Parc des Expositions',
             description: 'Soirée',
-            color: '#FF9800',
+            color: '#673AB7',
             type: 'party',
             venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
           },
@@ -226,7 +226,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             endTime: '23:00',
             name: 'Zénith',
             description: 'Soirée',
-            color: '#FF9800',
+            color: '#673AB7',
             type: 'party',
             venue: 'Rue du Zénith, 54320 Maxéville'
           }
