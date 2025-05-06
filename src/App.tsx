@@ -1690,6 +1690,8 @@ function App() {
           <h3>${party.name}</h3>
           <p>${party.description}</p>
           <p class="venue-address">${party.address}</p>
+          ${party.name !== 'Place Stanislas' ? '<div class="party-bus"><h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4></div>' : ''}
+          ${party.name === 'Centre Prouvé' ? '<div class="party-results"><h4 style=\'color: var(--success-color)\'>Résultat : à venir</h4></div>' : ''}
         `;
         
         // Boutons d'actions
@@ -2570,6 +2572,16 @@ function App() {
                         <>
                           <p className="event-description">{event.description}</p>
                           <p className="event-address">{event.address}</p>
+                          {event.name !== 'Place Stanislas' && (
+                            <div className="party-bus">
+                              <h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌</a></h4>
+                            </div>
+                          )}
+                          {event.name === 'Centre Prouvé' && (
+                            <div className="party-results">
+                              <h4 style={{ color: 'var(--success-color)', marginTop: '10px' }}>Résultat : à venir</h4>
+                            </div>
+                          )}
                         </>
                       )}
                       <div className="event-actions">
