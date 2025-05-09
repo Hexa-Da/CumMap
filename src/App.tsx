@@ -290,6 +290,24 @@ function App() {
       timestamp: Date.now(),
       isAdmin: true
     });
+
+    // Notification locale (web)
+    if (window.Notification && Notification.permission === 'granted') {
+      new Notification('Nouveau message de l\'organisation', {
+        body: msg,
+        icon: '/favicon.png'
+      });
+    } else if (window.Notification && Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification('Nouveau message de l\'organisation', {
+            body: msg,
+            icon: '/favicon.png'
+          });
+        }
+      });
+    }
+    // TODO: Intégrer ici FCM (Firebase Cloud Messaging) pour notifications push sur mobile/app
   };
 
   // Modification d'un message dans Firebase (texte et nom)
@@ -1465,8 +1483,8 @@ function App() {
               <p class="match-date">${formatDateTime(match.date, match.endTime)}</p>
               <p class="match-teams">${match.teams}</p>
               <p class="match-description">${match.description}</p>
-              ${match.result ? `<p class="match-result"><strong>Résultat :</strong> ${match.result}</p>` : ''}
-            `;
+              ${match.result ? `<p class="match-result"><strong>Résultat :</strong> ${match.result}</p>` : ''} 
+            `; 
             
             // Boutons d'édition en mode édition - toujours visibles
             if (isEditing && isAdmin) {
@@ -1691,7 +1709,6 @@ function App() {
           <p>${party.description}</p>
           <p class="venue-address">${party.address}</p>
           ${party.name !== 'Place Stanislas' ? '<div class="party-bus"><h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4></div>' : ''}
-          ${party.name === 'Centre Prouvé' ? '<div class="party-results"><h4 style=\'color: var(--success-color)\'>Résultat : à venir</h4></div>' : ''}
         `;
         
         // Boutons d'actions
@@ -2158,6 +2175,19 @@ function App() {
     setTimeout(scrollToFirstNonPassedEvent, 100);
   };
 
+  // Calcul du nombre de messages non lus
+  const lastSeenChatTimestamp = Number(localStorage.getItem('lastSeenChatTimestamp') || 0);
+  const unreadCount = messages.filter(m => m.timestamp > lastSeenChatTimestamp).length;
+
+  // Quand on ouvre le chat, on marque tous les messages comme lus
+  const handleOpenChat = () => {
+    setActiveTab(activeTab === 'map' ? 'chat' : 'map');
+    if (activeTab !== 'chat' && messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      localStorage.setItem('lastSeenChatTimestamp', String(lastMsg.timestamp));
+    }
+  };
+
   return (
     <div className="app">
       <div className="app-header">
@@ -2260,30 +2290,53 @@ function App() {
             </>
           )}
         </div>
-        <button
-          className="chat-button"
-          onClick={() => {
-            ReactGA.event({
-              category: 'navigation',
-              action: 'change_tab',
-              label: activeTab === 'map' ? 'chat' : 'map'
-            });
-            setActiveTab(activeTab === 'map' ? 'chat' : 'map');
-          }}
-          title="Messages de l'orga"
-          style={{
-            padding: '0px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}
-        >
-          💬
-        </button>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            className="chat-button"
+            onClick={() => {
+              ReactGA.event({
+                category: 'navigation',
+                action: 'change_tab',
+                label: activeTab === 'map' ? 'chat' : 'map'
+              });
+              handleOpenChat();
+            }}
+            title="Messages de l'orga"
+            style={{
+              padding: '0px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              position: 'relative'
+            }}
+          >
+            💬
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                background: 'red',
+                color: 'white',
+                borderRadius: '50%',
+                minWidth: 18,
+                height: 18,
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 5px',
+                zIndex: 10,
+                fontWeight: 700,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+              }}>{unreadCount}</span>
+            )}
+          </button>
+        </div>
         <button
           className="emergency-button"
           onClick={() => setShowEmergency(true)}
@@ -2574,7 +2627,7 @@ function App() {
                           <p className="event-address">{event.address}</p>
                           {event.name !== 'Place Stanislas' && (
                             <div className="party-bus">
-                              <h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌</a></h4>
+                              <h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4>
                             </div>
                           )}
                           {event.name === 'Centre Prouvé' && (
