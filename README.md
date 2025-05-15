@@ -1,6 +1,6 @@
 # CumMap
 
-CumMap est une application web interactive développée pour le Cartel NAncy 2026, un événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
+CumMap est une application web interactive développée pour le Cartel Nancy 2026, un événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
 
 ## 🎯 Objectif du projet
 
