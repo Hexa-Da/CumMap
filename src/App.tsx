@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
 import CalendarPopup from './components/CalendarPopup';
 import { Venue, Match } from './types';
+import PlanningFiles from './components/PlanningFiles';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -2675,28 +2676,8 @@ function App() {
                     Retour
                   </button>
                 </div>
-                <div style={{ padding: '2rem', textAlign: 'left', maxWidth: 600, margin: '0 auto' }}>
-                  <p>Retrouvez ici les plannings utiles&nbsp;:</p>
-                  <ul style={{ lineHeight: '2' }}>
-                    <li>
-                      <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">
-                        🚌 Planning des bus (PDF)
-                      </a>
-                    </li>
-                    <li>
-                      <a href="/plannings/planning-tournois.xlsx" target="_blank" rel="noopener noreferrer">
-                        🏆 Planning des tournois (Excel)
-                      </a>
-                    </li>
-                    <li>
-                      <a href="/plannings/planning-soirees.pdf" target="_blank" rel="noopener noreferrer">
-                        🎉 Planning des soirées (PDF)
-                      </a>
-                    </li>
-                  </ul>
-                  <p style={{ fontSize: '0.9em', color: 'var(--text-color-light)' }}>
-                    (Tu peux modifier ces liens dans le code, ou ajouter d'autres fichiers plus tard)
-                  </p>
+                <div style={{ padding: '2rem', textAlign: 'left', maxWidth: 800, margin: '0 auto' }}>
+                  <PlanningFiles />
                 </div>
               </div>
             )}

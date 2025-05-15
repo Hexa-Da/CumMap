@@ -30,4 +30,14 @@ export interface Match {
   endTime?: string;
   result?: string;
   venueId: string;
+}
+
+export interface PlanningFile {
+  id: string;
+  name: string;
+  type: 'pdf' | 'excel';
+  url: string;
+  uploadDate: number;
+  description?: string;
+  uploadedBy: string;
 } 
