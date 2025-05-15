@@ -4,7 +4,7 @@ CumMap est une application web interactive développée pour le Cartel NAncy 202
 
 ## 🎯 Objectif du projet
 
-L'objectif principal de CumMap est de faciliter la navigation et l'organisation des participants lors du Cartel Paris 2025 (Version supporter des Mines de Nancy). L'application permet de centraliser toutes les informations concernant les événements sportifs, les soirées et les lieux importants, offrant ainsi une expérience utilisateur optimale pour les participants. 
+L'objectif principal de CumMap etait de faciliter la navigation et l'organisation des participants lors du Cartel Paris 2025 (Version supporter des Mines de Nancy). L'application permet maintenant de centraliser toutes les informations concernant les événements sportifs, les soirées et les lieux importants, offrant ainsi une expérience utilisateur optimale pour les participants (peu importe la délégation) pour le Cartel Nancy 2026.  
 
 ## 🎥 Démo des fonctionnalités principales
 
