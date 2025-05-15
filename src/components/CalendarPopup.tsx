@@ -445,12 +445,26 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             <button 
               className="filter-reset-button"
               onClick={() => {
-                onEventFilterChange('all');
-                onDelegationFilterChange('all');
-                onVenueFilterChange('Tous');
-                onGenderFilterChange('female');
-                onGenderFilterChange('male');
-                onGenderFilterChange('mixed');
+                // Vérifier si les filtres sont déjà réinitialisés
+                const isAlreadyReset = 
+                  eventFilter === 'all' && 
+                  delegationFilter === 'all' && 
+                  venueFilter === 'Tous' && 
+                  showFemale && 
+                  showMale && 
+                  showMixed;
+
+                // Ne réinitialiser que si nécessaire
+                if (!isAlreadyReset) {
+                  // Réinitialiser tous les filtres en une seule fois
+                  onEventFilterChange('all');
+                  onDelegationFilterChange('all');
+                  onVenueFilterChange('Tous');
+                  // Forcer un délai pour s'assurer que tous les changements sont appliqués
+                  setTimeout(() => {
+                    onEventFilterChange('all');
+                  }, 0);
+                }
               }}
             >
               Réinitialiser
