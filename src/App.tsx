@@ -2497,6 +2497,8 @@ function App() {
                           setShowFemale(true);
                           setShowMale(true);
                           setShowMixed(true);
+                          triggerMarkerUpdate();
+                          setTimeout(scrollToFirstNonPassedEvent, 100);
                         }}
                       >
                         Réinitialiser
