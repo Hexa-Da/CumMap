@@ -1537,23 +1537,6 @@ html, body, #root {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .events-panel {
-    width: 100%;
-    height: 100%;
-  }
-
-  .events-toggle-button {
-    top: 10px;
-    left: 10px;
-  }
-  
-  .close-events-button {
-    top: 10px;
-    right: 10px;
-  }
-}
-
 .filter-select {
   flex: 1;
   min-width: 0;
@@ -2288,15 +2271,15 @@ html, body, #root {
 
 /* Styles pour les fichiers de planning */
 .planning-files {
-  padding: 20px;
+  padding: 10px;
   background: var(--background-color);
   border-radius: 8px;
-  margin: 20px 0;
 }
 
 .planning-files h2 {
   color: var(--text-color);
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .files-list {
@@ -2379,6 +2362,10 @@ html, body, #root {
   margin-bottom: 20px;
 }
 
+.admin-instructions {
+  margin-bottom: 1rem;
+}
+
 .add-file-button {
   padding: 8px 16px;
   background-color: var(--success-color);
@@ -2396,7 +2383,8 @@ html, body, #root {
 
 .add-file-form {
   background: var(--card-background);
-  padding: 20px;
+  padding: 2px;
+  gap: 1rem;
   border-radius: 8px;
   margin-bottom: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -2443,4 +2431,43 @@ html, body, #root {
 
 .submit-button:hover {
   background-color: var(--primary-color-dark);
+}
+
+.filters {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  color: #495057;
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filter-select:hover {
+  border-color: #80bdff;
+}
+
+.filter-select:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }

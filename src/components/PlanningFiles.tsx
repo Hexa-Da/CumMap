@@ -6,6 +6,8 @@ import { auth } from '../firebase';
 
 export default function PlanningFiles() {
   const [files, setFiles] = useState<PlanningFile[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<PlanningFile[]>([]);
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newFile, setNewFile] = useState({
@@ -14,6 +16,74 @@ export default function PlanningFiles() {
     url: '',
     description: ''
   });
+
+  // Liste des types d'événements disponibles
+  const eventTypes = [
+    { value: 'all', label: 'Tous les événements' },
+    { value: 'party', label: 'Soirées et Défilé ⭐' },
+    { value: 'Football', label: 'Football ⚽' },
+    { value: 'Basketball', label: 'Basketball 🏀' },
+    { value: 'Handball', label: 'Handball 🤾' },
+    { value: 'Rugby', label: 'Rugby 🏉' },
+    { value: 'Ultimate', label: 'Ultimate 🥏' },
+    { value: 'Natation', label: 'Natation 🏊' },
+    { value: 'Badminton', label: 'Badminton 🏸' },
+    { value: 'Tennis', label: 'Tennis 🎾' },
+    { value: 'Cross', label: 'Cross 🏃' },
+    { value: 'Volleyball', label: 'Volleyball 🏐' },
+    { value: 'Ping-pong', label: 'Ping-pong 🏓' },
+    { value: 'Boxe', label: 'Boxe 🥊' },
+    { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
+    { value: 'Pétanque', label: 'Pétanque 🍹' },
+    { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
+    { value: 'Jeux de société', label: 'Jeux de société 🎲' },
+    { value: 'Pompom', label: 'Pompom 🎀' },
+    { value: 'Defile', label: 'Défilé 🎺' },
+    { value: 'Hotel', label: 'Hôtel 🏢' },
+    { value: 'Restaurant', label: 'Restaurant 🍽️' }
+  ];
+
+  // Fonction pour convertir l'URL en mode lecture seule
+  const getReadOnlyUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      // Si c'est une URL Google Drive
+      if (urlObj.hostname.includes('drive.google.com')) {
+        // Si c'est un lien de partage direct
+        if (urlObj.pathname.includes('/d/')) {
+          const fileId = urlObj.pathname.split('/d/')[1].split('/')[0];
+          return `https://drive.google.com/file/d/${fileId}/preview?rm=minimal`;
+        }
+        // Si c'est un lien de partage avec des paramètres
+        else if (urlObj.searchParams.has('id')) {
+          const fileId = urlObj.searchParams.get('id');
+          return `https://drive.google.com/file/d/${fileId}/preview?rm=minimal`;
+        }
+      }
+      // Pour les autres types d'URLs, retourner l'URL originale
+      return url;
+    } catch (error) {
+      console.error('Erreur lors de la conversion de l\'URL:', error);
+      return url;
+    }
+  };
+
+  // Fonction pour vérifier si l'URL est sécurisée
+  const isSecureUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname.includes('drive.google.com')) {
+        // Vérifier si l'URL contient des paramètres de partage
+        const hasSharingParams = urlObj.searchParams.has('usp') || 
+                               urlObj.searchParams.has('export') ||
+                               urlObj.searchParams.has('edit');
+        return !hasSharingParams;
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
 
   useEffect(() => {
     // Vérifier si l'utilisateur est admin
@@ -50,6 +120,20 @@ export default function PlanningFiles() {
     };
   }, []);
 
+  // Effet pour filtrer les fichiers quand les filtres ou la liste change
+  useEffect(() => {
+    let filtered = files;
+
+    // Filtre par type d'événement
+    if (eventTypeFilter !== 'all') {
+      filtered = filtered.filter(file => 
+        file.name.toLowerCase().includes(eventTypeFilter.toLowerCase())
+      );
+    }
+
+    setFilteredFiles(filtered);
+  }, [eventTypeFilter, files]);
+
   const handleDeleteFile = async (fileId: string) => {
     if (!isAdmin) return;
     
@@ -71,6 +155,12 @@ export default function PlanningFiles() {
       const user = auth.currentUser;
       if (!user) {
         alert('Vous devez être connecté pour ajouter un fichier.');
+        return;
+      }
+
+      // Vérifier si l'URL est sécurisée
+      if (!isSecureUrl(newFile.url)) {
+        alert('L\'URL fournie n\'est pas sécurisée. Veuillez utiliser un lien de partage en lecture seule.');
         return;
       }
 
@@ -99,6 +189,23 @@ export default function PlanningFiles() {
     <div className="planning-files">
       <h2>Fichiers de planning</h2>
       
+      <div className="filters">
+        <div className="filter-group">
+          <select
+            id="eventTypeFilter"
+            value={eventTypeFilter}
+            onChange={(e) => setEventTypeFilter(e.target.value)}
+            className="filter-select"
+          >
+            {eventTypes.map(type => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {isAdmin && (
         <div className="admin-controls">
           <button
@@ -120,6 +227,7 @@ export default function PlanningFiles() {
               value={newFile.name}
               onChange={(e) => setNewFile({ ...newFile, name: e.target.value })}
               required
+              placeholder="Ex: Planning Basketball M"
             />
           </div>
 
@@ -144,7 +252,7 @@ export default function PlanningFiles() {
               value={newFile.url}
               onChange={(e) => setNewFile({ ...newFile, url: e.target.value })}
               required
-              placeholder="https://..."
+              placeholder="https://drive.google.com/..."
             />
           </div>
 
@@ -164,11 +272,11 @@ export default function PlanningFiles() {
         </form>
       )}
 
-      {files.length === 0 ? (
+      {filteredFiles.length === 0 ? (
         <p>Aucun fichier disponible</p>
       ) : (
         <div className="files-list">
-          {files.map((file) => (
+          {filteredFiles.map((file) => (
             <div key={file.id} className="file-item">
               <div className="file-info">
                 <h3>{file.name}</h3>
@@ -178,11 +286,11 @@ export default function PlanningFiles() {
               </div>
               <div className="file-actions">
                 <a 
-                  href={file.url} 
+                  href={isAdmin ? file.url : getReadOnlyUrl(file.url)} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="icon-button download-button"
-                  title="Voir le fichier"
+                  title={isAdmin ? "Voir le fichier" : "Voir le fichier (lecture seule)"}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
