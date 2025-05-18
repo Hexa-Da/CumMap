@@ -1857,37 +1857,9 @@ function App() {
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
-        } else if (party) {
-          // Afficher le marqueur de soirée si :
-          // 1. Le filtre est sur "all" ou "party"
-          // 2. Le filtre de lieu correspond
-          let partyId = '';
-          switch (party.name) {
-            case 'Place Stanislas':
-              partyId = 'place-stanislas';
-              break;
-            case 'Centre Prouvé':
-              partyId = 'centre-prouve';
-              break;
-            case 'Parc des Expositions':
-              partyId = 'parc-expo';
-              break;
-            case 'Zénith':
-              partyId = 'zenith';
-              break;
-            default:
-              partyId = party.name.toLowerCase().replace(/\s+/g, '-');
-          }
-
-          const shouldShow = 
-            (eventFilter === 'all' || eventFilter === 'party') &&
-            (venueFilter === 'Tous' || partyId === venueFilter);
-
-          markerElement.style.display = shouldShow ? 'block' : 'none';
-          markerElement.style.opacity = shouldShow ? '1' : '0';
-        } else if (hotel || restaurant) {
-          // Afficher les hôtels et restaurants uniquement si le filtre est sur "all"
-          const shouldShow = eventFilter === 'all';
+        } else if (party || hotel || restaurant) {
+          // Afficher les hôtels, restaurants et soirées uniquement si l'utilisateur est admin
+          const shouldShow = isAdmin && eventFilter === 'all';
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
