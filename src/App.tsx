@@ -259,11 +259,12 @@ function App() {
         const adminsRef = ref(database, 'admins');
         onValue(adminsRef, (snapshot) => {
           const admins = snapshot.val();
+          // L'utilisateur doit être connecté ET être dans la liste des admins
           setIsAdmin(admins && admins[user.uid]);
         });
       } else {
         setUser(null);
-        setIsAdmin(false);
+        setIsAdmin(false); // Forcer isAdmin à false si l'utilisateur n'est pas connecté
       }
       setIsLoading(false);
     });
@@ -1857,9 +1858,15 @@ function App() {
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
-        } else if (party || hotel || restaurant) {
-          // Afficher les hôtels, restaurants et soirées uniquement si l'utilisateur est admin
+        } else if (party) {
+          // Afficher les soirées uniquement si l'utilisateur est admin
           const shouldShow = isAdmin && eventFilter === 'all';
+
+          markerElement.style.display = shouldShow ? 'block' : 'none';
+          markerElement.style.opacity = shouldShow ? '1' : '0';
+        } else if (hotel || restaurant) {
+          // Afficher les hôtels et restaurants pour tous
+          const shouldShow = eventFilter === 'all';
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
