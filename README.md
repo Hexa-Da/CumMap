@@ -1,6 +1,6 @@
 # CumMap
 
-CumMap est une application web interactive qui a évolué pour devenir le client web de l'application officielle du Cartel Nancy 2026. Initialement créée pour le Cartel de Paris 2025 en tant que support pour les supportères des Mines de Nancy, l'application a été adaptée et enrichie pour répondre aux besoins de l'événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
+CumMap est une application web interactive qui a évolué pour devenir le client web de l'application officielle du Cartel Nancy 2026. Initialement créée pour le Cartel de Paris 2025 en tant que support pour les supportères des Mines de Nancy, l'application a été adaptée et enrichie pour répondre aux besoins de l'événement majeur rassemblant plus de 2000 étudiants des écoles d'ingénieur de l'Alliance IMT.
 
 ## 🎯 Objectif du projet
 
@@ -19,23 +19,21 @@ CumMap fonctionne comme un client web frontend qui se connecte à la base de don
 
 ## 🎥 Démo des fonctionnalités principales
 
-Une démo de l'application est disponible à l'adresse [https://cummap.netlify.app](https://cummap.netlify.app). 
-Vous pouvez y découvrir toutes les fonctionnalités de l'application, notamment :
+Une démo de l'application web est disponible à l'adresse [https://cummap.netlify.app](https://cummap.netlify.app). 
+Vous pouvez y découvrir une partie des fonctionnalités de l'application finale, notamment :
 
 ### Carte interactive
 - 🗺️ Visualisation des lieux d'événements sur une carte interactive avec Leaflet
 - 🎯 Géolocalisation des utilisateurs avec gestion des erreurs et retry
-- 📍 Marqueurs personnalisés pour différents types d'événements (matchs, soirées, hôtels)
+- 📍 Marqueurs personnalisés pour différents types d'événements (matchs, soirées, hôtels et restaurants)
 - 🔍 4 styles de carte différents (OpenStreetMap, CyclOSM, Humanitarian, OSM France)
-- 🎨 Support du mode sombre
 
 ### Gestion des événements
 - 📅 Affichage chronologique des événements
 - 🏷️ Filtrage avancé par type d'événement (sportif, soirée, etc.), délégation, lieu, et genre (Féminin, Masculin, Mixte)
 - 🎛️ Boutons "Filtrer" et "Réinitialiser" pour un contrôle rapide des filtres
 - 📋 Liste détaillée avec informations complètes
-- ⭐ Système de favoris pour marquer les événements importants
-- 🗂️ Onglet "Planning" pour consulter les plannings PDF/Excel (bus, tournois, soirées)
+- 🗂️ Onglet "Planning" pour consulter les plannings PDF (bus, tournois, soirées)
 - 📆 Calendrier interactif avec header harmonisé, filtres contextuels, et affichage compact des filtres
 - 🔄 Synchronisation des filtres entre l'onglet événements et le calendrier
 - ⏩ Auto-scroll automatique vers le prochain événement à venir
@@ -95,7 +93,7 @@ npm run dev
 
 ### Configuration Firebase
 1. Créer un projet Firebase
-2. Activer les services nécessaires (Realtime Database, Authentication)
+2. Activer les services nécessaires (Realtime Database, Authentication et Storage)
 3. Configurer les règles de sécurité
 4. Créer un fichier `.env` avec les variables d'environnement Firebase :
 ```
