@@ -1556,30 +1556,12 @@ html, body, #root {
   background-size: 12px;
 }
 
-.filter-select:hover {
-  border-color: var(--primary-color);
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
 @media (prefers-color-scheme: dark) {
   .filter-select {
     background-color: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-color);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z'/%3E%3C/svg%3E");
-  }
-  
-  .filter-select:hover {
-    border-color: var(--primary-color);
-  }
-  
-  .filter-select:focus {
-    border-color: var(--primary-color);
   }
 }
 
@@ -2460,14 +2442,4 @@ html, body, #root {
   color: #495057;
   cursor: pointer;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.filter-select:hover {
-  border-color: #80bdff;
-}
-
-.filter-select:focus {
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }

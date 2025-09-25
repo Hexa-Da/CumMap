@@ -26,6 +26,7 @@ interface CalendarPopupProps {
   showFemale: boolean;
   showMale: boolean;
   showMixed: boolean;
+  isAdmin: boolean;
   onEventFilterChange: (value: string) => void;
   onDelegationFilterChange: (value: string) => void;
   onVenueFilterChange: (value: string) => void;
@@ -43,6 +44,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   showFemale,
   showMale,
   showMixed,
+  isAdmin,
   onEventFilterChange,
   onDelegationFilterChange,
   onVenueFilterChange,
@@ -54,7 +56,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   const sportOptions = [
     { value: 'none', label: 'Aucun' },
     { value: 'all', label: 'Tous les événements' },
-    { value: 'party', label: 'Soirée et Défilé ⭐' },
+    ...(isAdmin ? [{ value: 'party', label: 'Soirée et Défilé ⭐' }] : []),
     { value: 'Football', label: 'Football ⚽' },
     { value: 'Basketball', label: 'Basketball 🏀' },
     { value: 'Handball', label: 'Handball 🤾' },
@@ -89,8 +91,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
       return [{ value: 'Tous', label: 'Tous les lieux' }];
     }
 
-    // Pour les soirées et défilés, retourner les lieux fixes
-    if (eventFilter === 'party') {
+    // Pour les soirées et défilés, retourner les lieux fixes (uniquement si admin)
+    if (eventFilter === 'party' && isAdmin) {
       return [
         { value: 'Tous', label: 'Tous les lieux' },
         { value: 'place-stanislas', label: 'Place Stanislas' },
@@ -183,8 +185,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
         });
       }
 
-      // Pour les soirées et défilés
-      if (eventFilter === 'all' || eventFilter === 'party') {
+      // Pour les soirées et défilés (uniquement si admin)
+      if ((eventFilter === 'all' || eventFilter === 'party') && isAdmin) {
         const parties = [
           {
             id: 'place-stanislas',
@@ -423,8 +425,14 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
 
   return (
     <div className="calendar-popup-overlay" onClick={onClose}>
-      <div className="calendar-popup" onClick={e => e.stopPropagation()}>
-        <div className="calendar-popup-header">
+      <div className="calendar-popup" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Header fixe */}
+        <div className="calendar-popup-header" style={{ 
+          flexShrink: 0,
+          backgroundColor: 'var(--bg-primary)', 
+          borderBottom: '1px solid var(--border-color)',
+          paddingBottom: '0.75rem'
+        }}>
           <h3>Calendrier</h3>
           <button 
             className="close-button"
@@ -434,100 +442,210 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             Retour
           </button>
         </div>
-        <div className="calendar-filter-buttons-row" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0.5rem 0rem 0.5rem' }}>
-          <button 
-            className="filter-toggle-button"
-            onClick={() => setShowFiltersCalendar(v => !v)}
-          >
-            {showFiltersCalendar ? 'Masquer les filtres' : 'Filtrer'}
-          </button>
-          {showFiltersCalendar && (
+        
+        {/* Zone de filtres - structure identique à App.tsx */}
+        <div className="event-filters" style={{ 
+          flexShrink: 0,
+          padding: '0rem 0.5rem 0.5rem 0.5rem',
+          backgroundColor: 'var(--bg-color)',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem'
+        }}>
+          <div className="filter-buttons-row" style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
-              className="filter-reset-button"
-              onClick={() => {
-                // Vérifier si les filtres sont déjà réinitialisés
-                const isAlreadyReset = 
-                  eventFilter === 'all' && 
-                  delegationFilter === 'all' && 
-                  venueFilter === 'Tous' && 
-                  showFemale && 
-                  showMale && 
-                  showMixed;
-
-                // Ne réinitialiser que si nécessaire
-                if (!isAlreadyReset) {
-                  // Réinitialiser tous les filtres en une seule fois
-                  onEventFilterChange('all');
-                  onDelegationFilterChange('all');
-                  onVenueFilterChange('Tous');
-                  // Forcer un délai pour s'assurer que tous les changements sont appliqués
-                  setTimeout(() => {
-                    onEventFilterChange('all');
-                  }, 0);
-                }
+              className="filter-toggle-button"
+              onClick={() => setShowFiltersCalendar(v => !v)}
+              style={{
+                flex: 1,
+                padding: '4px 12px',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                backgroundColor: 'var(--warning-color)',
+                color: 'white'
               }}
             >
-              Réinitialiser
+              {showFiltersCalendar ? 'Masquer les filtres' : 'Filtrer'}
             </button>
-          )}
-        </div>
-        {showFiltersCalendar && (
-          <>
-            <div className="filter-row">
-              <select 
-                className="filter-select"
-                value={eventFilter}
-                onChange={(e) => {
-                  onEventFilterChange(e.target.value);
-                  // Réinitialiser le filtre de lieu quand le type d'événement change
-                  onVenueFilterChange('Tous');
+            {showFiltersCalendar && (
+              <button 
+                className="filter-reset-button"
+                onClick={() => {
+                  // Vérifier si les filtres sont déjà réinitialisés
+                  const isAlreadyReset = 
+                    eventFilter === 'all' && 
+                    delegationFilter === 'all' && 
+                    venueFilter === 'Tous' && 
+                    showFemale && 
+                    showMale && 
+                    showMixed;
+
+                  // Ne réinitialiser que si nécessaire
+                  if (!isAlreadyReset) {
+                    // Réinitialiser tous les filtres en une seule fois
+                    onEventFilterChange('all');
+                    onDelegationFilterChange('all');
+                    onVenueFilterChange('Tous');
+                    // Forcer un délai pour s'assurer que tous les changements sont appliqués
+                    setTimeout(() => {
+                      onEventFilterChange('all');
+                    }, 0);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '4px 12px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  backgroundColor: 'var(--primary-color)',
+                  color: 'white'
                 }}
               >
-                {sportOptions.map(option => (
+                Réinitialiser
+              </button>
+            )}
+          </div>
+        
+        {showFiltersCalendar && (
+          <>
+            {/* Filtres de sélection - structure identique à App.tsx */}
+            <select 
+              className="filter-select"
+              value={eventFilter}
+              onChange={(e) => {
+                onEventFilterChange(e.target.value);
+                // Réinitialiser le filtre de lieu quand le type d'événement change
+                onVenueFilterChange('Tous');
+              }}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                backgroundColor: 'var(--bg-color)',
+                color: 'var(--text-color)',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                appearance: 'none',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
+                backgroundSize: '12px'
+              }}
+            >
+              {sportOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="filter-select"
+              value={delegationFilter}
+              onChange={(e) => onDelegationFilterChange(e.target.value)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                backgroundColor: 'var(--bg-color)',
+                color: 'var(--text-color)',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                appearance: 'none',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
+                backgroundSize: '12px'
+              }}
+            >
+              <option value="all">Toutes les délégations</option>
+              {getAllDelegations().map(delegation => (
+                <option key={delegation} value={delegation}>
+                  {delegation}
+                </option>
+              ))}
+            </select>
+
+            {/* Filtre des lieux sur la même ligne */}
+            {eventFilter !== 'none' && eventFilter !== 'all' && (eventFilter !== 'party' || isAdmin) && (
+              <select 
+                className="filter-select"
+                value={venueFilter}
+                onChange={(e) => onVenueFilterChange(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--bg-color)',
+                  color: 'var(--text-color)',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  appearance: 'none',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 10px center',
+                  backgroundSize: '12px'
+                }}
+              >
+                {getVenueOptions().map(option => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-
-              <select
-                className="filter-select"
-                value={delegationFilter}
-                onChange={(e) => onDelegationFilterChange(e.target.value)}
-              >
-                <option value="all">Toutes les délégations</option>
-                {getAllDelegations().map(delegation => (
-                  <option key={delegation} value={delegation}>
-                    {delegation}
-                  </option>
-                ))}
-              </select>
-
-              {/* Filtre des lieux sur la même ligne */}
-              {eventFilter !== 'none' && eventFilter !== 'all' && (
-                <select 
-                  className="filter-select"
-                  value={venueFilter}
-                  onChange={(e) => onVenueFilterChange(e.target.value)}
-                >
-                  {getVenueOptions().map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            )}
 
             {/* Ligne séparée pour les boutons de genre */}
             {eventFilter !== 'none' && eventFilter !== 'party' && (() => {
               const { hasFemale, hasMale, hasMixed } = hasGenderMatches(eventFilter);
               return (hasFemale || hasMale || hasMixed) && (
-                <div className="filter-row gender-filter-row">
+                <div className="gender-filter-row" style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flex: 1.03
+                }}>
                   {hasFemale && (
                     <button 
                       className={`gender-filter-button ${showFemale ? 'active' : ''}`}
                       onClick={() => onGenderFilterChange('female')}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        backgroundColor: showFemale ? 'var(--primary-color)' : 'var(--bg-color)',
+                        color: showFemale ? 'white' : 'var(--text-color)',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
                     >
                       Féminin
                     </button>
@@ -536,6 +654,17 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                     <button 
                       className={`gender-filter-button ${showMale ? 'active' : ''}`}
                       onClick={() => onGenderFilterChange('male')}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        backgroundColor: showMale ? 'var(--primary-color)' : 'var(--bg-color)',
+                        color: showMale ? 'white' : 'var(--text-color)',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
                     >
                       Masculin
                     </button>
@@ -544,6 +673,17 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                     <button 
                       className={`gender-filter-button ${showMixed ? 'active' : ''}`}
                       onClick={() => onGenderFilterChange('mixed')}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        backgroundColor: showMixed ? 'var(--primary-color)' : 'var(--bg-color)',
+                        color: showMixed ? 'white' : 'var(--text-color)',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
                     >
                       Mixte
                     </button>
@@ -553,7 +693,13 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             })()}
           </>
         )}
-        <div className="calendar-grid">
+        </div>
+
+        {/* Zone de contenu avec scroll */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Grille du calendrier avec scroll */}
+          <div className="calendar-grid" style={{ flex: 1, minHeight: 0 }}>
           <div className="calendar-hours">
             <div className="calendar-hour-header"></div>
             {hours.map(hour => (
@@ -606,8 +752,9 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
               );
             })}
           </div>
-        </div>
-        {selectedEvent && (
+          </div>
+          
+          {selectedEvent && (
           <div className="match-event-details">
             <h3>{selectedEvent.name}</h3>
             <p>Horaire: {selectedEvent.time} - {selectedEvent.endTime}</p>
@@ -706,6 +853,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
