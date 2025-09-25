@@ -1,10 +1,21 @@
 # CumMap
 
-CumMap est une application web interactive développée pour le Cartel Nancy 2026, un événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
+CumMap est une application web interactive qui a évolué pour devenir le client web de l'application officielle du Cartel Nancy 2026. Initialement créée pour le Cartel de Paris 2025 en tant que support pour les supportères des Mines de Nancy, l'application a été adaptée et enrichie pour répondre aux besoins de l'événement majeur rassemblant plus de 3000 étudiants des écoles d'ingénieur de l'Alliance IMT.
 
 ## 🎯 Objectif du projet
 
-L'objectif principal de CumMap etait de faciliter la navigation et l'organisation des participants lors du Cartel Paris 2025 (Version supporter des Mines de Nancy). L'application permet maintenant de centraliser toutes les informations concernant les événements sportifs, les soirées et les lieux importants, offrant ainsi une expérience utilisateur optimale pour les participants (peu importe la délégation) pour le Cartel Nancy 2026.  
+**Origine** : CumMap a été développée initialement pour faciliter la navigation et l'organisation des participants lors du Cartel Paris 2025, spécifiquement pour les supportères des Mines de Nancy.
+
+**Évolution** : L'application a évolué pour devenir le client web de l'application officielle du Cartel Nancy 2026 (repo privé : `App_Cartel_Nancy`). Elle centralise maintenant toutes les informations concernant les événements sportifs, les soirées et les lieux importants, offrant une expérience utilisateur optimale pour tous les participants, quelle que soit leur délégation.
+
+## 🏗️ Architecture du projet
+
+CumMap fonctionne comme un client web frontend qui se connecte à la base de données Firebase partagée avec l'application officielle mobile du Cartel Nancy 2026. Cette architecture permet :
+
+- **Synchronisation en temps réel** des données entre l'application mobile et web
+- **Gestion centralisée** des événements, lieux et informations
+- **Interface web responsive** complémentaire à l'application mobile native
+- **Accès multi-plateforme** aux informations du Cartel
 
 ## 🎥 Démo des fonctionnalités principales
 
