@@ -545,7 +545,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 appearance: 'none',
-                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 10px center',
                 backgroundSize: '12px'
@@ -575,7 +575,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 appearance: 'none',
-                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 10px center',
                 backgroundSize: '12px'
@@ -608,7 +608,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   appearance: 'none',
-                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23fff\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666\' d=\'M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.763L10.825 4z\'/%3E%3C/svg%3E")',
                   backgroundRepeat: 'no-repeat',
                   backgroundPosition: 'right 10px center',
                   backgroundSize: '12px'
