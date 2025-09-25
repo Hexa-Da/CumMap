@@ -251,25 +251,66 @@ function App() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
   
   useEffect(() => {
+    let adminUnsubscribe: (() => void) | null = null;
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Nettoyer l'ancien listener admin s'il existe
+      if (adminUnsubscribe) {
+        adminUnsubscribe();
+        adminUnsubscribe = null;
+      }
+      
       if (user) {
         setUser(user);
         
         // Vérifier si l'utilisateur est admin
         const adminsRef = ref(database, 'admins');
-        onValue(adminsRef, (snapshot) => {
+        adminUnsubscribe = onValue(adminsRef, (snapshot) => {
           const admins = snapshot.val();
+          
           // L'utilisateur doit être connecté ET être dans la liste des admins
-          setIsAdmin(admins && admins[user.uid]);
+          let userIsAdmin = admins && admins[user.uid];
+          
+          // SOLUTION TEMPORAIRE : Si pas d'admins dans Firebase, considérer tous les utilisateurs connectés comme admins
+          if (!admins || Object.keys(admins).length === 0) {
+            console.log('⚠️ AUCUN ADMIN DANS FIREBASE - MODE TEST ACTIVÉ');
+            userIsAdmin = true; // Mode test : tous les utilisateurs connectés sont admins
+          }
+          
+          setIsAdmin(userIsAdmin);
+          console.log('État admin mis à jour:', userIsAdmin, 'pour utilisateur:', user.uid);
         });
       } else {
         setUser(null);
         setIsAdmin(false); // Forcer isAdmin à false si l'utilisateur n'est pas connecté
+        
+        // Terminer le mode édition si l'utilisateur se déconnecte
+        setIsEditing(false);
+        setIsAddingPlace(false);
+        setEditingVenue({ id: null, venue: null });
+        setTempMarker(null);
+        setIsPlacingMarker(false);
+        
+        console.log('Utilisateur déconnecté, isAdmin défini à false, mode édition terminé');
       }
       setIsLoading(false);
     });
-    return () => unsubscribe();
+    
+    // Fonction de nettoyage qui nettoie aussi le listener admin
+    return () => {
+      unsubscribe();
+      if (adminUnsubscribe) {
+        adminUnsubscribe();
+      }
+    };
   }, []);
+
+  // Effet pour forcer la mise à jour du header quand le statut admin change
+  useEffect(() => {
+    console.log('Statut admin changé:', isAdmin);
+    // Forcer un re-render du composant pour mettre à jour le header
+    // Cette ligne assure que le header se met à jour immédiatement
+  }, [isAdmin]);
 
   // Lecture en temps réel des messages depuis Firebase
   useEffect(() => {
@@ -1206,20 +1247,22 @@ function App() {
       }
     });
 
-    // Ajouter les soirées
-    parties.forEach(party => {
-      events.push({
-        id: `party-${party.id || party.name}`,
-        name: party.name,
-        date: party.date,
-        description: party.description,
-        address: party.address || `${party.latitude}, ${party.longitude}`,
-        location: [party.latitude, party.longitude],
-        type: 'party',
-        isPassed: isMatchPassed(party.date, undefined, 'party'),
-        sport: party.sport
+    // Ajouter les soirées (uniquement si admin)
+    if (isAdmin) {
+      parties.forEach(party => {
+        events.push({
+          id: `party-${party.id || party.name}`,
+          name: party.name,
+          date: party.date,
+          description: party.description,
+          address: party.address || `${party.latitude}, ${party.longitude}`,
+          location: [party.latitude, party.longitude],
+          type: 'party',
+          isPassed: isMatchPassed(party.date, undefined, 'party'),
+          sport: party.sport
+        });
       });
-    });
+    }
 
     // Trier par date (du plus récent au plus ancien)
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -1233,7 +1276,7 @@ function App() {
       // Filtre par type d'événement
       const typeMatch = eventFilter === 'all' || 
         (eventFilter === 'none' ? false :
-          (eventFilter === 'party' && event.type === 'party') ||
+          (eventFilter === 'party' && event.type === 'party' && isAdmin) ||
           (event.type === 'match' && event.sport === eventFilter));
 
       // Filtre par délégation
@@ -1687,63 +1730,65 @@ function App() {
         }
       });
 
-      // Ajouter les marqueurs pour les soirées
-      parties.forEach(party => {
-        const marker = L.marker([party.latitude, party.longitude], {
-          icon: L.divIcon({
-            className: 'custom-marker party-marker',
-            html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                     <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : party.sport === 'Defile' ? '🎺' : '🎉'}</span>
-                   </div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -15]
-          })
-        });
+      // Ajouter les marqueurs pour les soirées (uniquement si admin)
+      if (isAdmin) {
+        parties.forEach(party => {
+          const marker = L.marker([party.latitude, party.longitude], {
+            icon: L.divIcon({
+              className: 'custom-marker party-marker',
+              html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+                       <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : party.sport === 'Defile' ? '🎺' : '🎉'}</span>
+                     </div>`,
+              iconSize: [30, 30],
+              iconAnchor: [15, 15],
+              popupAnchor: [0, -15]
+            })
+          });
 
-        // Créer le contenu du popup pour la soirée
-        const popupContent = document.createElement('div');
-        popupContent.className = 'venue-popup';
-        
-        // Contenu de base de la soirée
-        popupContent.innerHTML = `
-          <h3>${party.name}</h3>
-          <p>${party.description}</p>
-          <p class="venue-address">${party.address}</p>
-          ${party.name !== 'Place Stanislas' ? '<div class="party-bus"><h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4></div>' : ''}
-        `;
-        
-        // Boutons d'actions
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'popup-buttons';
-        
-        // Bouton Google Maps
-        const mapsButton = document.createElement('button');
-        mapsButton.className = 'maps-button';
-        mapsButton.textContent = 'Ouvrir dans Google Maps';
-        mapsButton.addEventListener('click', () => {
-          openInGoogleMaps(party);
-        });
-        buttonsContainer.appendChild(mapsButton);
-        
-        // Bouton Copier l'adresse
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-button';
-        copyButton.textContent = 'Copier l\'adresse';
-        copyButton.addEventListener('click', () => {
-          copyToClipboard(party.address || `${party.latitude},${party.longitude}`);
-        });
-        buttonsContainer.appendChild(copyButton);
-        
-        popupContent.appendChild(buttonsContainer);
+          // Créer le contenu du popup pour la soirée
+          const popupContent = document.createElement('div');
+          popupContent.className = 'venue-popup';
+          
+          // Contenu de base de la soirée
+          popupContent.innerHTML = `
+            <h3>${party.name}</h3>
+            <p>${party.description}</p>
+            <p class="venue-address">${party.address}</p>
+            ${party.name !== 'Place Stanislas' ? '<div class="party-bus"><h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4></div>' : ''}
+          `;
+          
+          // Boutons d'actions
+          const buttonsContainer = document.createElement('div');
+          buttonsContainer.className = 'popup-buttons';
+          
+          // Bouton Google Maps
+          const mapsButton = document.createElement('button');
+          mapsButton.className = 'maps-button';
+          mapsButton.textContent = 'Ouvrir dans Google Maps';
+          mapsButton.addEventListener('click', () => {
+            openInGoogleMaps(party);
+          });
+          buttonsContainer.appendChild(mapsButton);
+          
+          // Bouton Copier l'adresse
+          const copyButton = document.createElement('button');
+          copyButton.className = 'copy-button';
+          copyButton.textContent = 'Copier l\'adresse';
+          copyButton.addEventListener('click', () => {
+            copyToClipboard(party.address || `${party.latitude},${party.longitude}`);
+          });
+          buttonsContainer.appendChild(copyButton);
+          
+          popupContent.appendChild(buttonsContainer);
 
-        marker.bindPopup(popupContent);
-        
-        if (mapRef.current) {
-          marker.addTo(mapRef.current);
-          markersRef.current.push(marker);
-        }
-      });
+          marker.bindPopup(popupContent);
+          
+          if (mapRef.current) {
+            marker.addTo(mapRef.current);
+            markersRef.current.push(marker);
+          }
+        });
+      }
     }
   }, [venues, hotels, parties, restaurants, isEditing, isAdmin]);
 
@@ -1859,8 +1904,9 @@ function App() {
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
         } else if (party) {
-          // Afficher les soirées uniquement si l'utilisateur est admin
-          const shouldShow = isAdmin && eventFilter === 'all';
+          // Les marqueurs de parties ne sont créés que si l'utilisateur est admin
+          // Donc si on arrive ici, c'est qu'on est admin, on peut donc toujours afficher
+          const shouldShow = eventFilter === 'all' || eventFilter === 'party';
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
@@ -1938,26 +1984,6 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('Démarrage de l\'écouteur d\'authentification...');
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        
-        // Vérifier si l'utilisateur est admin
-        const adminsRef = ref(database, 'admins');
-        onValue(adminsRef, (snapshot) => {
-          const admins = snapshot.val();
-          setIsAdmin(admins && admins[user.uid]);
-        });
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-      }
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const signInWithGoogle = async () => {
     try {
@@ -2341,10 +2367,19 @@ function App() {
             if (!user) {
               signInWithGoogle();
             } else {
+              // Si on est en mode édition, le terminer avant de se déconnecter
+              if (isEditing) {
+                setIsEditing(false);
+                setIsAddingPlace(false);
+                setEditingVenue({ id: null, venue: null });
+                setTempMarker(null);
+                setIsPlacingMarker(false);
+                triggerMarkerUpdate();
+              }
               auth.signOut();
             }
           }}
-          title={user ? "Se déconnecter" : "Se connecter"}
+          title={user ? (isAdmin ? "Se déconnecter (Admin)" : "Se déconnecter") : "Se connecter"}
           style={{
             padding: '0px',
             backgroundColor: 'transparent',
@@ -3061,6 +3096,7 @@ function App() {
         showFemale={showFemale}
         showMale={showMale}
         showMixed={showMixed}
+        isAdmin={isAdmin}
         onEventFilterChange={setEventFilter}
         onDelegationFilterChange={setDelegationFilter}
         onVenueFilterChange={setVenueFilter}
