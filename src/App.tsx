@@ -236,6 +236,7 @@ interface Message {
 function App() {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -245,7 +246,6 @@ function App() {
   const [showAddMessage, setShowAddMessage] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [newMessageSender, setNewMessageSender] = useState('Organisation'); // nom personnalisé pour l'envoi
-  const [showEmergency, setShowEmergency] = useState(false);
   const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null); // index du message en cours d'édition
   const [editingMessageValue, setEditingMessageValue] = useState(''); // valeur temporaire pour l'édition
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
@@ -357,6 +357,19 @@ function App() {
   const handleEditMessage = (id: string, newContent: string, newSender: string) => {
     update(ref(database, `chatMessages/${id}`), { content: newContent, sender: newSender || 'Organisation' });
   };
+
+  // Fonction pour ajuster automatiquement la hauteur du textarea
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  // Ajuster la hauteur du textarea quand le message change
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [newMessage]);
 
   // Suppression d'un message dans Firebase
   const handleDeleteMessage = (id: string) => {
@@ -2296,71 +2309,55 @@ function App() {
             </>
           )}
         </div>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <button
-            className="chat-button"
-            onClick={() => {
-              ReactGA.event({
-                category: 'navigation',
-                action: 'change_tab',
-                label: activeTab === 'map' ? 'chat' : 'map'
-              });
-              handleOpenChat();
-            }}
-            title="Messages de l'orga"
-            style={{
-              padding: '0px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              position: 'relative'
-            }}
-          >
-            💬
-            {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                background: 'red',
-                color: 'white',
-                borderRadius: '50%',
-                minWidth: 18,
-                height: 18,
-                fontSize: 12,
+        {isAdmin && (
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              className="chat-button"
+              onClick={() => {
+                ReactGA.event({
+                  category: 'navigation',
+                  action: 'change_tab',
+                  label: activeTab === 'map' ? 'chat' : 'map'
+                });
+                handleOpenChat();
+              }}
+              title="Messages de l'orga"
+              style={{
+                padding: '0px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0 5px',
-                zIndex: 10,
-                fontWeight: 700,
-                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-              }}>{unreadCount}</span>
-            )}
-          </button>
-        </div>
-        <button
-          className="emergency-button"
-          onClick={() => setShowEmergency(true)}
-          title="Contacts d'urgence"
-          style={{
-            padding: '0px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px',
-            color: '#e74c3c'
-          }}
-        >
-          🚨
-        </button>
+                fontSize: '20px',
+                position: 'relative'
+              }}
+            >
+              💬
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  background: 'red',
+                  color: 'white',
+                  borderRadius: '50%',
+                  minWidth: 18,
+                  height: 18,
+                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 5px',
+                  zIndex: 10,
+                  fontWeight: 700,
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                }}>{unreadCount}</span>
+              )}
+            </button>
+          </div>
+        )}
         <button 
           className="admin-button"
           onClick={() => {
@@ -2724,7 +2721,14 @@ function App() {
                 {showAddMessage && (
                   <form
                     className="add-message-form"
-                    style={{ display: 'flex', gap: '8px', padding: '1rem', alignItems: 'center', background: 'var(--bg-secondary)' }}
+                    style={{ 
+                      display: 'flex', 
+                      gap: '8px', 
+                      padding: '1rem', 
+                      alignItems: 'flex-start', 
+                      background: 'var(--bg-secondary)',
+                      borderBottom: '1px solid var(--border-color)'
+                    }}
                     onSubmit={e => {
                       e.preventDefault();
                       if (newMessage.trim()) {
@@ -2739,6 +2743,9 @@ function App() {
                         setNewMessageSender('Organisation');
                         setShowAddMessage(false);
                         setEditingMessageId(null);
+                        if (textareaRef.current) {
+                          textareaRef.current.style.height = 'auto';
+                        }
                       }
                     }}
                   >
@@ -2749,18 +2756,53 @@ function App() {
                         value={newMessageSender}
                         onChange={e => setNewMessageSender(e.target.value)}
                         placeholder="Nom (ex: Organisation, Prénom...)"
-                        style={{ width: 100, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                        style={{ width: 100, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', alignSelf: 'flex-start' }}
                       />
                     )}
-                    <input
-                      type="text"
+                    <textarea
+                      ref={textareaRef}
                       value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      placeholder="Votre message..."
-                      style={{ flex: 1, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                      onChange={e => {
+                        setNewMessage(e.target.value);
+                        adjustTextareaHeight();
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (newMessage.trim()) {
+                            if (editingMessageId) {
+                              handleEditMessage(editingMessageId, newMessage, newMessageSender || 'Organisation');
+                            } else {
+                              handleAddMessage(newMessage, newMessageSender || 'Organisation');
+                            }
+                            setNewMessage('');
+                            setNewMessageSender('Organisation');
+                            setShowAddMessage(false);
+                            setEditingMessageId(null);
+                            if (textareaRef.current) {
+                              textareaRef.current.style.height = 'auto';
+                            }
+                          }
+                        }
+                      }}
+                      placeholder="Votre message... (Entrée pour envoyer, Maj+Entrée pour revenir à la ligne)"
+                      style={{ 
+                        flex: 1, 
+                        minHeight: 25, 
+                        maxHeight: 200,
+                        padding: '8px', 
+                        borderRadius: '4px', 
+                        border: '1px solid var(--border-color)',
+                        resize: 'none',
+                        overflowY: 'auto',
+                        fontFamily: 'inherit',
+                        fontSize: 'inherit',
+                        lineHeight: '1.4'
+                      }}
                       autoFocus
+                      rows={1}
                     />
-                    <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, alignSelf: 'flex-start', marginTop: '4px' }}>
                       ➡️
                     </button>
                   </form>
@@ -3106,21 +3148,6 @@ function App() {
           if (gender === 'mixed') setShowMixed(!showMixed);
         }}
       />
-      {showEmergency && (
-        <div className="emergency-popup" onClick={() => setShowEmergency(false)}>
-          <div className="emergency-popup-content" onClick={e => e.stopPropagation()}>
-            <h3>Contacts d'urgence</h3>
-            <ul style={{ textAlign: 'left', margin: '1rem 0' }}>
-              <li><strong>SAMU :</strong> 15</li>
-              <li><strong>Police :</strong> 17</li>
-              <li><strong>Pompier :</strong> 18</li>
-              <li><strong>Numéro européen :</strong> 112</li>
-              <li><strong>Urgence sourds/malentendants :</strong> 114 (SMS)</li>
-            </ul>
-            <button className="close-emergency-button" onClick={() => setShowEmergency(false)}>Fermer</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
