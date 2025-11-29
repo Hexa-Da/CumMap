@@ -48,6 +48,8 @@ interface BaseItem {
 
 interface Hotel extends BaseItem {
   type: 'hotel';
+  telephone?: string;
+  matches?: Match[];
 }
 
 interface Restaurant extends BaseItem {
@@ -57,6 +59,7 @@ interface Restaurant extends BaseItem {
 
 interface Party extends BaseItem {
   type: 'party';
+  result?: string;
 }
 
 type Place = Venue | Hotel | Party | Restaurant;
@@ -385,107 +388,227 @@ function App() {
     return true;
   };
 
-  const [hotels] = useState<Hotel[]>([
-    {
-      id: '1',
-      name: "Ibis Budget",
-      position: [48.638751, 6.183532],
-      description: "Hôtel Ibis Budget Houdemont",
-      address: "Za Frocourt, 6 All. de la Genelière, 54180 Houdemont",
-      type: 'hotel',
-      date: '',
-      latitude: 48.638751,
-      longitude: 6.183532,
-      emoji: '🏢',
-      sport: 'Hotel'
-    }
-  ]);
+  const [hotels] = useState<Hotel[]>(() => {
+    // Les descriptions seront chargées depuis Firebase via les listeners
+    return [
+      {
+        id: '1',
+        name: "Ibis Styles Nancy Sud",
+        position: [48.638767, 6.183726],
+        description: '',
+        address: "8 Allée De La Genelière, Rn 57, 54180 Houdemont",
+        telephone: "03 83 56 10 25",
+        type: 'hotel',
+        date: '',
+        latitude: 48.638767,
+        longitude: 6.183726,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '2',
+        name: "Nemea Home Suite Nancy Centre",
+        position: [48.685828, 6.190530],
+        description: '',
+        address: "13 Rue Albert Lebrun, 54000 Nancy",
+        telephone: "03 83 33 88 40",
+        type: 'hotel',
+        date: '',
+        latitude: 48.685828,
+        longitude: 6.190530,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '3',
+        name: "Nemea Grand Coeur Nancy Centre",
+        position: [48.685564, 6.181711],
+        description: '',
+        address: "12 Rue Charles III, 54000 Nancy",
+        telephone: "03 83 27 02 66",
+        type: 'hotel',
+        date: '',
+        latitude: 48.685564,
+        longitude: 6.181711,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '4',
+        name: "Hotel Ibis Nancy Brabois",
+        position: [48.650700, 6.144908],
+        description: '',
+        address: "All. de Bourgogne, 54500 Vandœuvre-lès-Nancy",
+        telephone: "03 83 44 55 77",
+        type: 'hotel',
+        date: '',
+        latitude: 48.650700,
+        longitude: 6.144908,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '5',
+        name: "Hotel Residome Nancy",
+        position: [48.694090, 6.195636],
+        description: '',
+        address: "9 Bd de la Mothe, 54000 Nancy",
+        telephone: "03 83 19 55 60",
+        type: 'hotel',
+        date: '',
+        latitude: 48.694090,
+        longitude: 6.195636,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '6',
+        name: "Ibis Budget Nancy Laxou",
+        position: [48.695594, 6.124011],
+        description: '',
+        address: "1 Rue du Vair, 54520 Laxou",
+        telephone: "08 92 68 04 82",
+        type: 'hotel',
+        date: '',
+        latitude: 48.695594,
+        longitude: 6.124011,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '7',
+        name: "Hotel Revotel Nancy Centre",
+        position: [48.689027, 6.170853],
+        description: '',
+        address: "41 Rue Raymond Poincaré, 54000 Nancy",
+        telephone: "03 83 28 02 13",
+        type: 'hotel',
+        date: '',
+        latitude: 48.689027,
+        longitude: 6.170853,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      },
+      {
+        id: '8',
+        name: "Hotel Cerise Nancy",
+        position: [48.699409, 6.144490],
+        description: '',
+        address: "1339 Av. Raymond Pinchard, 54100 Nancy",
+        telephone: "03 83 98 03 33",
+        type: 'hotel',
+        date: '',
+        latitude: 48.699409,
+        longitude: 6.144490,
+        emoji: '🏢',
+        sport: 'Hotel',
+        matches: []
+      }
+    ];
+  });
 
-  const [restaurants] = useState<Restaurant[]>([
-    {
-      id: '1',
-      name: "Crous ARTEM",
-      position: [48.673570, 6.169268],
-      description: "Repas du soir",
-      address: "Rue Michel Dinet, 54000 Nancy",
-      type: 'restaurant',
-      date: '',
-      latitude: 48.673570,
-      longitude: 6.169268,
-      emoji: '🍽️',
-      sport: 'Restaurant',
-      mealType: 'soir'
-    },
-    {
-      id: '2',
-      name: "Parc Saint-Marie",
-      position: [48.680449, 6.170722],
-      description: "Repas du midi",
-      address: "1 Av. Boffrand, 54000 Nancy",
-      type: 'restaurant',
-      date: '',
-      latitude: 48.680449,
-      longitude: 6.170722,
-      emoji: '🍽️',
-      sport: 'Restaurant',
-      mealType: 'midi'
-    }
-  ]);
+  const [restaurants] = useState<Restaurant[]>(() => {
+    // Les descriptions seront chargées depuis Firebase via les listeners
+    return [
+      {
+        id: '1',
+        name: "Crous ARTEM",
+        position: [48.673570, 6.169268],
+        description: "Repas du soir",
+        address: "Rue Michel Dinet, 54000 Nancy",
+        type: 'restaurant',
+        date: '',
+        latitude: 48.673570,
+        longitude: 6.169268,
+        emoji: '🍽️',
+        sport: 'Restaurant',
+        mealType: 'soir',
+        matches: []
+      },
+      {
+        id: '2',
+        name: "Parc Saint-Marie",
+        position: [48.680449, 6.170722],
+        description: "Repas du midi",
+        address: "1 Av. Boffrand, 54000 Nancy",
+        type: 'restaurant',
+        date: '',
+        latitude: 48.680449,
+        longitude: 6.170722,
+        emoji: '🍽️',
+        sport: 'Restaurant',
+        mealType: 'midi',
+        matches: []
+      }
+    ];
+  });
 
-  const [parties] = useState<Party[]>([
-    {
-      id: '1',
-      name: "Place Stanislas",
-      position: [48.693524, 6.183270],
-      description: "Rendez vous 12h puis départ du Défilé à 13h",
-      address: "Pl. Stanislas, 54000 Nancy",
-      type: 'party',
-      date: '2026-04-16T12:00:00',
-      latitude: 48.693524,
-      longitude: 6.183270,
-      emoji: '🎺',
-      sport: 'Defile'
-    },
-    {
-      id: '2',
-      name: "Centre Prouvé",
-      position: [48.687858, 6.176977],
-      description: "Soirée Pompoms du 16 avril, 21h-3h",
-      address: "1 Pl. de la République, 54000 Nancy",
-      type: 'party',
-      date: '2026-04-16T21:00:00',
-      latitude: 48.687858,
-      longitude: 6.176977,
-      emoji: '🎀',
-      sport: 'Pompom'
-    },
-    {
-      id: '3',
-      name: "Parc des Expositions",
-      position: [48.663272, 6.190715],
-      description: "Soirée du 17 avril, 22h-4h",
-      address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
-      type: 'party',
-      date: '2026-04-17T22:00:00',
-      latitude: 48.663272,
-      longitude: 6.190715,
-      emoji: '🎉',
-      sport: 'Party'
-    },
-    {
-      id: '4',
-      name: "Zénith",
-      position: [48.710237, 6.139252],
-      description: "Soirée du 18 avril, 20h-4h",
-      address: "Rue du Zénith, 54320 Maxéville",
-      type: 'party',
-      date: '2026-04-18T20:00:00',
-      latitude: 48.710237,
-      longitude: 6.139252,
-      emoji: '🎉',
-      sport: 'Party'
-    }
-  ]);
+  const [parties] = useState<Party[]>(() => {
+    // Les descriptions et résultats seront chargés depuis Firebase via les listeners
+    return [
+      {
+        id: '1',
+        name: "Place Stanislas",
+        position: [48.693524, 6.183270],
+        description: "Rendez vous 12h puis départ du Défilé à 13h",
+        address: "Pl. Stanislas, 54000 Nancy",
+        type: 'party',
+        date: '2026-04-16T12:00:00',
+        latitude: 48.693524,
+        longitude: 6.183270,
+        emoji: '🎺',
+        sport: 'Defile'
+      },
+      {
+        id: '2',
+        name: "Parc Expo",
+        position: [48.663030, 6.191597],
+        description: "Soirée Pompoms du 16 avril, 21h-3h",
+        address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
+        type: 'party',
+        date: '2026-04-16T21:00:00',
+        latitude: 48.663030,
+        longitude: 6.191597,
+        emoji: '🎀',
+        sport: 'Pompom',
+        result: 'à venir'
+      },
+      {
+        id: '3',
+        name: "Parc Expo",
+        position: [48.663481, 6.189737],
+        description: "Soirée Showcase 17 novembre, 20h-4h",
+        address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
+        type: 'party',
+        date: '2026-11-17T20:00:00',
+        latitude: 48.663481,
+        longitude: 6.189737,
+        emoji: '🎤',
+        sport: 'Party',
+        result: 'à venir'
+      },
+      {
+        id: '4',
+        name: "Zénith",
+        position: [48.710136, 6.139169],
+        description: "Soirée DJ Contest 18 novembre, 20h-4h",
+        address: "Rue du Zénith, 54320 Maxéville",
+        type: 'party',
+        date: '2026-11-18T20:00:00',
+        latitude: 48.710136,
+        longitude: 6.139169,
+        emoji: '🎧',
+        sport: 'Party'
+      }
+    ];
+  });
 
   // Charger les lieux depuis Firebase au démarrage
   useEffect(() => {
@@ -493,16 +616,18 @@ function App() {
     const unsubscribe = onValue(venuesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const venuesArray = Object.entries(data).map(([key, value]: [string, any]) => ({
-          ...value,
-          id: key,
-          matches: value.matches || [],  // Assurer que matches est toujours un tableau
-          sport: value.sport || '',
-          date: value.date || '',
-          latitude: value.position ? value.position[0] : 0,
-          longitude: value.position ? value.position[1] : 0,
-          emoji: value.emoji || ''
-        }));
+        const venuesArray = Object.entries(data)
+          .map(([key, value]: [string, any]) => ({
+            ...value,
+            id: key,
+            matches: value.matches || [],  // Assurer que matches est toujours un tableau
+            sport: value.sport || '',
+            date: value.date || '',
+            latitude: value.position ? value.position[0] : 0,
+            longitude: value.position ? value.position[1] : 0,
+            emoji: value.emoji || ''
+          }))
+          .filter((venue: any) => venue.placeType !== 'indication'); // Filtrer les marqueurs avec placeType "indication"
         setVenues(venuesArray);
       } else {
         setVenues([]); // Si pas de données, initialiser avec un tableau vide
@@ -572,27 +697,20 @@ function App() {
     Basketball: '🏀',
     Handball: '🤾',
     Rugby: '🏉',
-    Volleyball: '🏐',
-    Tennis: '🎾',
-    Badminton: '🏸',
-    Hockey: '🏑',
-    'Base-ball': '⚾',
-    Golf: '⛳',
-    'Ping-pong': '🏓',
     Ultimate: '🥏',
     Natation: '🏊',
-    Cross: '🏃',
-    Boxe: '🥊',
+    Badminton: '🏸',
+    Tennis: '🎾',
+    Cross: '👟',
+    Volleyball: '🏐',
+    'Ping-pong': '🏓',
+    Echecs: '♟️',
     Athlétisme: '🏃‍♂️',
+    Spikeball: '⚡️',
     Pétanque: '🍹',
     Escalade: '🧗‍♂️',
-    'Jeux de société': '🎲',
     Other: '🎯',
-    Pompom: '🎀',
-    Defile: '🎺',
-    Party: '🎉',
-    Hotel: '🏢',
-    Restaurant: '🍽️'
+    Party: '🎉'
   };
 
   // Fonction pour géocoder une adresse avec Nominatim
@@ -638,14 +756,14 @@ function App() {
       'Natation': '🏊',
       'Badminton': '🏸',
       'Tennis': '🎾',
-      'Cross': '🏃',
+      'Cross': '👟',
       'Volleyball': '🏐',
       'Ping-pong': '🏓',
-      'Boxe': '🥊',
+      'Echecs': '♟️',
       'Athlétisme': '🏃‍♂️',
+      'Spikeball': '⚡️',
       'Pétanque': '🍹',
-      'Escalade': '🧗‍♂️',
-      'Jeux de société': '🎲'
+      'Escalade': '🧗‍♂️'
     };
     return sportIcons[sport] || '🏆';
   };
@@ -1449,8 +1567,12 @@ function App() {
       });
       markersRef.current = [];
 
-      // Ajouter les marqueurs pour les lieux
+      // Ajouter les marqueurs pour les lieux (exclure ceux avec placeType "indication")
       venues.forEach(venue => {
+        // Filtrer les marqueurs avec placeType "indication"
+        if ((venue as any).placeType === 'indication') {
+          return; // Ignorer ce marqueur
+        }
         const markerColor = getMarkerColor(venue.date);
         const marker = L.marker([venue.latitude, venue.longitude], {
           icon: L.divIcon({
@@ -1750,7 +1872,7 @@ function App() {
             icon: L.divIcon({
               className: 'custom-marker party-marker',
               html: `<div style="background-color: #9C27B0; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
-                       <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.sport === 'Pompom' ? '🎀' : party.sport === 'Defile' ? '🎺' : '🎉'}</span>
+                       <span style="font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${party.emoji || '🎉'}</span>
                      </div>`,
               iconSize: [30, 30],
               iconAnchor: [15, 15],
@@ -1767,7 +1889,6 @@ function App() {
             <h3>${party.name}</h3>
             <p>${party.description}</p>
             <p class="venue-address">${party.address}</p>
-            ${party.name !== 'Place Stanislas' ? '<div class="party-bus"><h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4></div>' : ''}
           `;
           
           // Boutons d'actions
@@ -2534,14 +2655,14 @@ function App() {
                         <option value="Natation">Natation 🏊</option>
                         <option value="Badminton">Badminton 🏸</option>
                         <option value="Tennis">Tennis 🎾</option>
-                        <option value="Cross">Cross 🏃</option>
+                        <option value="Cross">Cross 👟</option>
                         <option value="Volleyball">Volleyball 🏐</option>
                         <option value="Ping-pong">Ping-pong 🏓</option>
-                        <option value="Boxe">Boxe 🥊</option>
+                        <option value="Echecs">Echecs ♟️</option>
                         <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                        <option value="Spikeball">Spikeball ⚡️</option>
                         <option value="Pétanque">Pétanque 🍹</option>
                         <option value="Escalade">Escalade 🧗‍♂️</option>
-                        <option value="Jeux de société">Jeux de société 🎲</option>
                       </select>
 
                       <select
@@ -2639,11 +2760,6 @@ function App() {
                         <>
                           <p className="event-description">{event.description}</p>
                           <p className="event-address">{event.address}</p>
-                          {event.name !== 'Place Stanislas' && (
-                            <div className="party-bus">
-                              <h4>Bus : <a href="/plannings/planning-bus.pdf" target="_blank" rel="noopener noreferrer">Voir le planning des bus 🚌 </a></h4>
-                            </div>
-                          )}
                           {event.name === 'Centre Prouvé' && (
                             <div className="party-results">
                               <h4 style={{ color: 'var(--success-color)', marginTop: '10px' }}>Résultat : à venir</h4>
@@ -2690,7 +2806,7 @@ function App() {
                   </button>
                 </div>
                 <div style={{ padding: '2rem', textAlign: 'left', maxWidth: 800, margin: '0 auto' }}>
-                  <PlanningFiles />
+                  <PlanningFiles isEditing={isEditing} isAdmin={isAdmin} />
                 </div>
               </div>
             )}
@@ -3091,14 +3207,14 @@ function App() {
                   <option value="Natation">Natation 🏊</option>
                   <option value="Badminton">Badminton 🏸</option>
                   <option value="Tennis">Tennis 🎾</option>
-                  <option value="Cross">Cross 🏃</option>
+                  <option value="Cross">Cross 👟</option>
                   <option value="Volleyball">Volleyball 🏐</option>
                   <option value="Ping-pong">Ping-pong 🏓</option>
-                  <option value="Boxe">Boxe 🥊</option>
+                  <option value="Echecs">Echecs ♟️</option>
                   <option value="Athlétisme">Athlétisme 🏃‍♂️</option>
+                  <option value="Spikeball">Spikeball ⚡️</option>
                   <option value="Pétanque">Pétanque 🍹</option>
                   <option value="Escalade">Escalade 🧗‍♂️</option>
-                  <option value="Jeux de société">Jeux de société 🎲</option>
                 </select>
               </div>
               <div className="form-actions">

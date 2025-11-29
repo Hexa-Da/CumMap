@@ -56,29 +56,29 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   const sportOptions = [
     { value: 'none', label: 'Aucun' },
     { value: 'all', label: 'Tous les événements' },
-    ...(isAdmin ? [{ value: 'party', label: 'Soirée et Défilé ⭐' }] : []),
+    ...(isAdmin ? [{ value: 'party', label: 'Soirées et Défilé ⭐' }] : []),
     { value: 'Football', label: 'Football ⚽' },
     { value: 'Basketball', label: 'Basketball 🏀' },
     { value: 'Handball', label: 'Handball 🤾' },
     { value: 'Rugby', label: 'Rugby 🏉' },
-    { value: 'Volleyball', label: 'Volleyball 🏐' },
-    { value: 'Tennis', label: 'Tennis 🎾' },
-    { value: 'Badminton', label: 'Badminton 🏸' },
-    { value: 'Ping-pong', label: 'Ping-pong 🏓' },
     { value: 'Ultimate', label: 'Ultimate 🥏' },
     { value: 'Natation', label: 'Natation 🏊' },
-    { value: 'Cross', label: 'Cross 🏃' },
-    { value: 'Boxe', label: 'Boxe 🥊' },
+    { value: 'Badminton', label: 'Badminton 🏸' },
+    { value: 'Tennis', label: 'Tennis 🎾' },
+    { value: 'Cross', label: 'Cross 👟' },
+    { value: 'Volleyball', label: 'Volleyball 🏐' },
+    { value: 'Ping-pong', label: 'Ping-pong 🏓' },
+    { value: 'Echecs', label: 'Echecs ♟️' },
     { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
+    { value: 'Spikeball', label: 'Spikeball ⚡️' },
     { value: 'Pétanque', label: 'Pétanque 🍹' },
-    { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
-    { value: 'Jeux de société', label: 'Jeux de société 🎲' },
+    { value: 'Escalade', label: 'Escalade 🧗‍♂️' }
   ];
 
   const days = [
     { date: '2026-04-16', label: 'Jeudi' },
-    { date: '2026-04-17', label: 'Vendredi' },
-    { date: '2026-04-18', label: 'Samedi' }
+    { date: '2026-11-17', label: 'Vendredi' },
+    { date: '2026-11-18', label: 'Samedi' }
   ];
 
   const hours = [
@@ -96,8 +96,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
       return [
         { value: 'Tous', label: 'Tous les lieux' },
         { value: 'place-stanislas', label: 'Place Stanislas' },
-        { value: 'centre-prouve', label: 'Centre Prouvé' },
-        { value: 'parc-expo', label: 'Parc des Expositions' },
+        { value: 'parc-expo-pompom', label: 'Parc Expo (Pompoms)' },
+        { value: 'parc-expo-showcase', label: 'Parc Expo (Showcase)' },
         { value: 'zenith', label: 'Zénith' }
       ];
     }
@@ -200,34 +200,34 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             venue: 'Pl. Stanislas, 54000 Nancy'
           },
           {
-            id: 'centre-prouve',
+            id: 'parc-expo-pompom',
             date: '2026-04-16',
             time: '21:00',
             endTime: '23:00',
-            name: 'Centre Prouvé',
-            description: 'Show Pompoms',
+            name: 'Parc Expo',
+            description: 'Soirée Pompoms',
             color: '#673AB7',
             type: 'party',
-            venue: '1 Pl. de la République, 54000 Nancy'
+            venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
           },
           {
-            id: 'parc-expo',
-            date: '2026-04-17',
-            time: '22:00',
+            id: 'parc-expo-showcase',
+            date: '2026-11-17',
+            time: '20:00',
             endTime: '23:00',
-            name: 'Parc des Expositions',
-            description: 'Soirée',
+            name: 'Parc Expo',
+            description: 'Showcase 🎤',
             color: '#673AB7',
             type: 'party',
             venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
           },
           {
             id: 'zenith',
-            date: '2026-04-18',
+            date: '2026-11-18',
             time: '20:00',
             endTime: '23:00',
             name: 'Zénith',
-            description: 'Soirée',
+            description: 'DJ Contest',
             color: '#673AB7',
             type: 'party',
             venue: 'Rue du Zénith, 54320 Maxéville'
@@ -796,51 +796,63 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                       matches: [],
                       type: 'venue'
                     },
-                    'Centre Prouvé': {
-                      id: 'centre-prouve',
-                      name: 'Centre Prouvé',
-                      description: 'Centre Prouvé',
-                      address: '1 Pl. de la République, 54000 Nancy',
-                      latitude: 48.687858,
-                      longitude: 6.176977,
-                      position: [48.687858, 6.176977],
+                    'Parc Expo': {
+                      id: 'parc-expo-pompom',
+                      name: 'Parc Expo',
+                      description: 'Soirée Pompoms',
+                      address: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy',
+                      latitude: 48.663030,
+                      longitude: 6.191597,
+                      position: [48.663030, 6.191597],
                       sport: 'Pompom',
                       date: '',
                       emoji: '🎀',
                       matches: [],
                       type: 'venue'
                     },
-                    'Parc des Expositions': {
-                      id: 'parc-expo',
-                      name: 'Parc des Expositions',
-                      description: 'Parc des Expositions',
-                      address: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy',
-                      latitude: 48.663272,
-                      longitude: 6.190715,
-                      position: [48.663272, 6.190715],
-                      sport: 'Party',
-                      date: '',
-                      emoji: '🎉',
-                      matches: [],
-                      type: 'venue'
-                    },
                     'Zénith': {
                       id: 'zenith',
                       name: 'Zénith',
-                      description: 'Zénith',
+                      description: 'DJ Contest',
                       address: 'Rue du Zénith, 54320 Maxéville',
-                      latitude: 48.710237,
-                      longitude: 6.139252,
-                      position: [48.710237, 6.139252],
+                      latitude: 48.710136,
+                      longitude: 6.139169,
+                      position: [48.710136, 6.139169],
                       sport: 'Party',
                       date: '',
-                      emoji: '🎉',
+                      emoji: '🎧',
                       matches: [],
                       type: 'venue'
                     }
                   };
 
-                  const venue = partyVenues[selectedEvent.name];
+                  // Gérer les deux soirées au Parc Expo avec des descriptions différentes
+                  let venue: Venue | undefined;
+                  if (selectedEvent.name === 'Parc Expo') {
+                    // Utiliser la description pour distinguer les deux soirées
+                    if (selectedEvent.description?.includes('Pompoms')) {
+                      // Soirée Pompoms du 16 avril
+                      venue = partyVenues['Parc Expo'];
+                    } else if (selectedEvent.description?.includes('Showcase')) {
+                      // Soirée Showcase du 17 novembre
+                      venue = {
+                        id: 'parc-expo-showcase',
+                        name: 'Parc Expo',
+                        description: 'Showcase 🎤',
+                        address: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy',
+                        latitude: 48.663481,
+                        longitude: 6.189737,
+                        position: [48.663481, 6.189737],
+                        sport: 'Party',
+                        date: '',
+                        emoji: '🎤',
+                        matches: [],
+                        type: 'venue'
+                      };
+                    }
+                  } else {
+                    venue = partyVenues[selectedEvent.name];
+                  }
                   if (venue) {
                     onViewOnMap(venue);
                     setSelectedEvent(null)
