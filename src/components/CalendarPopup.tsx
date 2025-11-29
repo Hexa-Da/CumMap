@@ -77,8 +77,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
 
   const days = [
     { date: '2026-04-16', label: 'Jeudi' },
-    { date: '2026-11-17', label: 'Vendredi' },
-    { date: '2026-11-18', label: 'Samedi' }
+    { date: '2026-04-17', label: 'Vendredi' },
+    { date: '2026-04-18', label: 'Samedi' }
   ];
 
   const hours = [
@@ -212,7 +212,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
           },
           {
             id: 'parc-expo-showcase',
-            date: '2026-11-17',
+            date: '2026-04-17',
             time: '20:00',
             endTime: '23:00',
             name: 'Parc Expo',
@@ -223,7 +223,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
           },
           {
             id: 'zenith',
-            date: '2026-11-18',
+            date: '2026-04-18',
             time: '20:00',
             endTime: '23:00',
             name: 'Zénith',
