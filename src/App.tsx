@@ -584,10 +584,10 @@ function App() {
         id: '3',
         name: "Parc Expo",
         position: [48.663481, 6.189737],
-        description: "Soirée Showcase 17 novembre, 20h-4h",
+        description: "Soirée Showcase 17 avril, 20h-4h",
         address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
         type: 'party',
-        date: '2026-11-17T20:00:00',
+        date: '2026-04-17T20:00:00',
         latitude: 48.663481,
         longitude: 6.189737,
         emoji: '🎤',
@@ -598,10 +598,10 @@ function App() {
         id: '4',
         name: "Zénith",
         position: [48.710136, 6.139169],
-        description: "Soirée DJ Contest 18 novembre, 20h-4h",
+        description: "Soirée DJ Contest 18 avril, 20h-4h",
         address: "Rue du Zénith, 54320 Maxéville",
         type: 'party',
-        date: '2026-11-18T20:00:00',
+        date: '2026-04-18T20:00:00',
         latitude: 48.710136,
         longitude: 6.139169,
         emoji: '🎧',
@@ -1382,7 +1382,7 @@ function App() {
     if (isAdmin) {
       parties.forEach(party => {
         events.push({
-          id: `party-${party.id || party.name}`,
+          id: `party-${party.id}`,
           name: party.name,
           date: party.date,
           description: party.description,
@@ -1422,21 +1422,43 @@ function App() {
         if (event.type === 'party') {
           // Pour les soirées et défilés, utiliser les identifiants spécifiques
           let partyId = '';
-          switch (event.name) {
-            case 'Place Stanislas':
+          // Utiliser l'ID de l'événement pour distinguer les soirées au même endroit
+          const eventId = event.id.replace('party-', '');
+          switch (eventId) {
+            case '1':
               partyId = 'place-stanislas';
               break;
-            case 'Centre Prouvé':
-              partyId = 'centre-prouve';
+            case '2':
+              partyId = 'parc-expo-pompom';
               break;
-            case 'Parc des Expositions':
-              partyId = 'parc-expo';
+            case '3':
+              partyId = 'parc-expo-showcase';
               break;
-            case 'Zénith':
+            case '4':
               partyId = 'zenith';
               break;
             default:
-              partyId = event.name.toLowerCase().replace(/\s+/g, '-');
+              // Fallback sur le nom si l'ID ne correspond pas
+              switch (event.name) {
+                case 'Place Stanislas':
+                  partyId = 'place-stanislas';
+                  break;
+                case 'Parc Expo':
+                  // Distinguer par la description
+                  if (event.description?.includes('Pompoms')) {
+                    partyId = 'parc-expo-pompom';
+                  } else if (event.description?.includes('Showcase')) {
+                    partyId = 'parc-expo-showcase';
+                  } else {
+                    partyId = 'parc-expo';
+                  }
+                  break;
+                case 'Zénith':
+                  partyId = 'zenith';
+                  break;
+                default:
+                  partyId = event.name.toLowerCase().replace(/\s+/g, '-');
+              }
           }
           venueMatch = partyId === venueFilter;
         } else {
@@ -1461,14 +1483,33 @@ function App() {
 
   // Fonction pour formater la date et l'heure
   const formatDateTime = (dateString: string, endTimeString?: string) => {
-    const date = new Date(dateString);
+    // Parser la date comme heure locale (évite les problèmes de fuseau horaire)
+    let date: Date;
+    if (dateString.includes('T') && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+      // Format ISO sans fuseau horaire, on le traite comme heure locale
+      const [datePart, timePart] = dateString.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hours, minutes, seconds] = (timePart || '00:00:00').split(':').map(Number);
+      date = new Date(year, month - 1, day, hours, minutes, seconds || 0);
+    } else {
+      date = new Date(dateString);
+    }
+    
     const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     const day = days[date.getDay()];
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     
     if (endTimeString) {
-      const endTime = new Date(endTimeString);
+      let endTime: Date;
+      if (endTimeString.includes('T') && !endTimeString.includes('Z') && !endTimeString.includes('+') && !endTimeString.includes('-', 10)) {
+        const [datePart, timePart] = endTimeString.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes, seconds] = (timePart || '00:00:00').split(':').map(Number);
+        endTime = new Date(year, month - 1, day, hours, minutes, seconds || 0);
+      } else {
+        endTime = new Date(endTimeString);
+      }
       const endHours = endTime.getHours().toString().padStart(2, '0');
       const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
       return `${day} ${hours}:${minutes} - ${endHours}:${endMinutes}`;
@@ -1751,8 +1792,9 @@ function App() {
         }
       });
 
-      // Ajouter les marqueurs pour les hôtels
-      hotels.forEach(hotel => {
+      // Ajouter les marqueurs pour les hôtels (uniquement si admin)
+      if (isAdmin) {
+        hotels.forEach(hotel => {
         const marker = L.marker([hotel.latitude, hotel.longitude], {
           icon: L.divIcon({
             className: 'custom-marker hotel-marker',
@@ -1806,10 +1848,12 @@ function App() {
           marker.addTo(mapRef.current);
           markersRef.current.push(marker);
         }
-      });
+        });
+      }
 
-      // Ajouter les marqueurs pour les restaurants
-      restaurants.forEach(restaurant => {
+      // Ajouter les marqueurs pour les restaurants (uniquement si admin)
+      if (isAdmin) {
+        restaurants.forEach(restaurant => {
         const marker = L.marker([restaurant.latitude, restaurant.longitude], {
           icon: L.divIcon({
             className: 'custom-marker restaurant-marker',
@@ -1863,7 +1907,8 @@ function App() {
           marker.addTo(mapRef.current);
           markersRef.current.push(marker);
         }
-      });
+        });
+      }
 
       // Ajouter les marqueurs pour les soirées (uniquement si admin)
       if (isAdmin) {
@@ -2045,8 +2090,8 @@ function App() {
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
         } else if (hotel || restaurant) {
-          // Afficher les hôtels et restaurants pour tous
-          const shouldShow = eventFilter === 'all';
+          // Afficher les hôtels et restaurants uniquement si admin
+          const shouldShow = isAdmin && (eventFilter === 'all');
 
           markerElement.style.display = shouldShow ? 'block' : 'none';
           markerElement.style.opacity = shouldShow ? '1' : '0';
@@ -2060,7 +2105,7 @@ function App() {
     if (mapRef.current) {
       updateMapMarkers();
     }
-  }, [eventFilter, venueFilter, delegationFilter, showFemale, showMale, showMixed, venues, appAction]);
+  }, [eventFilter, venueFilter, delegationFilter, showFemale, showMale, showMixed, venues, appAction, isAdmin]);
 
   const handleEventSelect = (event: any) => {
     setSelectedEvent(event);
@@ -2254,8 +2299,8 @@ function App() {
       return [
         { value: 'Tous', label: 'Tous les lieux' },
         { value: 'place-stanislas', label: 'Place Stanislas' },
-        { value: 'centre-prouve', label: 'Centre Prouvé' },
-        { value: 'parc-expo', label: 'Parc des Expositions' },
+        { value: 'parc-expo-pompom', label: 'Parc Expo (Pompoms)' },
+        { value: 'parc-expo-showcase', label: 'Parc Expo (Showcase)' },
         { value: 'zenith', label: 'Zénith' }
       ];
     }
@@ -2742,7 +2787,11 @@ function App() {
                               ? '🎺 Défilé'
                               : event.sport === 'Pompom'
                                 ? '🎀 Pompom'
-                                : '🎉 Soirée'}
+                                : event.description?.includes('Showcase')
+                                  ? '🎤 Showcase'
+                                  : event.description?.includes('DJ Contest')
+                                    ? '🎧 DJ Contest'
+                                    : '🎉 Soirée'}
                         </span>
                         <span className="event-date">{formatDateTime(event.date)}</span>
                       </div>
