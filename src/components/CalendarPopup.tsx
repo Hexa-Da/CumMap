@@ -203,7 +203,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             id: 'parc-expo-pompom',
             date: '2026-04-16',
             time: '21:00',
-            endTime: '23:00',
+            endTime: '03:00',
             name: 'Parc Expo',
             description: 'Soirée Pompoms',
             color: '#673AB7',
@@ -214,9 +214,9 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             id: 'parc-expo-showcase',
             date: '2026-04-17',
             time: '20:00',
-            endTime: '23:00',
+            endTime: '04:00',
             name: 'Parc Expo',
-            description: 'Showcase 🎤',
+            description: 'Showcase',
             color: '#673AB7',
             type: 'party',
             venue: 'Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy'
@@ -225,7 +225,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
             id: 'zenith',
             date: '2026-04-18',
             time: '20:00',
-            endTime: '23:00',
+            endTime: '04:00',
             name: 'Zénith',
             description: 'DJ Contest',
             color: '#673AB7',
@@ -296,33 +296,55 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   };
 
   const getEventPosition = (time: string, endTime: string | undefined, index: number, total: number) => {
-    const [startHour, startMinute] = time.split(':').map(Number);
-    let endHour = startHour + 1;
-    let endMinute = 0;
+    const HOUR_HEIGHT = 43.33; // pixels par heure
+    const MIN_HOUR = 8;
+    const MAX_HOUR = 23;
     
+    let [startHour, startMinute] = time.split(':').map(Number);
+    let endHour: number;
+    let endMinute: number;
+    
+    // Parser l'heure de fin si elle existe
     if (endTime) {
       const [parsedEndHour, parsedEndMinute] = endTime.split(':').map(Number);
       if (!isNaN(parsedEndHour) && !isNaN(parsedEndMinute)) {
         endHour = parsedEndHour;
         endMinute = parsedEndMinute;
+      } else {
+        // Fallback: durée par défaut de 1h
+        endHour = startHour + 1;
+        endMinute = startMinute;
       }
+    } else {
+      // Pas d'heure de fin: durée par défaut de 1h
+      endHour = startHour + 1;
+      endMinute = startMinute;
     }
 
-    if (!endTime) {
-      endHour = 23;
+    // Limiter l'heure de début à la plage affichée (8h minimum)
+    if (startHour < MIN_HOUR) {
+      startHour = MIN_HOUR;
+      startMinute = 0;
+    }
+    
+    // Détecter si l'heure de fin est le lendemain (ex: 03:00 après 21:00)
+    // ou si elle dépasse 23h - dans tous les cas, limiter à 23h
+    if (endHour < startHour || endHour > MAX_HOUR || (endHour === MAX_HOUR && endMinute > 0)) {
+      endHour = MAX_HOUR;
       endMinute = 0;
     }
 
-    const startPosition = (startHour - 8) + (startMinute / 60);
-    const endPosition = (endHour - 8) + (endMinute / 60);
-    const duration = endPosition - startPosition;
+    // Calculer les positions en heures depuis 8h
+    const startPosition = (startHour - MIN_HOUR) + (startMinute / 60);
+    const endPosition = (endHour - MIN_HOUR) + (endMinute / 60);
+    const duration = Math.max(endPosition - startPosition, 0.5); // Minimum 30 min de hauteur pour visibilité
 
     const width = total === 1 ? '100%' : `${100 / total}%`;
     const left = total === 1 ? '0%' : `${(100 / total) * index}%`;
 
     return {
-      top: `${startPosition * 43.33}px`,
-      height: `${duration * 43.33}px`,
+      top: `${startPosition * HOUR_HEIGHT}px`,
+      height: `${duration * HOUR_HEIGHT}px`,
       width,
       left
     };
@@ -338,19 +360,21 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
   };
 
   const getCurrentTimePosition = () => {
+    const HOUR_HEIGHT = 43.33; // pixels par heure
+    const MIN_HOUR = 8;
+    const MAX_HOUR = 23;
+    
     const now = getCurrentDate();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     
     // Ne pas afficher l'indicateur si l'heure est en dehors de la plage 8h-23h
-    if (hours < 8 || hours >= 23) {
+    if (hours < MIN_HOUR || hours >= MAX_HOUR) {
       return '';
     }
     
-    const totalMinutes = hours * 60 + minutes;
-    const startHour = 8;
-    const minutesFromStart = totalMinutes - (startHour * 60);
-    const position = `${(minutesFromStart / 60) * 43.33}px`;
+    const hoursFromStart = (hours - MIN_HOUR) + (minutes / 60);
+    const position = `${hoursFromStart * HOUR_HEIGHT}px`;
     return position;
   };
 
@@ -702,9 +726,21 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
           <div className="calendar-grid" style={{ flex: 1, minHeight: 0 }}>
           <div className="calendar-hours">
             <div className="calendar-hour-header"></div>
-            {hours.map(hour => (
-              <div key={hour} className="calendar-hour">{hour}</div>
-            ))}
+            <div className="calendar-hours-container">
+              {hours.map((hour, index) => {
+                const HOUR_HEIGHT = 43.33;
+                const topPosition = index * HOUR_HEIGHT;
+                return (
+                  <div 
+                    key={hour} 
+                    className="calendar-hour"
+                    style={{ top: `${topPosition}px` }}
+                  >
+                    {hour}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div className="calendar-days">
             {days.map(day => {

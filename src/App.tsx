@@ -2212,6 +2212,13 @@ function App() {
 
   const handleCalendarClose = () => {
     setIsCalendarOpen(false);
+    // Déclencher l'auto-scroll vers le premier événement non passé
+    setTimeout(() => {
+      const firstNonPassedEvent = document.querySelector('.event-item:not(.passed)');
+      if (firstNonPassedEvent) {
+        firstNonPassedEvent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleViewOnMap = (venue: Venue) => {
@@ -2639,14 +2646,14 @@ function App() {
                   >
                     <i className="fas fa-calendar"></i>Calendrier
                   </button>
-                  {/* AJOUTER bouton Planning */}
+                  {/* AJOUTER bouton Fichiers */}
                   <button
                     className="planning-button"
                     style={{ left: 120, width: 100 }}
                     onClick={() => setActiveTab('planning')}
-                    title="Voir les plannings (bus, tournois, etc.)"
+                    title="Voir les fichiers (bus, tournois, etc.)"
                   >
-                    <i className="fas fa-table"></i>Planning
+                    <i className="fas fa-table"></i>Fichiers
                   </button>
                   <button 
                     className="close-events-button"
@@ -2841,14 +2848,23 @@ function App() {
                 </div>
               </div>
             )}
-            {/* AJOUTER panneau Planning */}
+            {/* AJOUTER panneau Fichiers */}
             {activeTab === 'planning' && (
               <div className="planning-panel">
                 <div className="planning-panel-header">
-                  <h3>Plannings</h3>
+                  <h3>Fichiers</h3>
                   <button 
                     className="close-planning-button"
-                    onClick={() => setActiveTab('events')}
+                    onClick={() => {
+                      setActiveTab('events');
+                      // Déclencher l'auto-scroll vers le premier événement non passé
+                      setTimeout(() => {
+                        const firstNonPassedEvent = document.querySelector('.event-item:not(.passed)');
+                        if (firstNonPassedEvent) {
+                          firstNonPassedEvent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
                     title="Retour aux événements"
                   >
                     Retour

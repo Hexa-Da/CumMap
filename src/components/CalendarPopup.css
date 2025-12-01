@@ -16,13 +16,13 @@
   position: fixed;
   top: 0;
   left: 0;
-  border-radius: 8px;
+  right: 0;
+  border-radius: 0;
   width: 100%;
   height: 100%;
-  max-width: 1200px;
   max-height: 100vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px var(--shadow-color);
+  box-shadow: none;
 }
 
 .calendar-popup-header {
@@ -76,22 +76,26 @@
 }
 
 .calendar-hours {
-  display: grid;
-  grid-template-rows: auto repeat(16, 1fr);
-  gap: 2px;
+  position: relative;
+  min-width: 50px;
   padding-right: 10px;
-  border-right: 1px var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
 .calendar-hour-header {
   height: 40px;
-  border-bottom: 1px var(--border-color);
+  margin-top: 10px;
+  margin-bottom: 5px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
   padding-right: 4px;
-  margin-right: 10px;
+}
+
+.calendar-hours-container {
+  position: relative;
+  height: 650px; /* Même hauteur que .calendar-events */
+  width: 100%;
 }
 
 .calendar-filter-buttons-row {
@@ -156,13 +160,15 @@
 }
 
 .calendar-hour {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 10px;
+  position: absolute;
+  left: 5px;
+  right: 0;
+  text-align: right;
+  padding-right: 5px;
   color: var(--text-color);
   font-size: 0.9rem;
+  transform: translateY(-50%); /* Centrer le texte sur la ligne horaire */
+  white-space: nowrap;
 }
 
 .calendar-days {
@@ -178,7 +184,8 @@
 }
 
 .calendar-day-header {
-  padding: 10px;
+  height: 40px;
+  padding: 0 10px;
   background-color: var(--bg-secondary);
   color: var(--text-color);
   text-align: center;
@@ -186,6 +193,9 @@
   border-radius: 4px;
   margin-bottom: 5px;
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .calendar-events {

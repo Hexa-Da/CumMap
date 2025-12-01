@@ -142,7 +142,8 @@ export default function PlanningFiles({
 }: PlanningFilesProps) {
   const [files, setFiles] = useState<PlanningFile[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<PlanningFile[]>([]);
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all');
+  const [eventType, setEventType] = useState<string>('all');
+  const [specificEvent, setSpecificEvent] = useState<string>('all');
   const [internalIsAdmin, setInternalIsAdmin] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newFile, setNewFile] = useState({
@@ -151,6 +152,8 @@ export default function PlanningFiles({
     url: '',
     eventType: ''
   });
+  const [formEventType, setFormEventType] = useState<string>('sports');
+  const [formSpecificEvent, setFormSpecificEvent] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
@@ -160,42 +163,180 @@ export default function PlanningFiles({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Liste des types d'événements disponibles
-  const eventTypes = [
-    { value: 'all', label: 'Tous les événements' },
-    { value: 'party', label: 'Soirées et Défilé ⭐' },
-    { value: 'Football', label: 'Football ⚽' },
-    { value: 'Basketball', label: 'Basketball 🏀' },
-    { value: 'Handball', label: 'Handball 🤾' },
-    { value: 'Rugby', label: 'Rugby 🏉' },
-    { value: 'Ultimate', label: 'Ultimate 🥏' },
-    { value: 'Natation', label: 'Natation 🏊' },
-    { value: 'Badminton', label: 'Badminton 🏸' },
-    { value: 'Tennis', label: 'Tennis 🎾' },
-    { value: 'Cross', label: 'Cross 👟' },
-    { value: 'Volleyball', label: 'Volleyball 🏐' },
-    { value: 'Ping-pong', label: 'Ping-pong 🏓' },
-    { value: 'Echecs', label: 'Echecs ♟️' },
-    { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
-    { value: 'Spikeball', label: 'Spikeball ⚡️' },
-    { value: 'Pétanque', label: 'Pétanque 🍹' },
-    { value: 'Escalade', label: 'Escalade 🧗‍♂️' }
+  // Options pour les types d'événements (premier niveau)
+  const eventTypeOptions = [
+    { value: 'all', label: 'Tous les fichiers' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'party', label: 'Soirées' },
+    { value: 'restaurants', label: 'Restaurants' },
+    { value: 'hotel', label: 'Hôtels' },
+    { value: 'bus', label: 'Transport' },
+    { value: 'hse', label: 'HSE' }
   ];
+
+  // Options spécifiques selon le type d'événement (second niveau)
+  const getSpecificOptions = (type: string) => {
+    switch (type) {
+      case 'sports':
+        return [
+          { value: 'all', label: 'Tous les sports' },
+          { value: 'Football', label: 'Football ⚽' },
+          { value: 'Basketball', label: 'Basketball 🏀' },
+          { value: 'Handball', label: 'Handball 🤾' },
+          { value: 'Rugby', label: 'Rugby 🏉' },
+          { value: 'Ultimate', label: 'Ultimate 🥏' },
+          { value: 'Natation', label: 'Natation 🏊' },
+          { value: 'Badminton', label: 'Badminton 🏸' },
+          { value: 'Tennis', label: 'Tennis 🎾' },
+          { value: 'Cross', label: 'Cross 👟' },
+          { value: 'Volleyball', label: 'Volleyball 🏐' },
+          { value: 'Ping-pong', label: 'Ping-pong 🏓' },
+          { value: 'Echecs', label: 'Echecs ♟️' },
+          { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
+          { value: 'Spikeball', label: 'Spikeball ⚡️' },
+          { value: 'Pétanque', label: 'Pétanque 🍹' },
+          { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
+          { value: 'Pompom', label: 'Pompom 🎀' }
+        ];
+      case 'party':
+        return [
+          { value: 'all', label: 'Toutes les soirées' },
+          { value: 'jeudi', label: 'Soirée du jeudi' },
+          { value: 'vendredi', label: 'Soirée du vendredi' },
+          { value: 'samedi', label: 'Soirée du samedi - Gala' },
+          { value: 'navettes', label: 'Infos navettes' }
+        ];
+      case 'restaurants':
+        return [
+          { value: 'all', label: 'Tous les restaurants' },
+          { value: 'crous', label: 'CROUS' },
+          { value: 'artem', label: 'Artem' },
+          { value: 'autres', label: 'Autres restaurants' }
+        ];
+      case 'bus':
+        return [
+          { value: 'all', label: 'Tous les transports' },
+          { value: 'zenith', label: 'Bus Zénith' },
+          { value: 'retour', label: 'Bus de retour' },
+          { value: 'navettes', label: 'Navettes' }
+        ];
+      case 'hotel':
+        return [
+          { value: 'all', label: 'Tous les hôtels' },
+          { value: 'localisation', label: 'Localisation' },
+          { value: 'horaires', label: 'Horaires réception' },
+          { value: 'services', label: 'Services disponibles' }
+        ];
+      case 'hse':
+        return [
+          { value: 'all', label: 'Tous les fichiers HSE' },
+          { value: 'HSE', label: 'HSE' }
+        ];
+      default:
+        return [{ value: 'all', label: 'Tous' }];
+    }
+  };
+
+  // Options spécifiques pour le formulaire d'ajout (sans "Tous les...")
+  const getFormSpecificOptions = (type: string) => {
+    switch (type) {
+      case 'sports':
+        return [
+          { value: '', label: 'Sélectionnez un sport' },
+          { value: 'Football', label: 'Football ⚽' },
+          { value: 'Basketball', label: 'Basketball 🏀' },
+          { value: 'Handball', label: 'Handball 🤾' },
+          { value: 'Rugby', label: 'Rugby 🏉' },
+          { value: 'Ultimate', label: 'Ultimate 🥏' },
+          { value: 'Natation', label: 'Natation 🏊' },
+          { value: 'Badminton', label: 'Badminton 🏸' },
+          { value: 'Tennis', label: 'Tennis 🎾' },
+          { value: 'Cross', label: 'Cross 👟' },
+          { value: 'Volleyball', label: 'Volleyball 🏐' },
+          { value: 'Ping-pong', label: 'Ping-pong 🏓' },
+          { value: 'Echecs', label: 'Echecs ♟️' },
+          { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
+          { value: 'Spikeball', label: 'Spikeball ⚡️' },
+          { value: 'Pétanque', label: 'Pétanque 🍹' },
+          { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
+          { value: 'Pompom', label: 'Pompom 🎀' }
+        ];
+      case 'party':
+        return [
+          { value: '', label: 'Sélectionnez une soirée' },
+          { value: 'jeudi', label: 'Soirée du jeudi' },
+          { value: 'vendredi', label: 'Soirée du vendredi' },
+          { value: 'samedi', label: 'Soirée du samedi - Gala' },
+          { value: 'navettes', label: 'Infos navettes' }
+        ];
+      case 'restaurants':
+        return [
+          { value: '', label: 'Sélectionnez un restaurant' },
+          { value: 'crous', label: 'CROUS' },
+          { value: 'artem', label: 'Artem' },
+          { value: 'autres', label: 'Autres restaurants' }
+        ];
+      case 'bus':
+        return [
+          { value: '', label: 'Sélectionnez un transport' },
+          { value: 'zenith', label: 'Bus Zénith' },
+          { value: 'retour', label: 'Bus de retour' },
+          { value: 'navettes', label: 'Navettes' }
+        ];
+      case 'hotel':
+        return [
+          { value: '', label: 'Sélectionnez une catégorie' },
+          { value: 'localisation', label: 'Localisation' },
+          { value: 'horaires', label: 'Horaires réception' },
+          { value: 'services', label: 'Services disponibles' }
+        ];
+      case 'hse':
+        return [
+          { value: '', label: 'Sélectionnez une catégorie' },
+          { value: 'HSE', label: 'HSE' }
+        ];
+      default:
+        return [{ value: '', label: 'Sélectionnez' }];
+    }
+  };
+
+  // Réinitialiser le sous-type du formulaire quand le type change
+  useEffect(() => {
+    setFormSpecificEvent('');
+  }, [formEventType]);
+
+  // Mettre à jour eventType du newFile quand formSpecificEvent change
+  useEffect(() => {
+    if (formSpecificEvent) {
+      setNewFile(prev => ({ ...prev, eventType: formSpecificEvent }));
+    }
+  }, [formSpecificEvent]);
 
   // Helper pour détecter mobile
   const isMobile = window.innerWidth < 600;
 
+  // Réinitialiser le filtre spécifique quand le type change
+  useEffect(() => {
+    setSpecificEvent('all');
+  }, [eventType]);
+
   // Initialiser le filtre basé sur la prop
   useEffect(() => {
     if (filter) {
-      if (filter === 'sports') {
-        setEventTypeFilter('sports');
+      if (filter === 'all') {
+        setEventType('all');
+      } else if (filter === 'sports') {
+        setEventType('sports');
       } else if (filter === 'restaurants') {
-        setEventTypeFilter('Restaurant');
+        setEventType('restaurants');
       } else if (filter === 'bus') {
-        setEventTypeFilter('party');
-      } else if (filter === 'all') {
-        setEventTypeFilter('all');
+        setEventType('bus');
+      } else if (filter === 'hotel') {
+        setEventType('hotel');
+      } else if (filter === 'party') {
+        setEventType('party');
+      } else if (filter === 'hse') {
+        setEventType('hse');
       }
     }
   }, [filter]);
@@ -286,51 +427,81 @@ export default function PlanningFiles({
   useEffect(() => {
     let filtered = files;
 
-    // Filtre par type d'événement
-    if (eventTypeFilter === 'sports') {
+    // Filtre par type d'événement (premier niveau)
+    if (eventType === 'sports') {
       const sportsTypes = [
         'Football', 'Basketball', 'Handball', 'Rugby', 'Ultimate', 'Natation',
         'Badminton', 'Tennis', 'Cross', 'Volleyball', 'Ping-pong', 'Echecs',
-        'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade'
+        'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade', 'Pompom'
       ];
       filtered = filtered.filter(file => 
         sportsTypes.includes(file.eventType || '')
       );
-    } else if (eventTypeFilter === 'party') {
+      
+      // Filtre spécifique (second niveau)
+      if (specificEvent !== 'all') {
+        filtered = filtered.filter(file => file.eventType === specificEvent);
+      }
+    } else if (eventType === 'party') {
       filtered = filtered.filter(file => 
         file.eventType === 'party' || 
         file.eventType?.toLowerCase().includes('soirée') ||
         file.eventType?.toLowerCase().includes('gala') ||
         file.eventType?.toLowerCase().includes('navette')
       );
-    } else if (eventTypeFilter === 'restaurants') {
+      
+      if (specificEvent !== 'all') {
+        filtered = filtered.filter(file => 
+          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
+        );
+      }
+    } else if (eventType === 'restaurants') {
       filtered = filtered.filter(file => 
         file.eventType === 'Restaurant' ||
         file.eventType?.toLowerCase().includes('restaurant') ||
         file.eventType?.toLowerCase().includes('crous') ||
         file.eventType?.toLowerCase().includes('artem')
       );
-    } else if (eventTypeFilter === 'bus') {
+      
+      if (specificEvent !== 'all') {
+        filtered = filtered.filter(file => 
+          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
+        );
+      }
+    } else if (eventType === 'bus') {
       filtered = filtered.filter(file => 
         file.eventType?.toLowerCase().includes('bus') ||
         file.eventType?.toLowerCase().includes('transport') ||
         file.eventType?.toLowerCase().includes('navette') ||
         file.eventType?.toLowerCase().includes('zenith')
       );
-    } else if (eventTypeFilter === 'hotel') {
+      
+      if (specificEvent !== 'all') {
+        filtered = filtered.filter(file => 
+          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
+        );
+      }
+    } else if (eventType === 'hotel') {
       filtered = filtered.filter(file => 
         file.eventType === 'Hotel' ||
         file.eventType?.toLowerCase().includes('hôtel') ||
         file.eventType?.toLowerCase().includes('hotel')
       );
-    } else if (eventTypeFilter !== 'all') {
+      
+      if (specificEvent !== 'all') {
+        filtered = filtered.filter(file => 
+          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
+        );
+      }
+    } else if (eventType === 'hse') {
       filtered = filtered.filter(file => 
-        file.eventType === eventTypeFilter
+        file.eventType === 'HSE' ||
+        file.eventType?.toLowerCase().includes('hse')
       );
     }
 
     setFilteredFiles(filtered);
-  }, [eventTypeFilter, files]);
+  }, [eventType, specificEvent, files]);
 
   const handleDeleteFile = async (fileId: string) => {
     if (!isAdmin) return;
@@ -462,6 +633,8 @@ export default function PlanningFiles({
         url: '',
               eventType: ''
       });
+      setFormEventType('sports');
+      setFormSpecificEvent('');
       setShowAddForm(false);
 
             if (fileInputRef.current) {
@@ -496,37 +669,156 @@ export default function PlanningFiles({
     }
   };
 
+  // Barre de progression d'upload globale
+  const uploadProgressBar = uploading ? (
+    <div style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 10000,
+      background: 'rgba(20,20,20,0.95)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      borderRadius: '12px',
+      border: '2px solid var(--accent-color)',
+      minWidth: '300px',
+      maxWidth: '500px',
+    }}>
+      <div style={{
+        color: 'var(--accent-color)',
+        fontWeight: 'bold',
+        fontSize: '1.2rem',
+        marginBottom: '15px',
+        textAlign: 'center'
+      }}>
+        Upload en cours...
+      </div>
+      <div style={{
+        width: '100%',
+        height: '16px',
+        background: '#333',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        marginBottom: '10px',
+      }}>
+        <div style={{
+          width: `${uploadProgress}%`,
+          height: '100%',
+          background: 'linear-gradient(90deg, var(--accent-color), #4CAF50)',
+          transition: 'width 0.3s ease',
+          borderRadius: '8px',
+        }}></div>
+      </div>
+      <div style={{
+        color: 'var(--accent-color)',
+        fontWeight: 'bold',
+        fontSize: '1.3rem',
+        marginBottom: '5px'
+      }}>
+        {Math.round(uploadProgress)}%
+      </div>
+      <div style={{
+        color: 'var(--text-secondary)',
+        fontSize: '0.9rem',
+        textAlign: 'center'
+      }}>
+        {uploadProgress < 100 ? 'Téléchargement du fichier...' : 'Finalisation de l\'upload...'}
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="planning-files">
-      <h2 style={{ marginTop: 0, marginBottom: '10px' }}>Plannings</h2>
+    <div className="planning-files" style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      width: '100%',
+      maxWidth: '500px',
+      margin: '0 auto'
+    }}>
+      {uploadProgressBar}
+      
+      <h2 style={{ marginTop: 0, marginBottom: '10px', textAlign: 'center' }}>Fichiers</h2>
       
       {showFilterSelector && (
-      <div className="filters">
-        <div className="filter-group">
-          <select
-            id="eventTypeFilter"
-            value={eventTypeFilter}
-            onChange={(e) => setEventTypeFilter(e.target.value)}
-            className="filter-select"
-          >
-            {eventTypes.map(type => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
+        <div className="filters" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem', width: '100%', maxWidth: '340px' }}>
+          {/* Premier niveau de filtre */}
+          <div className="filter-group">
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', marginBottom: '4px', display: 'block', textAlign: 'center' }}>
+              Type :
+            </label>
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
+              className="filter-select"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                backgroundColor: 'var(--bg-color)',
+                color: 'var(--text-color)',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              {eventTypeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Second niveau de filtre (conditionnel) */}
+          {eventType !== 'all' && (
+            <div className="filter-group">
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', marginBottom: '4px', display: 'block', textAlign: 'center' }}>
+                {eventType === 'sports' ? 'Sport :' :
+                 eventType === 'party' ? 'Soirée :' :
+                 eventType === 'restaurants' ? 'Restaurant :' :
+                 eventType === 'bus' ? 'Transport :' :
+                 eventType === 'hotel' ? 'Hôtel :' :
+                 eventType === 'hse' ? 'HSE :' : 'Spécifique :'}
+              </label>
+              <select
+                value={specificEvent}
+                onChange={(e) => setSpecificEvent(e.target.value)}
+                className="filter-select"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--bg-color)',
+                  color: 'var(--text-color)',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                {getSpecificOptions(eventType).map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
-      </div>
       )}
 
-      <div className="planning-content">
+      <div className="planning-content" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {isEditing && isAdmin && (
         <div className="admin-controls" style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1rem' }}>
           <button
             className="add-file-button"
             onClick={() => setShowAddForm(!showAddForm)}
           >
-              {showAddForm ? 'Annuler' : 'Ajouter un planning'}
+              {showAddForm ? 'Annuler' : 'Ajouter un fichier'}
           </button>
         </div>
       )}
@@ -564,7 +856,7 @@ export default function PlanningFiles({
                 position: 'relative'
               }}>
                 <h3 style={{ margin: 0, color: 'var(--text-color)', fontSize: '1.2rem' }}>
-                  Ajouter un planning
+                  Ajouter un fichier
                 </h3>
               <button 
                 onClick={() => setShowAddForm(false)}
@@ -599,7 +891,7 @@ export default function PlanningFiles({
                 boxSizing: 'border-box',
               }}>
           <div className="form-group">
-                  <label htmlFor="fileName">Nom du planning</label>
+                  <label htmlFor="fileName">Nom du fichier</label>
             <input
               type="text"
               id="fileName"
@@ -621,11 +913,11 @@ export default function PlanningFiles({
           </div>
 
           <div className="form-group">
-                  <label htmlFor="eventType">Type d'événement</label>
+                  <label htmlFor="formEventType">Catégorie</label>
             <select
-                    id="eventType"
-                    value={newFile.eventType}
-                    onChange={(e) => setNewFile({ ...newFile, eventType: e.target.value })}
+                    id="formEventType"
+                    value={formEventType}
+                    onChange={(e) => setFormEventType(e.target.value)}
               required
                     style={{
                       width: '100%',
@@ -638,8 +930,40 @@ export default function PlanningFiles({
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value="">Sélectionnez un type</option>
-                    {eventTypes.filter(type => type.value !== 'all').map(type => (
+                    {eventTypeOptions.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+                  <label htmlFor="formSpecificEvent">
+                    {formEventType === 'sports' ? 'Sport' :
+                     formEventType === 'party' ? 'Soirée' :
+                     formEventType === 'restaurants' ? 'Restaurant' :
+                     formEventType === 'bus' ? 'Transport' :
+                     formEventType === 'hotel' ? 'Hôtel' :
+                     formEventType === 'hse' ? 'HSE' : 'Type'}
+                  </label>
+            <select
+                    id="formSpecificEvent"
+                    value={formSpecificEvent}
+                    onChange={(e) => setFormSpecificEvent(e.target.value)}
+              required
+                    style={{
+                      width: '100%',
+                      padding: isMobile ? '0.4rem' : '0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: isMobile ? '0.98rem' : '1rem',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {getFormSpecificOptions(formEventType).map(type => (
                       <option key={type.value} value={type.value}>
                         {type.label}
                       </option>
@@ -668,24 +992,6 @@ export default function PlanningFiles({
                     }}
             />
           </div>
-
-          {uploading && (
-            <div style={{
-              width: '100%',
-              height: '8px',
-              backgroundColor: 'var(--border-color)',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              marginTop: '0.5rem'
-            }}>
-              <div style={{
-                width: `${uploadProgress}%`,
-                height: '100%',
-                backgroundColor: 'var(--primary-color)',
-                transition: 'width 0.3s ease'
-              }} />
-          </div>
-          )}
 
           <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', justifyContent: 'space-between', marginTop: '1rem', flexWrap: isMobile ? 'wrap' : 'nowrap', width: '100%' }}>
                   <button 
@@ -729,7 +1035,7 @@ export default function PlanningFiles({
                     onMouseOver={(e) => !uploading && (e.currentTarget.style.transform = 'translateY(-1px)')}
                     onMouseOut={(e) => !uploading && (e.currentTarget.style.transform = 'translateY(0)')}
                   >
-                    {uploading ? 'Upload en cours...' : 'Ajouter le planning'}
+                    {uploading ? 'Upload en cours...' : 'Ajouter le fichier'}
           </button>
                 </div>
         </form>
@@ -739,9 +1045,9 @@ export default function PlanningFiles({
       )}
 
       {filteredFiles.length === 0 ? (
-          <p className="no-files">Aucun planning disponible</p>
+          <p className="no-files" style={{ textAlign: 'center', width: '100%' }}>Aucun fichier disponible</p>
       ) : (
-          <div className="files-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '40vh', overflowY: 'auto', width: '100%', minWidth: 0, alignItems: 'center' }}>
+          <div className="files-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '40vh', overflowY: 'auto', width: '100%', maxWidth: '340px', minWidth: 0, alignItems: 'center' }}>
           {filteredFiles.map((file) => {
             return (
               <div key={file.id} className="file-item" style={{
@@ -772,6 +1078,13 @@ export default function PlanningFiles({
                   maxWidth: '100%',
                   minWidth: 0,
                 }}>{file.name}</div>
+                <div style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '4px'
+                }}>
+                  {file.eventType}
+                </div>
                 <div style={{
                   display: 'flex',
                   flexDirection: 'row',
