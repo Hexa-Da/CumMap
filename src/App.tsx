@@ -71,29 +71,15 @@ interface HistoryAction {
   undo: () => Promise<void>;
 }
 
-// Initialiser Google Analytics correctement avec debugging
+// Initialiser Google Analytics
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXX';
-console.log('[GA] ID de mesure utilisé:', GA_MEASUREMENT_ID);
 
-// Configuration avec mode test activé pour la validation
 ReactGA.initialize(GA_MEASUREMENT_ID, {
   testMode: process.env.NODE_ENV !== 'production',
   gaOptions: {
     sendPageView: false // Nous enverrons manuellement le pageview
   }
 });
-
-// Afficher explicitement l'objet ReactGA pour le déboggage
-console.log('[GA] Objet ReactGA:', ReactGA);
-
-// Envoyer un événement test pour vérifier la connexion
-ReactGA.event({
-  category: 'testing',
-  action: 'ga_test',
-  label: 'Validation de connexion GA4'
-});
-
-console.log('[GA] Google Analytics initialisé en mode test');
 
 // Composant pour la géolocalisation
 function LocationMarker() {
@@ -252,6 +238,7 @@ function App() {
   const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null); // index du message en cours d'édition
   const [editingMessageValue, setEditingMessageValue] = useState(''); // valeur temporaire pour l'édition
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
+  const [lastSeenChatTimestamp, setLastSeenChatTimestamp] = useState<number>(() => Number(localStorage.getItem('lastSeenChatTimestamp') || 0)); // timestamp du dernier message vu
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -280,8 +267,10 @@ function App() {
     const messagesRef = ref(database, 'chatMessages');
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // Transforme l'objet en tableau [{id, ...}]
-      const messagesArray = Object.entries(data).map(([id, value]) => ({ id, ...(value as any) }));
+      // Transforme l'objet en tableau [{id, ...}] et trie par timestamp
+      const messagesArray = Object.entries(data)
+        .map(([id, value]) => ({ id, ...(value as any) }))
+        .sort((a, b) => a.timestamp - b.timestamp);
       setMessages(messagesArray);
     });
     return () => unsubscribe();
@@ -2134,6 +2123,17 @@ function App() {
     }
   };
 
+  // Met à jour le timestamp quand on est dans le chat (en temps réel)
+  useEffect(() => {
+    if (activeTab === 'chat' && messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.timestamp > lastSeenChatTimestamp) {
+        localStorage.setItem('lastSeenChatTimestamp', String(lastMsg.timestamp));
+        setLastSeenChatTimestamp(lastMsg.timestamp);
+      }
+    }
+  }, [activeTab, messages, lastSeenChatTimestamp]);
+
   if (isLoading) {
     return <div>Chargement...</div>;
   }
@@ -2325,15 +2325,19 @@ function App() {
   };
 
   // Calcul du nombre de messages non lus
-  const lastSeenChatTimestamp = Number(localStorage.getItem('lastSeenChatTimestamp') || 0);
   const unreadCount = messages.filter(m => m.timestamp > lastSeenChatTimestamp).length;
 
-  // Quand on ouvre le chat, on marque tous les messages comme lus
+  // Quand on ouvre/ferme le chat, on marque tous les messages comme lus
   const handleOpenChat = () => {
-    setActiveTab(activeTab === 'map' ? 'chat' : 'map');
-    if (activeTab !== 'chat' && messages.length > 0) {
+    // Toggle: si on est sur chat, on retourne à map, sinon on ouvre chat
+    const newTab = activeTab === 'chat' ? 'map' : 'chat';
+    setActiveTab(newTab);
+    // Marquer les messages comme lus quand on ouvre le chat
+    if (newTab === 'chat' && messages.length > 0) {
       const lastMsg = messages[messages.length - 1];
-      localStorage.setItem('lastSeenChatTimestamp', String(lastMsg.timestamp));
+      const newTimestamp = lastMsg.timestamp;
+      localStorage.setItem('lastSeenChatTimestamp', String(newTimestamp));
+      setLastSeenChatTimestamp(newTimestamp);
     }
   };
 
@@ -2603,15 +2607,17 @@ function App() {
                   >
                     <i className="fas fa-calendar"></i>Calendrier
                   </button>
-                  {/* AJOUTER bouton Fichiers */}
-                  <button
-                    className="planning-button"
-                    style={{ left: 120, width: 100 }}
-                    onClick={() => setActiveTab('planning')}
-                    title="Voir les fichiers (bus, tournois, etc.)"
-                  >
-                    <i className="fas fa-table"></i>Fichiers
-                  </button>
+                  {/* AJOUTER bouton Fichiers (admin uniquement) */}
+                  {isAdmin && (
+                    <button
+                      className="planning-button"
+                      style={{ left: 120, width: 100 }}
+                      onClick={() => setActiveTab('planning')}
+                      title="Voir les fichiers (bus, tournois, etc.)"
+                    >
+                      <i className="fas fa-table"></i>Fichiers
+                    </button>
+                  )}
                   <button 
                     className="close-events-button"
                     onClick={() => setActiveTab('map')}
