@@ -1,3 +1,21 @@
 {
-	"siteId": "72a6a829-58b5-4d9f-b106-850f3d9dfa25"
+	"siteId": "72a6a829-58b5-4d9f-b106-850f3d9dfa25",
+	"geolocation": {
+		"data": {
+			"city": "Nancy",
+			"country": {
+				"code": "FR",
+				"name": "France"
+			},
+			"subdivision": {
+				"code": "GES",
+				"name": "Grand Est"
+			},
+			"timezone": "Europe/Paris",
+			"latitude": 48.6822,
+			"longitude": 6.1862,
+			"postalCode": "54000"
+		},
+		"timestamp": 1765122481622
+	}
 }

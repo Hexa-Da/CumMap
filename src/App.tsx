@@ -8,7 +8,7 @@ import { auth, database, provider } from './firebase';
 import L from 'leaflet';
 import ReactGA from 'react-ga4';
 import { v4 as uuidv4 } from 'uuid';
-import { onAuthStateChanged, signInWithPopup} from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import CalendarPopup from './components/CalendarPopup';
 import { Venue, Match } from './types';
 import PlanningFiles from './components/PlanningFiles';
@@ -254,66 +254,26 @@ function App() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
   
   useEffect(() => {
-    let adminUnsubscribe: (() => void) | null = null;
-    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // Nettoyer l'ancien listener admin s'il existe
-      if (adminUnsubscribe) {
-        adminUnsubscribe();
-        adminUnsubscribe = null;
-      }
-      
       if (user) {
         setUser(user);
-        
-        // Vérifier si l'utilisateur est admin
-        const adminsRef = ref(database, 'admins');
-        adminUnsubscribe = onValue(adminsRef, (snapshot) => {
-          const admins = snapshot.val();
-          
-          // L'utilisateur doit être connecté ET être dans la liste des admins
-          let userIsAdmin = admins && admins[user.uid];
-          
-          // SOLUTION TEMPORAIRE : Si pas d'admins dans Firebase, considérer tous les utilisateurs connectés comme admins
-          if (!admins || Object.keys(admins).length === 0) {
-            console.log('⚠️ AUCUN ADMIN DANS FIREBASE - MODE TEST ACTIVÉ');
-            userIsAdmin = true; // Mode test : tous les utilisateurs connectés sont admins
-          }
-          
-          setIsAdmin(userIsAdmin);
-          console.log('État admin mis à jour:', userIsAdmin, 'pour utilisateur:', user.uid);
-        });
+        setIsAdmin(true);
       } else {
         setUser(null);
-        setIsAdmin(false); // Forcer isAdmin à false si l'utilisateur n'est pas connecté
-        
-        // Terminer le mode édition si l'utilisateur se déconnecte
+        setIsAdmin(false);
         setIsEditing(false);
         setIsAddingPlace(false);
         setEditingVenue({ id: null, venue: null });
         setTempMarker(null);
         setIsPlacingMarker(false);
-        
-        console.log('Utilisateur déconnecté, isAdmin défini à false, mode édition terminé');
       }
       setIsLoading(false);
     });
     
-    // Fonction de nettoyage qui nettoie aussi le listener admin
-    return () => {
-      unsubscribe();
-      if (adminUnsubscribe) {
-        adminUnsubscribe();
-      }
-    };
+    return () => unsubscribe();
   }, []);
 
-  // Effet pour forcer la mise à jour du header quand le statut admin change
-  useEffect(() => {
-    console.log('Statut admin changé:', isAdmin);
-    // Forcer un re-render du composant pour mettre à jour le header
-    // Cette ligne assure que le header se met à jour immédiatement
-  }, [isAdmin]);
+
 
   // Lecture en temps réel des messages depuis Firebase
   useEffect(() => {
@@ -2166,14 +2126,11 @@ function App() {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Tentative de connexion...');
-      console.log('Provider configuré:', provider);
       const result = await signInWithPopup(auth, provider);
-      console.log('Résultat de la connexion:', result);
-      console.log('UID de l\'utilisateur:', result.user.uid);
-      console.log('Email de l\'utilisateur:', result.user.email);
+      setUser(result.user);
+      setIsAdmin(true);
     } catch (error) {
-      console.error('Erreur détaillée de connexion:', error);
+      console.error('Erreur de connexion:', error);
     }
   };
 
