@@ -12,6 +12,7 @@ import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import CalendarPopup from './components/CalendarPopup';
 import { Venue, Match } from './types';
 import PlanningFiles from './components/PlanningFiles';
+import NotificationService from './services/NotificationService';
 
 // Fix for default marker icons in Leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -234,12 +235,20 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]); // messages du chat, lus depuis Firebase
   const [showAddMessage, setShowAddMessage] = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  const [newMessageSender, setNewMessageSender] = useState('Organisation'); // nom personnalisé pour l'envoi
+  const [newMessageSender, setNewMessageSender] = useState(''); // nom personnalisé pour l'envoi
   const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null); // index du message en cours d'édition
   const [editingMessageValue, setEditingMessageValue] = useState(''); // valeur temporaire pour l'édition
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null); // id du message en cours d'édition
   const [lastSeenChatTimestamp, setLastSeenChatTimestamp] = useState<number>(() => Number(localStorage.getItem('lastSeenChatTimestamp') || 0)); // timestamp du dernier message vu
   
+  // Initialiser le service de notifications
+  useEffect(() => {
+    const notificationService = NotificationService.getInstance();
+    notificationService.initialize().catch((error) => {
+      console.error('Erreur lors de l\'initialisation du service de notifications:', error);
+    });
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -267,42 +276,34 @@ function App() {
     const messagesRef = ref(database, 'chatMessages');
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // Transforme l'objet en tableau [{id, ...}] et trie par timestamp
+      // Transforme l'objet en tableau [{id, ...}] et trie par timestamp (plus récent en premier)
       const messagesArray = Object.entries(data)
         .map(([id, value]) => ({ id, ...(value as any) }))
-        .sort((a, b) => a.timestamp - b.timestamp);
+        .sort((a, b) => b.timestamp - a.timestamp);
       setMessages(messagesArray);
     });
     return () => unsubscribe();
   }, []);
 
   // Ajout d'un message dans Firebase (avec nom personnalisé)
-  const handleAddMessage = (msg: string, sender: string) => {
+  const handleAddMessage = async (msg: string, sender: string) => {
     const newMsgRef = push(ref(database, 'chatMessages'));
     set(newMsgRef, {
       content: msg,
-      sender: sender || 'Organisation',
+      sender: sender || "Organisation",
       timestamp: Date.now(),
       isAdmin: true
     });
 
-    // Notification locale (web)
-    if (window.Notification && Notification.permission === 'granted') {
-      new Notification('Nouveau message de l\'organisation', {
-        body: msg,
-        icon: '/favicon.png'
-      });
-    } else if (window.Notification && Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          new Notification('Nouveau message de l\'organisation', {
-            body: msg,
-            icon: '/favicon.png'
-          });
-        }
-      });
+    // Envoyer la notification via le service (Cloud Functions)
+    // Si sender est vide, envoyer une chaîne vide pour la notification
+    try {
+      const notificationService = NotificationService.getInstance();
+      await notificationService.notifyChatMessage(msg, sender || '');
+    } catch (error) {
+      // L'erreur est déjà gérée dans le service, on ne bloque pas l'utilisateur
+      console.error('Erreur lors de l\'envoi de la notification:', error);
     }
-    // TODO: Intégrer ici FCM (Firebase Cloud Messaging) pour notifications push sur mobile/app
   };
 
   // Modification d'un message dans Firebase (texte et nom)
@@ -2126,7 +2127,7 @@ function App() {
   // Met à jour le timestamp quand on est dans le chat (en temps réel)
   useEffect(() => {
     if (activeTab === 'chat' && messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
+      const lastMsg = messages[0]; // Le message le plus récent est maintenant en premier
       if (lastMsg.timestamp > lastSeenChatTimestamp) {
         localStorage.setItem('lastSeenChatTimestamp', String(lastMsg.timestamp));
         setLastSeenChatTimestamp(lastMsg.timestamp);
@@ -2334,7 +2335,7 @@ function App() {
     setActiveTab(newTab);
     // Marquer les messages comme lus quand on ouvre le chat
     if (newTab === 'chat' && messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
+      const lastMsg = messages[0]; // Le message le plus récent est maintenant en premier
       const newTimestamp = lastMsg.timestamp;
       localStorage.setItem('lastSeenChatTimestamp', String(newTimestamp));
       setLastSeenChatTimestamp(newTimestamp);
@@ -2881,10 +2882,10 @@ function App() {
                           handleEditMessage(editingMessageId, newMessage, newMessageSender || 'Organisation');
                         } else {
                           // Sinon, on ajoute un nouveau message
-                          handleAddMessage(newMessage, newMessageSender || 'Organisation');
+                          handleAddMessage(newMessage, newMessageSender || '');
                         }
                         setNewMessage('');
-                        setNewMessageSender('Organisation');
+                        setNewMessageSender('');
                         setShowAddMessage(false);
                         setEditingMessageId(null);
                         if (textareaRef.current) {
@@ -2917,10 +2918,10 @@ function App() {
                             if (editingMessageId) {
                               handleEditMessage(editingMessageId, newMessage, newMessageSender || 'Organisation');
                             } else {
-                              handleAddMessage(newMessage, newMessageSender || 'Organisation');
+                              handleAddMessage(newMessage, newMessageSender || '');
                             }
                             setNewMessage('');
-                            setNewMessageSender('Organisation');
+                            setNewMessageSender('');
                             setShowAddMessage(false);
                             setEditingMessageId(null);
                             if (textareaRef.current) {
