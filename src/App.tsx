@@ -2868,9 +2868,9 @@ function App() {
                     className="add-message-form"
                     style={{ 
                       display: 'flex', 
+                      flexDirection: 'column',
                       gap: '8px', 
                       padding: '1rem', 
-                      alignItems: 'flex-start', 
                       background: 'var(--bg-secondary)',
                       borderBottom: '1px solid var(--border-color)'
                     }}
@@ -2894,16 +2894,35 @@ function App() {
                       }
                     }}
                   >
-                    {/* Champ pour le nom de l'expéditeur (admin uniquement) */}
-                    {isAdmin && (
-                      <input
-                        type="text"
-                        value={newMessageSender}
-                        onChange={e => setNewMessageSender(e.target.value)}
-                        placeholder="Nom (ex: Organisation, Prénom...)"
-                        style={{ width: 100, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', alignSelf: 'flex-start' }}
-                      />
-                    )}
+                    {/* Première ligne : Champ pour le nom de l'expéditeur et bouton d'envoi */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {/* Champ pour le nom de l'expéditeur (admin uniquement) */}
+                      {isAdmin && (
+                        <input
+                          type="text"
+                          value={newMessageSender}
+                          onChange={e => setNewMessageSender(e.target.value)}
+                          placeholder="Nom (ex: Organisation, Prénom...)"
+                          style={{ flex: 1, height: 25, padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                        />
+                      )}
+                      <button
+                        type="submit"
+                        className="add-message-button"
+                        style={{ 
+                          padding: '4px 8px', 
+                          borderRadius: '4px', 
+                          border: 'none', 
+                          background: 'var(--primary-color)', 
+                          color: 'white', 
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {editingMessageId ? 'Modifier' : 'Envoyer'}
+                      </button>
+                    </div>
+                    
+                    {/* Deuxième ligne : Champ de saisie du message */}
                     <textarea
                       ref={textareaRef}
                       value={newMessage}
@@ -2932,7 +2951,7 @@ function App() {
                       }}
                       placeholder="Votre message... (Entrée pour envoyer, Maj+Entrée pour revenir à la ligne)"
                       style={{ 
-                        flex: 1, 
+                        width: '100%',
                         minHeight: 25, 
                         maxHeight: 200,
                         padding: '8px', 
@@ -2947,9 +2966,6 @@ function App() {
                       autoFocus
                       rows={1}
                     />
-                    <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, alignSelf: 'flex-start', marginTop: '4px' }}>
-                      ➡️
-                    </button>
                   </form>
                 )}
                 <div className="chat-container">
