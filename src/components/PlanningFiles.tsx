@@ -127,19 +127,92 @@ const compressImage = (file: File, maxSizeKB = 500, quality = 0.8): Promise<File
   });
 };
 
+interface Hotel {
+  id: string;
+  name: string;
+}
+
+interface Restaurant {
+  id: string;
+  name: string;
+}
+
+interface Party {
+  id: string;
+  name: string;
+  sport?: string;
+  description?: string;
+}
+
 interface PlanningFilesProps {
   isEditing?: boolean;
   isAdmin?: boolean;
   filter?: string;
   showFilterSelector?: boolean;
+  hotels?: Hotel[];
+  restaurants?: Restaurant[];
+  parties?: Party[];
+  uploading?: boolean;
+  setUploading?: (value: boolean) => void;
+  uploadProgress?: number;
+  setUploadProgress?: (value: number) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
+
+// Données par défaut des hôtels (synchronisées avec PlanningFilesPage)
+const DEFAULT_HOTELS: Hotel[] = [
+  { id: '1', name: "Ibis Styles Nancy Sud Houdemont" },
+  { id: '2', name: "Nemea Home Suite Nancy Centre" },
+  { id: '3', name: "Nemea Grand Coeur Nancy Centre" },
+  { id: '4', name: "Hotel Ibis Nancy Brabois" },
+  { id: '5', name: "Hotel Residome Nancy" },
+  { id: '6', name: "Ibis Budget Nancy Laxou" },
+  { id: '7', name: "Hotel Revotel Nancy Centre" },
+  { id: '8', name: "Hotel Cerise Nancy" },
+  { id: '9', name: "F1 Nancy Sud Houdemont" },
+  { id: '10', name: "F1 Nancy Nord Bouxières aux Dames" },
+  { id: '11', name: "Greet Hôtel Nancy Sud" },
+  { id: '12', name: "Hôtel Ibis Styles Sud Houdemont" },
+  { id: '13', name: "Hôtel Ibis Budget Centre" },
+  { id: '14', name: "Kosy coeur de ville" },
+  { id: '15', name: "Hôtel In Hôtel" },
+  { id: '16', name: "Campanile Nancy Gare" },
+  { id: '17', name: "Kyriad Vandoeuvre" }
+];
+
+// Données par défaut des restaurants (synchronisées avec PlanningFilesPage)
+const DEFAULT_RESTAURANTS: Restaurant[] = [
+  { id: '1', name: "Salle des Fêtes de Gentilly" },
+  { id: '2', name: "Parc Expo Hall B" }
+];
+
+// Données par défaut des soirées (synchronisées avec PlanningFilesPage)
+const DEFAULT_PARTIES: Party[] = [
+  { id: '1', name: "Place Stanislas", sport: 'Defile', description: "Défilé" },
+  { id: '2', name: "Parc Expo - Pompoms", sport: 'Pompom', description: "Soirée Pompoms" },
+  { id: '3', name: "Parc Expo - Showcase", sport: 'Party', description: "Soirée Showcase" },
+  { id: '4', name: "Zénith - DJ Contest", sport: 'Party', description: "Soirée DJ Contest" }
+];
 
 export default function PlanningFiles({ 
   isEditing = false,
   isAdmin: externalIsAdmin = false, 
   filter, 
-  showFilterSelector = true
+  showFilterSelector = true,
+  hotels: hotelsProp = DEFAULT_HOTELS,
+  restaurants: restaurantsProp = DEFAULT_RESTAURANTS,
+  parties: partiesProp = DEFAULT_PARTIES,
+  uploading: externalUploading,
+  setUploading: externalSetUploading,
+  uploadProgress: externalUploadProgress,
+  setUploadProgress: externalSetUploadProgress,
+  onLoadingChange
 }: PlanningFilesProps) {
+  // Utiliser les valeurs par défaut si les arrays sont vides
+  const hotels = hotelsProp.length > 0 ? hotelsProp : DEFAULT_HOTELS;
+  const restaurants = restaurantsProp.length > 0 ? restaurantsProp : DEFAULT_RESTAURANTS;
+  const parties = partiesProp.length > 0 ? partiesProp : DEFAULT_PARTIES;
+  
   const [files, setFiles] = useState<PlanningFile[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<PlanningFile[]>([]);
   const [eventType, setEventType] = useState<string>('all');
@@ -154,9 +227,16 @@ export default function PlanningFiles({
   });
   const [formEventType, setFormEventType] = useState<string>('sports');
   const [formSpecificEvent, setFormSpecificEvent] = useState<string>('');
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [internalUploading, setInternalUploading] = useState(false);
+  const [internalUploadProgress, setInternalUploadProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  
+  // Utiliser les props externes si fournies, sinon l'état interne
+  const uploading = externalUploading !== undefined ? externalUploading : internalUploading;
+  const uploadProgress = externalUploadProgress !== undefined ? externalUploadProgress : internalUploadProgress;
+  
+  const setUploading = externalSetUploading || setInternalUploading;
+  const setUploadProgress = externalSetUploadProgress || setInternalUploadProgress;
   
   // Utiliser la prop externe si fournie, sinon l'état interne
   const isAdmin = externalIsAdmin !== false ? externalIsAdmin : internalIsAdmin;
@@ -165,12 +245,11 @@ export default function PlanningFiles({
 
   // Options pour les types d'événements (premier niveau)
   const eventTypeOptions = [
-    { value: 'all', label: 'Tous les fichiers' },
+    { value: 'all', label: 'Tous les événements' },
     { value: 'sports', label: 'Sports' },
-    { value: 'party', label: 'Soirées' },
+    { value: 'party', label: 'Soirées/Défilé' },
     { value: 'restaurants', label: 'Restaurants' },
     { value: 'hotel', label: 'Hôtels' },
-    { value: 'bus', label: 'Transport' },
     { value: 'hse', label: 'HSE' }
   ];
 
@@ -195,37 +274,31 @@ export default function PlanningFiles({
           { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
           { value: 'Spikeball', label: 'Spikeball ⚡️' },
           { value: 'Pétanque', label: 'Pétanque 🍹' },
-          { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
-          { value: 'Pompom', label: 'Pompom 🎀' }
+          { value: 'Escalade', label: 'Escalade 🧗‍♂️' }
         ];
       case 'party':
         return [
-          { value: 'all', label: 'Toutes les soirées' },
-          { value: 'jeudi', label: 'Soirée du jeudi' },
-          { value: 'vendredi', label: 'Soirée du vendredi' },
-          { value: 'samedi', label: 'Soirée du samedi - Gala' },
-          { value: 'navettes', label: 'Infos navettes' }
+          { value: 'all', label: 'Toutes les soirées/défilé' },
+          ...parties.map(party => ({
+            value: party.id,
+            label: `${party.name} ${party.sport === 'Defile' ? '🎺' : party.sport === 'Pompom' ? '🎀' : party.description?.includes('DJ Contest') ? '🎧' : party.description?.includes('Showcase') ? '🎤' : '🎉'}`
+          }))
         ];
       case 'restaurants':
         return [
           { value: 'all', label: 'Tous les restaurants' },
-          { value: 'crous', label: 'CROUS' },
-          { value: 'artem', label: 'Artem' },
-          { value: 'autres', label: 'Autres restaurants' }
-        ];
-      case 'bus':
-        return [
-          { value: 'all', label: 'Tous les transports' },
-          { value: 'zenith', label: 'Bus Zénith' },
-          { value: 'retour', label: 'Bus de retour' },
-          { value: 'navettes', label: 'Navettes' }
+          ...restaurants.map(restaurant => ({
+            value: restaurant.id,
+            label: `${restaurant.name}`
+          }))
         ];
       case 'hotel':
         return [
           { value: 'all', label: 'Tous les hôtels' },
-          { value: 'localisation', label: 'Localisation' },
-          { value: 'horaires', label: 'Horaires réception' },
-          { value: 'services', label: 'Services disponibles' }
+          ...hotels.map(hotel => ({
+            value: hotel.id,
+            label: `${hotel.name}`
+          }))
         ];
       case 'hse':
         return [
@@ -258,37 +331,31 @@ export default function PlanningFiles({
           { value: 'Athlétisme', label: 'Athlétisme 🏃‍♂️' },
           { value: 'Spikeball', label: 'Spikeball ⚡️' },
           { value: 'Pétanque', label: 'Pétanque 🍹' },
-          { value: 'Escalade', label: 'Escalade 🧗‍♂️' },
-          { value: 'Pompom', label: 'Pompom 🎀' }
+          { value: 'Escalade', label: 'Escalade 🧗‍♂️' }
         ];
       case 'party':
         return [
-          { value: '', label: 'Sélectionnez une soirée' },
-          { value: 'jeudi', label: 'Soirée du jeudi' },
-          { value: 'vendredi', label: 'Soirée du vendredi' },
-          { value: 'samedi', label: 'Soirée du samedi - Gala' },
-          { value: 'navettes', label: 'Infos navettes' }
+          { value: '', label: 'Sélectionnez une soirée/défilé' },
+          ...parties.map(party => ({
+            value: party.id,
+            label: `${party.name} ${party.sport === 'Defile' ? '🎺' : party.sport === 'Pompom' ? '🎀' : party.description?.includes('DJ Contest') ? '🎧' : party.description?.includes('Showcase') ? '🎤' : '🎉'}`
+          }))
         ];
       case 'restaurants':
         return [
           { value: '', label: 'Sélectionnez un restaurant' },
-          { value: 'crous', label: 'CROUS' },
-          { value: 'artem', label: 'Artem' },
-          { value: 'autres', label: 'Autres restaurants' }
-        ];
-      case 'bus':
-        return [
-          { value: '', label: 'Sélectionnez un transport' },
-          { value: 'zenith', label: 'Bus Zénith' },
-          { value: 'retour', label: 'Bus de retour' },
-          { value: 'navettes', label: 'Navettes' }
+          ...restaurants.map(restaurant => ({
+            value: restaurant.id,
+            label: restaurant.name
+          }))
         ];
       case 'hotel':
         return [
-          { value: '', label: 'Sélectionnez une catégorie' },
-          { value: 'localisation', label: 'Localisation' },
-          { value: 'horaires', label: 'Horaires réception' },
-          { value: 'services', label: 'Services disponibles' }
+          { value: '', label: 'Sélectionnez un hôtel' },
+          ...hotels.map(hotel => ({
+            value: hotel.id,
+            label: hotel.name
+          }))
         ];
       case 'hse':
         return [
@@ -325,21 +392,64 @@ export default function PlanningFiles({
     if (filter) {
       if (filter === 'all') {
         setEventType('all');
+        setSpecificEvent('all');
       } else if (filter === 'sports') {
         setEventType('sports');
+        setSpecificEvent('all');
       } else if (filter === 'restaurants') {
         setEventType('restaurants');
-      } else if (filter === 'bus') {
-        setEventType('bus');
+        setSpecificEvent('all');
       } else if (filter === 'hotel') {
         setEventType('hotel');
+        setSpecificEvent('all');
       } else if (filter === 'party') {
         setEventType('party');
+        setSpecificEvent('all');
       } else if (filter === 'hse') {
         setEventType('hse');
+        setSpecificEvent('all');
+      } else {
+        // C'est un ID spécifique (sport, hôtel, restaurant, party) ou une valeur générique
+        // Vérifier dans quelle catégorie il appartient
+        const sportsTypes = ['Football', 'Basketball', 'Handball', 'Rugby', 'Ultimate', 'Natation',
+          'Badminton', 'Tennis', 'Cross', 'Volleyball', 'Ping-pong', 'Echecs',
+          'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade'];
+        
+        const filterLower = filter.toLowerCase();
+        
+        if (sportsTypes.includes(filter)) {
+          setEventType('sports');
+          setSpecificEvent(filter);
+        } else if (parties.some(p => p.id === filter)) {
+          setEventType('party');
+          setSpecificEvent(filter);
+        } else if (restaurants.some(r => r.id === filter)) {
+          setEventType('restaurants');
+          setSpecificEvent(filter);
+        } else if (hotels.some(h => h.id === filter)) {
+          setEventType('hotel');
+          setSpecificEvent(filter);
+        } else if (filter === 'HSE' || filterLower === 'hse') {
+          setEventType('hse');
+          setSpecificEvent('HSE');
+        } else if (filterLower.includes('restaurant')) {
+          // Valeur générique "Restaurant"
+          setEventType('restaurants');
+          setSpecificEvent('all');
+        } else if (filterLower.includes('hotel') || filterLower.includes('hôtel')) {
+          // Valeur générique "Hotel"
+          setEventType('hotel');
+          setSpecificEvent('all');
+        } else if (filterLower.includes('soirée') || filterLower.includes('soiree') || 
+                   filterLower.includes('party') || filterLower.includes('défilé') || 
+                   filterLower.includes('defile') || filterLower.includes('gala')) {
+          // Valeur générique pour les soirées
+          setEventType('party');
+          setSpecificEvent('all');
+        }
       }
     }
-  }, [filter]);
+  }, [filter, parties, restaurants, hotels]);
 
   // Vérifier si l'utilisateur est admin (seulement si pas fourni en prop)
   useEffect(() => {
@@ -375,11 +485,18 @@ export default function PlanningFiles({
     // Désactiver l'écoute si la page n'est pas visible
     if (!isVisible) return;
 
+    if (onLoadingChange) {
+      onLoadingChange(true);
+    }
+
     // Charger les fichiers avec optimisation des connexions
     const optimizer = FirebaseOptimizer.getInstance();
     
     if (!optimizer.canCreateConnection()) {
       console.warn('Limite de connexions Firebase atteinte pour les fichiers');
+      if (onLoadingChange) {
+        onLoadingChange(false);
+      }
       return;
     }
 
@@ -402,13 +519,17 @@ export default function PlanningFiles({
       } else {
         setFiles([]);
       }
+      
+      if (onLoadingChange) {
+        onLoadingChange(false);
+      }
     });
 
     return () => {
       filesUnsubscribe();
       optimizer.unregisterConnection();
     };
-  }, [isVisible]);
+  }, [isVisible, onLoadingChange]);
 
   // Utiliser IntersectionObserver pour détecter la visibilité
   useEffect(() => {
@@ -432,7 +553,7 @@ export default function PlanningFiles({
       const sportsTypes = [
         'Football', 'Basketball', 'Handball', 'Rugby', 'Ultimate', 'Natation',
         'Badminton', 'Tennis', 'Cross', 'Volleyball', 'Ping-pong', 'Echecs',
-        'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade', 'Pompom'
+        'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade'
       ];
       filtered = filtered.filter(file => 
         sportsTypes.includes(file.eventType || '')
@@ -443,55 +564,77 @@ export default function PlanningFiles({
         filtered = filtered.filter(file => file.eventType === specificEvent);
       }
     } else if (eventType === 'party') {
-      filtered = filtered.filter(file => 
-        file.eventType === 'party' || 
-        file.eventType?.toLowerCase().includes('soirée') ||
-        file.eventType?.toLowerCase().includes('gala') ||
-        file.eventType?.toLowerCase().includes('navette')
-      );
+      // Filtrer par IDs des parties ou valeurs génériques
+      const partyIds = parties.map(p => p.id);
+      filtered = filtered.filter(file => {
+        const eventType = file.eventType || '';
+        return partyIds.includes(eventType) ||
+               eventType.toLowerCase().includes('soirée') ||
+               eventType.toLowerCase().includes('soiree') ||
+               eventType.toLowerCase().includes('gala') ||
+               eventType.toLowerCase().includes('défilé') ||
+               eventType.toLowerCase().includes('defile') ||
+               eventType.toLowerCase().includes('party') ||
+               eventType.toLowerCase().includes('pompom') ||
+               eventType.toLowerCase().includes('navette');
+      });
       
       if (specificEvent !== 'all') {
-        filtered = filtered.filter(file => 
-          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
-        );
+        filtered = filtered.filter(file => {
+          const eventType = file.eventType || '';
+          return eventType === specificEvent ||
+                 (specificEvent === '1' && (eventType.toLowerCase().includes('défilé') || eventType.toLowerCase().includes('defile') || eventType.toLowerCase().includes('stanislas'))) ||
+                 (specificEvent === '2' && (eventType.toLowerCase().includes('pompom'))) ||
+                 (specificEvent === '3' && (eventType.toLowerCase().includes('showcase'))) ||
+                 (specificEvent === '4' && (eventType.toLowerCase().includes('dj contest') || eventType.toLowerCase().includes('zenith')));
+        });
       }
     } else if (eventType === 'restaurants') {
-      filtered = filtered.filter(file => 
-        file.eventType === 'Restaurant' ||
-        file.eventType?.toLowerCase().includes('restaurant') ||
-        file.eventType?.toLowerCase().includes('crous') ||
-        file.eventType?.toLowerCase().includes('artem')
-      );
+      // Filtrer par IDs des restaurants ou valeurs génériques
+      const restaurantIds = restaurants.map(r => r.id);
+      filtered = filtered.filter(file => {
+        const eventType = file.eventType || '';
+        return restaurantIds.includes(eventType) ||
+               eventType.toLowerCase().includes('restaurant') ||
+               eventType === 'Restaurant' ||
+               eventType === 'restaurant';
+      });
       
       if (specificEvent !== 'all') {
-        filtered = filtered.filter(file => 
-          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
-        );
-      }
-    } else if (eventType === 'bus') {
-      filtered = filtered.filter(file => 
-        file.eventType?.toLowerCase().includes('bus') ||
-        file.eventType?.toLowerCase().includes('transport') ||
-        file.eventType?.toLowerCase().includes('navette') ||
-        file.eventType?.toLowerCase().includes('zenith')
-      );
-      
-      if (specificEvent !== 'all') {
-        filtered = filtered.filter(file => 
-          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
-        );
+        filtered = filtered.filter(file => {
+          const eventType = file.eventType || '';
+          return eventType === specificEvent ||
+                 (specificEvent === '1' && (eventType.toLowerCase().includes('gentilly') || eventType.toLowerCase().includes('salle des fêtes'))) ||
+                 (specificEvent === '2' && (eventType.toLowerCase().includes('parc expo') || eventType.toLowerCase().includes('hall b')));
+        });
       }
     } else if (eventType === 'hotel') {
-      filtered = filtered.filter(file => 
-        file.eventType === 'Hotel' ||
-        file.eventType?.toLowerCase().includes('hôtel') ||
-        file.eventType?.toLowerCase().includes('hotel')
-      );
+      // Filtrer par IDs des hôtels ou valeurs génériques
+      const hotelIds = hotels.map(h => h.id);
+      filtered = filtered.filter(file => {
+        const eventType = file.eventType || '';
+        return hotelIds.includes(eventType) ||
+               eventType.toLowerCase().includes('hôtel') ||
+               eventType.toLowerCase().includes('hotel') ||
+               eventType === 'Hotel' ||
+               eventType === 'hotel';
+      });
       
       if (specificEvent !== 'all') {
-        filtered = filtered.filter(file => 
-          file.eventType?.toLowerCase().includes(specificEvent.toLowerCase())
-        );
+        filtered = filtered.filter(file => {
+          const eventType = file.eventType || '';
+          // Si c'est un ID, faire une correspondance exacte
+          if (hotelIds.includes(specificEvent)) {
+            return eventType === specificEvent;
+          }
+          // Sinon, chercher par nom d'hôtel
+          const selectedHotel = hotels.find(h => h.id === specificEvent);
+          if (selectedHotel) {
+            return eventType === specificEvent ||
+                   eventType.toLowerCase().includes(selectedHotel.name.toLowerCase());
+          }
+          return false;
+        });
       }
     } else if (eventType === 'hse') {
       filtered = filtered.filter(file => 
@@ -501,7 +644,7 @@ export default function PlanningFiles({
     }
 
     setFilteredFiles(filtered);
-  }, [eventType, specificEvent, files]);
+  }, [eventType, specificEvent, files, parties, restaurants, hotels]);
 
   const handleDeleteFile = async (fileId: string) => {
     if (!isAdmin) return;
@@ -749,7 +892,7 @@ export default function PlanningFiles({
           {/* Premier niveau de filtre */}
           <div className="filter-group">
             <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', marginBottom: '4px', display: 'block', textAlign: 'center' }}>
-              Type :
+              Type d'événement :
             </label>
             <select
               value={eventType}
@@ -781,7 +924,6 @@ export default function PlanningFiles({
                 {eventType === 'sports' ? 'Sport :' :
                  eventType === 'party' ? 'Soirée :' :
                  eventType === 'restaurants' ? 'Restaurant :' :
-                 eventType === 'bus' ? 'Transport :' :
                  eventType === 'hotel' ? 'Hôtel :' :
                  eventType === 'hse' ? 'HSE :' : 'Spécifique :'}
               </label>
@@ -941,9 +1083,8 @@ export default function PlanningFiles({
           <div className="form-group">
                   <label htmlFor="formSpecificEvent">
                     {formEventType === 'sports' ? 'Sport' :
-                     formEventType === 'party' ? 'Soirée' :
+                     formEventType === 'party' ? 'Soirée/Défilé' :
                      formEventType === 'restaurants' ? 'Restaurant' :
-                     formEventType === 'bus' ? 'Transport' :
                      formEventType === 'hotel' ? 'Hôtel' :
                      formEventType === 'hse' ? 'HSE' : 'Type'}
                   </label>
