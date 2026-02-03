@@ -728,7 +728,7 @@ function App() {
   const [newVenueDescription, setNewVenueDescription] = useState('');
   const [newVenueAddress, setNewVenueAddress] = useState('');
   const [selectedSport, setSelectedSport] = useState('Football');
-  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [_selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [editingMatch, setEditingMatch] = useState<{venueId: string | null, match: Match | null}>({ venueId: null, match: null });
   const [newMatch, setNewMatch] = useState<{date: string, teams: string, description: string, endTime?: string, result?: string}>({
     date: '',
@@ -736,10 +736,10 @@ function App() {
     description: '',
     result: ''
   });
-  const [openPopup, setOpenPopup] = useState<string | null>(null);
+  const [_openPopup, setOpenPopup] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [_userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapStyle, setMapStyle] = useState('osm');
   const [activeTab, setActiveTab] = useState<'map' | 'events' | 'chat' | 'planning'>('map');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
