@@ -1499,7 +1499,7 @@ function App() {
       // Les soirées et défilés sont toujours affichés, quelle que soit la délégation
       const delegationMatch = event.type === 'party' || 
         delegationFilter === 'all' || 
-        (event.teams && event.teams.toLowerCase().includes(delegationFilter.toLowerCase()));
+        (event.teams ? delegationMatches(event.teams, delegationFilter) : false);
 
       // Filtre par lieu
       let venueMatch = true;
@@ -2337,16 +2337,56 @@ function App() {
     }
   };
 
-  // Fonction pour obtenir toutes les délégations uniques
+  const isPhaseKeyword = (s: string) =>
+    /poule|perdant|vainqueur|gagnant/i.test(s);
+
+  const isShortCode = (s: string) =>
+    /^[A-Za-z][0-9A-Za-z]$/.test(s.replace(/\s/g, ''));
+
+  const isIgnoredEntry = (s: string) =>
+    !s || s === '...' || s === '…' || isPhaseKeyword(s) || isShortCode(s);
+
+  const normalizeDelegation = (raw: string): string => {
+    const l = raw.toLowerCase().trim();
+    if (l === 'nancy' || l === 'mines nancy') return 'mines nancy';
+    if (l === 'sainté' || l === 'sainte' || l === 'mines sainté' || l === 'mines sainte') return 'mines sainté';
+    return l;
+  };
+
+  const displayDelegation = (raw: string): string => {
+    const n = normalizeDelegation(raw);
+    if (n === 'mines nancy') return 'Mines Nancy';
+    if (n === 'mines sainté') return 'Mines Sainté';
+    return raw.trim();
+  };
+
+  const delegationMatches = (teams: string, selectedDelegation: string): boolean => {
+    if (selectedDelegation === 'all') return true;
+    const rawEntries = teams.split(/vs|VS|contre|CONTRE|,/).map(t => t.trim());
+    const normSelected = normalizeDelegation(selectedDelegation);
+    for (const entry of rawEntries) {
+      if (isIgnoredEntry(entry)) continue;
+      const subs = /\sx\s/i.test(entry) ? entry.split(/\sx\s/i).map(s => s.trim()) : [entry];
+      for (const sub of subs) {
+        if (isIgnoredEntry(sub)) continue;
+        if (normalizeDelegation(sub) === normSelected) return true;
+      }
+    }
+    return false;
+  };
+
   const getAllDelegations = () => {
     const delegations = new Set<string>();
     venues.forEach(venue => {
       if (venue.matches) {
         venue.matches.forEach(match => {
-          const teams = match.teams.split(/vs|VS|contre|CONTRE|,/).map(team => team.trim());
-          teams.forEach(team => {
-            // Exclure les "..." et les chaînes vides
-            if (team && team !== "..." && team !== "…") delegations.add(team);
+          const rawEntries = match.teams.split(/vs|VS|contre|CONTRE|,/).map(t => t.trim());
+          rawEntries.forEach(entry => {
+            if (isIgnoredEntry(entry)) return;
+            const subs = /\sx\s/i.test(entry) ? entry.split(/\sx\s/i).map(s => s.trim()) : [entry];
+            subs.forEach(sub => {
+              if (!isIgnoredEntry(sub)) delegations.add(displayDelegation(sub));
+            });
           });
         });
       }
