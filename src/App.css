@@ -523,7 +523,8 @@ html, body, #root {
 }
 
 .venue-popup {
-  min-width: min(250px, 90vw);
+  min-width: min(300px, 88vw);
+  max-width: min(420px, 95vw);
   padding: 1rem;
   background-color: var(--bg-color);
   border-radius: 8px;
@@ -753,7 +754,7 @@ html, body, #root {
   }
 
   .venue-popup {
-    max-width: 85vw;
+    max-width: 95vw;
   }
 }
 

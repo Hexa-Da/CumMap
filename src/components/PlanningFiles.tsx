@@ -827,12 +827,12 @@ export default function PlanningFiles({
       flexDirection: 'column',
       alignItems: 'center',
       borderRadius: '12px',
-      border: '2px solid var(--accent-color)',
+      border: '2px solid #4CAF50',
       minWidth: '300px',
       maxWidth: '500px',
     }}>
       <div style={{
-        color: 'var(--accent-color)',
+        color: '#4CAF50',
         fontWeight: 'bold',
         fontSize: '1.2rem',
         marginBottom: '15px',
@@ -851,13 +851,13 @@ export default function PlanningFiles({
         <div style={{
           width: `${uploadProgress}%`,
           height: '100%',
-          background: 'linear-gradient(90deg, var(--accent-color), #4CAF50)',
+          background: '#4CAF50',
           transition: 'width 0.3s ease',
           borderRadius: '8px',
         }}></div>
       </div>
       <div style={{
-        color: 'var(--accent-color)',
+        color: '#4CAF50',
         fontWeight: 'bold',
         fontSize: '1.3rem',
         marginBottom: '5px'
