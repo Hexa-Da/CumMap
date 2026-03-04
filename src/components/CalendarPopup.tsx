@@ -176,8 +176,8 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
     const events: Event[] = [];
     
     if (eventFilter !== 'none') {
-      // Pour les matchs sportifs
-      if (eventFilter === 'all' || eventFilter !== 'party') {
+      // Pour les matchs sportifs (uniquement visibles pour les admins)
+      if (isAdmin && (eventFilter === 'all' || eventFilter !== 'party')) {
         venues.forEach(venue => {
           if (venue.matches) {
             venue.matches.forEach(match => {
