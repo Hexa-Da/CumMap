@@ -1752,7 +1752,7 @@ function App() {
         const matchesListDiv = document.createElement('div');
         matchesListDiv.className = 'matches-list';
         
-        if (venue.matches && venue.matches.length > 0) {
+        if (isAdmin && venue.matches && venue.matches.length > 0) {
           matchesListDiv.innerHTML = '<h4>Matchs à venir :</h4>';
           
           // Trier les matchs par date
@@ -2918,6 +2918,7 @@ function App() {
                     </>
                   )}
                 </div>
+                {isAdmin && (
                 <div className="events-list">
                   {getFilteredEvents().map(event => (
                     <div 
@@ -2985,6 +2986,7 @@ function App() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
             {/* AJOUTER panneau Fichiers */}
