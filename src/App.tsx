@@ -2343,6 +2343,9 @@ function App() {
   const isShortCode = (s: string) =>
     /^[A-Za-z][0-9A-Za-z]$/.test(s.replace(/\s/g, ''));
 
+  const isSecondOrReserveTeam = (s: string) =>
+    /^\d+ème(\s|$)/.test(s) || /\s+\d+ème$/.test(s);
+
   const isIgnoredEntry = (s: string) =>
     !s || s === '...' || s === '…' || isPhaseKeyword(s) || isShortCode(s);
 
@@ -2385,7 +2388,7 @@ function App() {
             if (isIgnoredEntry(entry)) return;
             const subs = /\sx\s/i.test(entry) ? entry.split(/\sx\s/i).map(s => s.trim()) : [entry];
             subs.forEach(sub => {
-              if (!isIgnoredEntry(sub)) delegations.add(displayDelegation(sub));
+              if (!isIgnoredEntry(sub) && !isSecondOrReserveTeam(sub)) delegations.add(displayDelegation(sub));
             });
           });
         });
