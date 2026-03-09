@@ -2344,7 +2344,7 @@ function App() {
     /^[A-Za-z][0-9A-Za-z]$/.test(s.replace(/\s/g, ''));
 
   const isSecondOrReserveTeam = (s: string) =>
-    /^\d+ème(\s|$)/.test(s) || /\s+\d+ème$/.test(s);
+    /^\d+(?:er|ème)(\s|$)/.test(s) || /\s+\d+(?:er|ème)$/.test(s);
 
   const isIgnoredEntry = (s: string) =>
     !s || s === '...' || s === '…' || isPhaseKeyword(s) || isShortCode(s);
