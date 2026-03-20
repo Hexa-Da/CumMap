@@ -245,7 +245,7 @@ export default function PlanningFiles({
 
   // Options pour les types d'événements (premier niveau)
   const eventTypeOptions = [
-    { value: 'all', label: 'Tous les événements' },
+    { value: 'all', label: 'Tous les fichiers' },
     { value: 'sports', label: 'Sports' },
     { value: 'party', label: 'Soirées/Défilé' },
     { value: 'restaurants', label: 'Restaurants' },
@@ -892,7 +892,7 @@ export default function PlanningFiles({
           {/* Premier niveau de filtre */}
           <div className="filter-group">
             <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', marginBottom: '4px', display: 'block', textAlign: 'center' }}>
-              Type d'événement :
+              Type de fichier :
             </label>
             <select
               value={eventType}
@@ -918,7 +918,7 @@ export default function PlanningFiles({
           </div>
 
           {/* Second niveau de filtre (conditionnel) */}
-          {eventType !== 'all' && (
+          {eventType !== 'all' && eventType !== 'hse' && (
             <div className="filter-group">
               <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', marginBottom: '4px', display: 'block', textAlign: 'center' }}>
                 {eventType === 'sports' ? 'Sport :' :
