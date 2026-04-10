@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ref, onValue, push, remove, set } from 'firebase/database';
 import { database, storage, auth } from '../firebase';
-import { PlanningFile } from '../types';
+import { PlanningFile, PlanningFileCategory } from '../types';
 import { ref as storageRef, getDownloadURL, uploadBytesResumable, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -182,17 +182,32 @@ const DEFAULT_HOTELS: Hotel[] = [
 
 // Données par défaut des restaurants (synchronisées avec PlanningFilesPage)
 const DEFAULT_RESTAURANTS: Restaurant[] = [
-  { id: '1', name: "Salle des Fêtes de Gentilly" },
-  { id: '2', name: "Parc Expo Hall B" }
+  { id: 'salle-fetes-gentilly', name: "Salle des Fêtes de Gentilly" },
+  { id: 'parc-expo-hall-a1', name: "Parc Expo Hall A1" },
+  { id: 'parc-saint-marie', name: "Parc Saint-Marie" }
 ];
 
 // Données par défaut des soirées (synchronisées avec PlanningFilesPage)
 const DEFAULT_PARTIES: Party[] = [
-  { id: '1', name: "Place Stanislas", sport: 'Defile', description: "Défilé" },
-  { id: '2', name: "Parc Expo - Pompoms", sport: 'Pompom', description: "Soirée Pompoms" },
-  { id: '3', name: "Parc Expo - Showcase", sport: 'Party', description: "Soirée Showcase" },
-  { id: '4', name: "Zénith - DJ Contest", sport: 'Party', description: "Soirée DJ Contest" }
+  { id: 'place-stanislas', name: "Place Stanislas — Défilé", sport: 'Defile', description: "Défilé" },
+  { id: 'parc-expo-pompom', name: "Parc Expo — Soirée Pompoms", sport: 'Pompom', description: "Soirée Pompoms" },
+  { id: 'parc-expo-showcase', name: "Parc Expo — Showcase", sport: 'Party', description: "Soirée Showcase" },
+  { id: 'zenith', name: "Zénith — DJ Contest", sport: 'Party', description: "Soirée DJ Contest" }
 ];
+
+/** Anciens fichiers enregistrés avec eventType numérique */
+const LEGACY_PARTY_NUM_TO_SLUG: Record<string, string> = {
+  '1': 'place-stanislas',
+  '2': 'parc-expo-pompom',
+  '3': 'parc-expo-showcase',
+  '4': 'zenith'
+};
+
+const LEGACY_REST_NUM_TO_SLUG: Record<string, string> = {
+  '1': 'salle-fetes-gentilly',
+  '2': 'parc-expo-hall-a1',
+  '3': 'parc-saint-marie'
+};
 
 export default function PlanningFiles({ 
   isEditing = false,
@@ -420,6 +435,9 @@ export default function PlanningFiles({
         if (sportsTypes.includes(filter)) {
           setEventType('sports');
           setSpecificEvent(filter);
+        } else if (LEGACY_PARTY_NUM_TO_SLUG[filter]) {
+          setEventType('party');
+          setSpecificEvent(LEGACY_PARTY_NUM_TO_SLUG[filter]);
         } else if (parties.some(p => p.id === filter)) {
           setEventType('party');
           setSpecificEvent(filter);
@@ -555,9 +573,12 @@ export default function PlanningFiles({
         'Badminton', 'Tennis', 'Cross', 'Volleyball', 'Ping-pong', 'Echecs',
         'Athlétisme', 'Spikeball', 'Pétanque', 'Escalade'
       ];
-      filtered = filtered.filter(file => 
-        sportsTypes.includes(file.eventType || '')
-      );
+      filtered = filtered.filter(file => {
+        if (file.fileCategory) {
+          return file.fileCategory === 'sports';
+        }
+        return sportsTypes.includes(file.eventType || '');
+      });
       
       // Filtre spécifique (second niveau)
       if (specificEvent !== 'all') {
@@ -567,8 +588,12 @@ export default function PlanningFiles({
       // Filtrer par IDs des parties ou valeurs génériques
       const partyIds = parties.map(p => p.id);
       filtered = filtered.filter(file => {
+        if (file.fileCategory) {
+          return file.fileCategory === 'party';
+        }
         const eventType = file.eventType || '';
         return partyIds.includes(eventType) ||
+               Object.keys(LEGACY_PARTY_NUM_TO_SLUG).includes(eventType) ||
                eventType.toLowerCase().includes('soirée') ||
                eventType.toLowerCase().includes('soiree') ||
                eventType.toLowerCase().includes('gala') ||
@@ -581,20 +606,35 @@ export default function PlanningFiles({
       
       if (specificEvent !== 'all') {
         filtered = filtered.filter(file => {
-          const eventType = file.eventType || '';
-          return eventType === specificEvent ||
-                 (specificEvent === '1' && (eventType.toLowerCase().includes('défilé') || eventType.toLowerCase().includes('defile') || eventType.toLowerCase().includes('stanislas'))) ||
-                 (specificEvent === '2' && (eventType.toLowerCase().includes('pompom'))) ||
-                 (specificEvent === '3' && (eventType.toLowerCase().includes('showcase'))) ||
-                 (specificEvent === '4' && (eventType.toLowerCase().includes('dj contest') || eventType.toLowerCase().includes('zenith')));
+          const et = file.eventType || '';
+          if (et === specificEvent) return true;
+          if (LEGACY_PARTY_NUM_TO_SLUG[et] === specificEvent) return true;
+          const low = et.toLowerCase();
+          if (specificEvent === 'place-stanislas') {
+            return low.includes('défilé') || low.includes('defile') || low.includes('stanislas');
+          }
+          if (specificEvent === 'parc-expo-pompom') {
+            return low.includes('pompom');
+          }
+          if (specificEvent === 'parc-expo-showcase') {
+            return low.includes('showcase');
+          }
+          if (specificEvent === 'zenith') {
+            return low.includes('dj contest') || low.includes('zenith');
+          }
+          return false;
         });
       }
     } else if (eventType === 'restaurants') {
       // Filtrer par IDs des restaurants ou valeurs génériques
       const restaurantIds = restaurants.map(r => r.id);
       filtered = filtered.filter(file => {
+        if (file.fileCategory) {
+          return file.fileCategory === 'restaurants';
+        }
         const eventType = file.eventType || '';
         return restaurantIds.includes(eventType) ||
+               Object.keys(LEGACY_REST_NUM_TO_SLUG).includes(eventType) ||
                eventType.toLowerCase().includes('restaurant') ||
                eventType === 'Restaurant' ||
                eventType === 'restaurant';
@@ -602,16 +642,29 @@ export default function PlanningFiles({
       
       if (specificEvent !== 'all') {
         filtered = filtered.filter(file => {
-          const eventType = file.eventType || '';
-          return eventType === specificEvent ||
-                 (specificEvent === '1' && (eventType.toLowerCase().includes('gentilly') || eventType.toLowerCase().includes('salle des fêtes'))) ||
-                 (specificEvent === '2' && (eventType.toLowerCase().includes('parc expo') || eventType.toLowerCase().includes('hall b')));
+          const et = file.eventType || '';
+          if (et === specificEvent) return true;
+          if (LEGACY_REST_NUM_TO_SLUG[et] === specificEvent) return true;
+          const low = et.toLowerCase();
+          if (specificEvent === 'salle-fetes-gentilly') {
+            return low.includes('gentilly') || low.includes('salle des fêtes');
+          }
+          if (specificEvent === 'parc-expo-hall-a1') {
+            return low.includes('parc expo') || low.includes('hall a1') || low.includes('hall b');
+          }
+          if (specificEvent === 'parc-saint-marie') {
+            return low.includes('parc saint-marie') || low.includes('saint-marie') || low.includes('boffrand') || low.includes('brunch');
+          }
+          return false;
         });
       }
     } else if (eventType === 'hotel') {
       // Filtrer par IDs des hôtels ou valeurs génériques
       const hotelIds = hotels.map(h => h.id);
       filtered = filtered.filter(file => {
+        if (file.fileCategory) {
+          return file.fileCategory === 'hotel';
+        }
         const eventType = file.eventType || '';
         return hotelIds.includes(eventType) ||
                eventType.toLowerCase().includes('hôtel') ||
@@ -637,10 +690,15 @@ export default function PlanningFiles({
         });
       }
     } else if (eventType === 'hse') {
-      filtered = filtered.filter(file => 
-        file.eventType === 'HSE' ||
-        file.eventType?.toLowerCase().includes('hse')
-      );
+      filtered = filtered.filter(file => {
+        if (file.fileCategory) {
+          return file.fileCategory === 'hse';
+        }
+        return (
+          file.eventType === 'HSE' ||
+          file.eventType?.toLowerCase().includes('hse') === true
+        );
+      });
     }
 
     setFilteredFiles(filtered);
@@ -754,6 +812,15 @@ export default function PlanningFiles({
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
+            const category: PlanningFileCategory | undefined =
+              formEventType === 'sports' ||
+              formEventType === 'party' ||
+              formEventType === 'restaurants' ||
+              formEventType === 'hotel' ||
+              formEventType === 'hse'
+                ? formEventType
+                : undefined;
+
             const fileData = {
         ...newFile,
               url: downloadURL,
@@ -761,7 +828,8 @@ export default function PlanningFiles({
               uploadedBy: 'admin',
               originalSize: file.size,
               compressedSize: fileToUpload.size,
-              compressionRatio: file.type.startsWith('image/') ? Math.round((1 - fileToUpload.size / file.size) * 100) : 0
+              compressionRatio: file.type.startsWith('image/') ? Math.round((1 - fileToUpload.size / file.size) * 100) : 0,
+              ...(category ? { fileCategory: category } : {})
             };
             
             const dataSize = JSON.stringify(fileData).length;
