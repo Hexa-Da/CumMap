@@ -32,6 +32,14 @@ export interface Match {
   venueId: string;
 }
 
+/** Catégorie choisie à l’upload ; évite l’ambiguïté des IDs numériques partagés (party/resto/hôtel). */
+export type PlanningFileCategory =
+  | 'sports'
+  | 'party'
+  | 'restaurants'
+  | 'hotel'
+  | 'hse';
+
 export interface PlanningFile {
   id: string;
   name: string;
@@ -40,7 +48,9 @@ export interface PlanningFile {
   uploadDate: number;
   description?: string;
   uploadedBy: string;
+  /** Sous-type (sport, id soirée/resto/hôtel, etc.) — peut collisionner entre catégories sans `fileCategory`. */
   eventType?: string;
+  fileCategory?: PlanningFileCategory;
   originalSize?: number;
   compressedSize?: number;
   compressionRatio?: number;

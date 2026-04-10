@@ -603,7 +603,7 @@ function App() {
     // Les descriptions seront chargées depuis Firebase via les listeners
     return [
       {
-        id: '1',
+        id: 'salle-fetes-gentilly',
         name: "Salle des Fêtes de Gentilly",
         position: [48.698430, 6.139541],
         description: "Repas du Vendredi soir",
@@ -618,7 +618,7 @@ function App() {
         matches: []
       },
       {
-        id: '2',
+        id: 'parc-expo-hall-a1',
         name: "Parc Expo Hall A1",
         position: [48.663272, 6.190683],
         description: "Repas du Jeudi et Vendredi soir",
@@ -631,6 +631,21 @@ function App() {
         sport: 'Restaurant',
         mealType: 'soir',
         matches: []
+      },
+      {
+        id: 'parc-saint-marie',
+        name: "Parc Saint-Marie",
+        position: [48.680392, 6.170733],
+        description: "Brunch du Dimanche matin",
+        address: "1 Av. Boffrand, 54000 Nancy",
+        type: 'restaurant',
+        date: '',
+        latitude: 48.680392,
+        longitude: 6.170733,
+        emoji: '🍽️',
+        sport: 'Restaurant',
+        mealType: 'midi',
+        matches: []
       }
     ];
   });
@@ -639,8 +654,8 @@ function App() {
     // Les descriptions et résultats seront chargés depuis Firebase via les listeners
     return [
       {
-        id: '1',
-        name: "Place Stanislas",
+        id: 'place-stanislas',
+        name: "Place Stanislas — Défilé",
         position: [48.693524, 6.183270],
         description: "Grand défilé",
         address: "Pl. Stanislas, 54000 Nancy",
@@ -652,8 +667,8 @@ function App() {
         sport: 'Defile'
       },
       {
-        id: '2',
-        name: "Parc Expo",
+        id: 'parc-expo-pompom',
+        name: "Parc Expo — Soirée Pompoms",
         position: [48.663030, 6.191597],
         description: "Soirée Pompoms du 16 avril",
         address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
@@ -666,8 +681,8 @@ function App() {
         result: 'à venir'
       },
       {
-        id: '3',
-        name: "Parc Expo",
+        id: 'parc-expo-showcase',
+        name: "Parc Expo — Showcase",
         position: [48.663481, 6.189737],
         description: "Soirée Showcase 17 avril",
         address: "Rue Catherine Opalinska, 54500 Vandœuvre-lès-Nancy",
@@ -680,8 +695,8 @@ function App() {
         result: 'à venir'
       },
       {
-        id: '4',
-        name: "Zénith",
+        id: 'zenith',
+        name: "Zénith — DJ Contest",
         position: [48.710136, 6.139169],
         description: "Soirée DJ Contest 18 avril",
         address: "Rue du Zénith, 54320 Maxéville",
@@ -1505,45 +1520,34 @@ function App() {
       let venueMatch = true;
       if (venueFilter !== 'Tous') {
         if (event.type === 'party') {
-          // Pour les soirées et défilés, utiliser les identifiants spécifiques
-          let partyId = '';
           // Utiliser l'ID de l'événement pour distinguer les soirées au même endroit
           const eventId = event.id.replace('party-', '');
-          switch (eventId) {
-            case '1':
-              partyId = 'place-stanislas';
-              break;
-            case '2':
-              partyId = 'parc-expo-pompom';
-              break;
-            case '3':
-              partyId = 'parc-expo-showcase';
-              break;
-            case '4':
-              partyId = 'zenith';
-              break;
-            default:
-              // Fallback sur le nom si l'ID ne correspond pas
-              switch (event.name) {
-                case 'Place Stanislas':
-                  partyId = 'place-stanislas';
-                  break;
-                case 'Parc Expo':
-                  // Distinguer par la description
-                  if (event.description?.includes('Pompoms')) {
-                    partyId = 'parc-expo-pompom';
-                  } else if (event.description?.includes('Showcase')) {
-                    partyId = 'parc-expo-showcase';
-                  } else {
-                    partyId = 'parc-expo';
-                  }
-                  break;
-                case 'Zénith':
-                  partyId = 'zenith';
-                  break;
-                default:
-                  partyId = event.name.toLowerCase().replace(/\s+/g, '-');
-              }
+          let partyId = eventId;
+          // Anciens événements encore stockés avec des ids numériques
+          if (eventId === '1') partyId = 'place-stanislas';
+          else if (eventId === '2') partyId = 'parc-expo-pompom';
+          else if (eventId === '3') partyId = 'parc-expo-showcase';
+          else if (eventId === '4') partyId = 'zenith';
+          else if (!['place-stanislas', 'parc-expo-pompom', 'parc-expo-showcase', 'zenith'].includes(eventId)) {
+            switch (event.name) {
+              case 'Place Stanislas':
+                partyId = 'place-stanislas';
+                break;
+              case 'Parc Expo':
+                if (event.description?.includes('Pompoms')) {
+                  partyId = 'parc-expo-pompom';
+                } else if (event.description?.includes('Showcase')) {
+                  partyId = 'parc-expo-showcase';
+                } else {
+                  partyId = 'parc-expo';
+                }
+                break;
+              case 'Zénith':
+                partyId = 'zenith';
+                break;
+              default:
+                partyId = event.name.toLowerCase().replace(/\s+/g, '-');
+            }
           }
           venueMatch = partyId === venueFilter;
         } else {
@@ -3015,7 +3019,11 @@ function App() {
                   </button>
                 </div>
                 <div style={{ padding: '2rem', textAlign: 'left', maxWidth: 800, margin: '0 auto' }}>
-                  <PlanningFiles isEditing={isEditing} isAdmin={isAdmin} />
+                  <PlanningFiles
+                    isEditing={isEditing}
+                    isAdmin={isAdmin}
+                    restaurants={restaurants.map((r) => ({ id: r.id, name: r.name }))}
+                  />
                 </div>
               </div>
             )}
