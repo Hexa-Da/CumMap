@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './CalendarPopup.css';
 import { Venue } from '../types';
+import { PARTY_VENUE_FILTER_OPTIONS } from '../data/partyVenueFilterOptions';
 
 interface Event {
   type: 'match' | 'party';
@@ -93,13 +94,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
 
     // Pour les soirées et défilés, retourner les lieux fixes (uniquement si admin)
     if (eventFilter === 'party' && isAdmin) {
-      return [
-        { value: 'Tous', label: 'Tous les lieux' },
-        { value: 'place-stanislas', label: 'Place Stanislas' },
-        { value: 'parc-expo-pompom', label: 'Parc Expo (Pompoms)' },
-        { value: 'parc-expo-showcase', label: 'Parc Expo (Showcase)' },
-        { value: 'zenith', label: 'Zénith' }
-      ];
+      return [...PARTY_VENUE_FILTER_OPTIONS];
     }
 
     // Pour les sports, filtrer les lieux par sport
@@ -232,7 +227,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
       if ((eventFilter === 'all' || eventFilter === 'party') && isAdmin) {
         const parties = [
           {
-            id: 'place-stanislas',
+            id: 'defile',
             date: '2026-04-16',
             time: '14:00',
             endTime: '16:30',
@@ -862,7 +857,7 @@ const CalendarPopup: React.FC<CalendarPopupProps> = ({
                 } else if (selectedEvent.type === 'party') {
                   const partyVenues: { [key: string]: Venue } = {
                     'Place Stanislas': {
-                      id: 'place-stanislas',
+                      id: 'defile',
                       name: 'Place Stanislas',
                       description: 'Place Stanislas',
                       address: 'Pl. Stanislas, 54000 Nancy',
