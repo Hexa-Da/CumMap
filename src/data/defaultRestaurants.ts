@@ -66,5 +66,20 @@ export const DEFAULT_RESTAURANTS: RestaurantVenue[] = [
     sport: 'Restaurant',
     mealType: 'midi',
     matches: []
+  },
+  {
+    id: 'buvette-aiguillettes',
+    name: 'Buvette des Aiguillettes',
+    position: [48.668983, 6.158041],
+    description: 'Buvette — Complexe sportif Les Aiguillettes',
+    address: 'Boulevard des Aiguillettes, 54600 Villers-lès-Nancy',
+    type: 'restaurant',
+    date: '',
+    latitude: 48.668983,
+    longitude: 6.158041,
+    emoji: '🍽️',
+    sport: 'Restaurant',
+    mealType: 'midi',
+    matches: []
   }
 ];
