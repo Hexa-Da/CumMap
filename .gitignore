@@ -28,3 +28,11 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+### Docs Perso ###
+.cursor
+memoire
+tasks
+
+### Adaptation OpenCode ###
+opencode.jsonc
