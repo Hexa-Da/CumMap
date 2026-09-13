@@ -1,38 +1,40 @@
+# Dependencies & build
+node_modules/
+dist/
+dist-ssr/
+
+# Env / secrets (jamais committer)
+.env
+.env.local
+.env.*.local
+*.local
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# OS / éditeur
+.DS_Store
+Thumbs.db
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.env
-.env.local
-.env.*.local
+*.swp
+*~
 
-# Local Netlify folder
-.netlify
+# Firebase CLI local (cache / emulators)
+.firebase/
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
-### Docs Perso ###
-.cursor
-memoire
-tasks
-
-### Adaptation OpenCode ###
+# Docs / agent locaux (hors git)
+.cursor/
+memoire/
+tasks/
 opencode.jsonc

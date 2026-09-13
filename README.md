@@ -19,7 +19,7 @@ CumMap fonctionne comme un client web frontend qui se connecte à la base de don
 
 ## 🎥 Démo des fonctionnalités principales
 
-Une démo de l'application web est disponible à l'adresse [https://cummap.netlify.app](https://cummap.netlify.app). 
+L'application web est en ligne sur [https://cummap.homeofparis.com](https://cummap.homeofparis.com).
 Vous pouvez y découvrir une partie des fonctionnalités de l'application finale, notamment :
 
 ### Carte interactive
@@ -89,91 +89,13 @@ Vous pouvez y découvrir une partie des fonctionnalités de l'application finale
 ### Analytics
 - **Google Analytics 4** : Suivi des événements et interactions utilisateurs
 
-## 🔧 Installation et développement
-
-### Prérequis
-- Node.js (v18 ou supérieur)
-- npm ou yarn
-- Compte Firebase avec projet configuré
-- Firebase CLI installé globalement 
-
-### Installation
-```bash
-# Cloner le repository
-git clone https://github.com/votre-username/cummap.git
-
-# Installer les dépendances du projet principal
-cd cummap
-npm install
-
-# Installer les dépendances des Cloud Functions
-cd functions
-npm install
-cd ..
-
-# Lancer l'application en mode développement
-npm run dev
-```
-
-### Configuration Firebase
-1. Créer un projet Firebase
-2. Activer les services nécessaires :
-   - **Realtime Database** : Base de données en temps réel
-   - **Authentication** : Authentification Google
-   - **Storage** : Stockage de fichiers
-   - **Cloud Functions** : Fonctions serverless
-   - **Cloud Messaging (FCM)** : Notifications push
-3. Configurer les règles de sécurité pour Database et Storage
-4. Configurer les Cloud Functions :
-   ```bash
-   cd functions
-   npm install
-   ```
-   - Définir le secret `FUNCTION_SECRET` dans Firebase Console (Paramètres du projet > Secrets)
-   - Déployer les fonctions : `npm run deploy`
-5. Créer un fichier `.env` à la racine du projet avec les variables d'environnement :
-```
-VITE_FIREBASE_API_KEY=votre-clé-api
-VITE_FIREBASE_AUTH_DOMAIN=votre-domaine
-VITE_FIREBASE_DATABASE_URL=votre-url-database
-VITE_FIREBASE_PROJECT_ID=votre-id-projet
-VITE_FIREBASE_STORAGE_BUCKET=votre-bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=votre-sender-id
-VITE_FIREBASE_APP_ID=votre-app-id
-VITE_GA_MEASUREMENT_ID=votre-id-google-analytics
-VITE_FCM_ENDPOINT_AUTH_KEY=votre-secret-fonction
-VITE_FCM_NOTIFICATION_ENDPOINT=https://europe-west1-votre-projet.cloudfunctions.net/sendChatNotification
-VITE_FCM_SUBSCRIBE_ENDPOINT=https://europe-west1-votre-projet.cloudfunctions.net/subscribeToTopic
-```
-
-## 🚀 Déploiement
-
-### Déploiement web (Netlify)
-L'application est configurée pour être déployée sur Netlify via `netlify.toml`. Le déploiement se fait automatiquement lors des push sur la branche principale.
-
-### Déploiement Firebase Hosting
-```bash
-# Build de l'application
-npm run build
-
-# Déploiement sur Firebase Hosting
-firebase deploy --only hosting
-```
-
-### Déploiement des Cloud Functions
-```bash
-cd functions
-npm run build
-npm run deploy
-```
-
 ## 📝 Licence
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ## 🔗 Liens utiles
 
-- **Application en ligne** : [https://cummap.netlify.app](https://cummap.netlify.app)
+- **Application en ligne** : [https://cummap.homeofparis.com](https://cummap.homeofparis.com)
 - **Documentation Firebase** : [https://firebase.google.com/docs](https://firebase.google.com/docs)
 - **Documentation Leaflet** : [https://leafletjs.com/](https://leafletjs.com/)
 
