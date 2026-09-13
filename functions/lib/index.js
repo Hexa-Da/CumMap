@@ -11,27 +11,31 @@ const database_1 = require("firebase-admin/database");
 const app = (0, app_1.initializeApp)();
 const messaging = (0, messaging_1.getMessaging)(app);
 const database = (0, database_1.getDatabase)(app);
+const functionSecret = (0, params_1.defineSecret)("FUNCTION_SECRET");
+/** Emails autorisés à créer un compte Auth, séparés par des virgules (Secret Manager). */
+const allowedEmailsSecret = (0, params_1.defineSecret)("ALLOWED_EMAILS");
+function parseAllowedEmails(raw) {
+    return raw
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+}
 // --- FONCTION DE BLOCAGE (AUTHENTIFICATION) ---
 /**
- * Cette fonction empêche la création d'un compte si l'email n'est pas autorisé.
- * Elle s'exécute AVANT que l'utilisateur ne soit ajouté à Firebase Auth.
+ * Empêche la création d'un compte si l'email n'est pas dans ALLOWED_EMAILS (secret).
+ * S'exécute AVANT l'ajout dans Firebase Auth.
  */
-exports.beforecreate = (0, identity_1.beforeUserCreated)((event) => {
-    const user = event.data;
-    const email = user === null || user === void 0 ? void 0 : user.email;
-    // Liste des emails autorisés
-    const ALLOWED_EMAILS = [
-        "REDACTED_EMAIL",
-        // Ajoute d'autres emails ici
-    ];
-    if (!email || !ALLOWED_EMAILS.includes(email)) {
-        console.log(`[Auth Blocked] Tentative d'inscription refusée pour : ${email}`);
+exports.beforecreate = (0, identity_1.beforeUserCreated)({ secrets: [allowedEmailsSecret] }, (event) => {
+    var _a, _b;
+    const email = (_b = (_a = event.data) === null || _a === void 0 ? void 0 : _a.email) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+    const allowed = parseAllowedEmails(allowedEmailsSecret.value());
+    if (!email || allowed.length === 0 || !allowed.includes(email)) {
+        console.log("[Auth Blocked] Tentative d'inscription refusée (email hors allow-list)");
         throw new https_2.HttpsError("permission-denied", "Accès non autorisé : votre email n'est pas sur la liste blanche.");
     }
-    console.log(`[Auth Allowed] Nouvel utilisateur autorisé : ${email}`);
+    console.log("[Auth Allowed] Nouvel utilisateur autorisé");
 });
 // --- CONFIGURATION ET UTILITAIRES ---
-const functionSecret = (0, params_1.defineSecret)("FUNCTION_SECRET");
 function assertAuthorized(req, secret) {
     if (!secret) {
         throw new Error("FUNCTION_SECRET non configuré côté serveur");

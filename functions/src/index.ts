@@ -11,36 +11,42 @@ const app = initializeApp();
 const messaging = getMessaging(app);
 const database = getDatabase(app);
 
+const functionSecret = defineSecret("FUNCTION_SECRET");
+/** Emails autorisés à créer un compte Auth, séparés par des virgules (Secret Manager). */
+const allowedEmailsSecret = defineSecret("ALLOWED_EMAILS");
+
+function parseAllowedEmails(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 // --- FONCTION DE BLOCAGE (AUTHENTIFICATION) ---
 
 /**
- * Cette fonction empêche la création d'un compte si l'email n'est pas autorisé.
- * Elle s'exécute AVANT que l'utilisateur ne soit ajouté à Firebase Auth.
+ * Empêche la création d'un compte si l'email n'est pas dans ALLOWED_EMAILS (secret).
+ * S'exécute AVANT l'ajout dans Firebase Auth.
  */
-export const beforecreate = beforeUserCreated((event) => {
-  const user = event.data;
-  const email = user?.email;
+export const beforecreate = beforeUserCreated(
+  { secrets: [allowedEmailsSecret] },
+  (event) => {
+    const email = event.data?.email?.toLowerCase();
+    const allowed = parseAllowedEmails(allowedEmailsSecret.value());
 
-  // Liste des emails autorisés
-  const ALLOWED_EMAILS = [
-    "REDACTED_EMAIL",
-    // Ajoute d'autres emails ici
-  ];
+    if (!email || allowed.length === 0 || !allowed.includes(email)) {
+      console.log("[Auth Blocked] Tentative d'inscription refusée (email hors allow-list)");
+      throw new HttpsError(
+        "permission-denied",
+        "Accès non autorisé : votre email n'est pas sur la liste blanche."
+      );
+    }
 
-  if (!email || !ALLOWED_EMAILS.includes(email)) {
-    console.log(`[Auth Blocked] Tentative d'inscription refusée pour : ${email}`);
-    throw new HttpsError(
-      "permission-denied",
-      "Accès non autorisé : votre email n'est pas sur la liste blanche."
-    );
+    console.log("[Auth Allowed] Nouvel utilisateur autorisé");
   }
-
-  console.log(`[Auth Allowed] Nouvel utilisateur autorisé : ${email}`);
-});
+);
 
 // --- CONFIGURATION ET UTILITAIRES ---
-
-const functionSecret = defineSecret("FUNCTION_SECRET");
 
 function assertAuthorized(req: Request, secret: string) {
   if (!secret) {
